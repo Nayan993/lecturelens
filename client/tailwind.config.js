@@ -48,6 +48,17 @@ export default {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
       },
+      keyframes: {
+        shimmer: { '100%': { transform: 'translateX(100%)' } },
+        indeterminate: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(250%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 1.6s infinite',
+        indeterminate: 'indeterminate 1.4s ease-in-out infinite',
+      },
     },
   },
   plugins: [],
