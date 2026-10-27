@@ -1,0 +1,379 @@
+{
+  "items": [
+    {
+      "id": "6650c3a0c3b2e41d8a600000",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400000",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "In the \"loss landscape\" view of training described in the lecture, what is treated as the variable being optimised?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The training inputs x"
+        },
+        {
+          "id": "b",
+          "text": "The model parameters θ"
+        },
+        {
+          "id": "c",
+          "text": "The target labels y"
+        },
+        {
+          "id": "d",
+          "text": "The number of training examples"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The lecture says the data is fixed and the loss should be thought of as a function of θ; training searches for the θ with the smallest loss.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300000",
+          "startSec": 66.201,
+          "endSec": 95.359,
+          "quote": "The data is fixed. Think of it as a function of theta."
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:30:00.310Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:30:00.310Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600001",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400001",
+      "type": "mcq",
+      "difficulty": "easy",
+      "stem": "Which expression is the gradient descent update rule given in the lecture?",
+      "options": [
+        {
+          "id": "a",
+          "text": "θ ← θ + η∇L(θ)"
+        },
+        {
+          "id": "b",
+          "text": "θ ← θ − η∇L(θ)"
+        },
+        {
+          "id": "c",
+          "text": "θ ← θ − ∇L(θ) / η"
+        },
+        {
+          "id": "d",
+          "text": "θ ← ηθ − ∇L(θ)"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The gradient points uphill, so the update subtracts the learning rate times the gradient: θ_new = θ_old − η∇L(θ_old).",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300003",
+          "startSec": 249.396,
+          "endSec": 274.907,
+          "quote": "theta new equals theta old minus eta times the gradient of L evaluated at theta old"
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:31:01.311Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:31:01.311Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600002",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400001",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "Running gradient descent on L(w) = w² from w = 1, which learning rate makes the iterates diverge?",
+      "options": [
+        {
+          "id": "a",
+          "text": "η = 0.1"
+        },
+        {
+          "id": "b",
+          "text": "η = 0.5"
+        },
+        {
+          "id": "c",
+          "text": "η = 0.9"
+        },
+        {
+          "id": "d",
+          "text": "η = 1.1"
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Each step multiplies w by (1 − 2η). For η = 1.1 the multiplier is −1.2, whose magnitude exceeds 1, so |w| grows every step and the loss blows up.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300004",
+          "startSec": 357.43,
+          "endSec": 385.149,
+          "quote": "with eta equal to one point one, the multiplier is negative one point two"
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300004",
+          "startSec": 331.403,
+          "endSec": 357,
+          "quote": "It still converges, but it oscillates back and forth across the minimum."
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:32:02.312Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:32:02.312Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600003",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400002",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "A training set has 50,000 examples and the mini-batch size is 100. How many iterations make up one epoch?",
+      "options": [
+        {
+          "id": "a",
+          "text": "100"
+        },
+        {
+          "id": "b",
+          "text": "500"
+        },
+        {
+          "id": "c",
+          "text": "5,000"
+        },
+        {
+          "id": "d",
+          "text": "50,000"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "One iteration processes one mini-batch and one epoch is a full pass over the data, so 50,000 / 100 = 500 iterations.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300007",
+          "startSec": 568.51,
+          "endSec": 593.967,
+          "quote": "with fifty thousand examples and a batch size of one hundred, one epoch is five hundred iterations"
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:33:03.313Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:33:03.313Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600004",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400002",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "Why is the single-example stochastic gradient still useful even though it is noisy?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It always has lower variance than the full-batch gradient"
+        },
+        {
+          "id": "b",
+          "text": "It equals the full-batch gradient for every example"
+        },
+        {
+          "id": "c",
+          "text": "It is an unbiased estimate: in expectation it equals the full-batch gradient"
+        },
+        {
+          "id": "d",
+          "text": "It only needs to be computed once per epoch"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A single-example gradient has lower variance than the full-batch gradient, so each step is more reliable.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300006",
+          "startSec": 517.092,
+          "endSec": 540.686,
+          "quote": "That estimate is noisy, but it's unbiased."
+        }
+      ],
+      "status": "rejected",
+      "rejectionReason": "FACTUALLY_WRONG",
+      "reviewNote": "Keyed answer (a) is false: the lecture says the estimate is noisy (higher variance) but unbiased. The correct option is (c), and the explanation contradicts the cited passage.",
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:34:04.314Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:34:04.314Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600005",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400003",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "For f = (x + y)·z with x = −2, y = 5 and z = −4, what is ∂f/∂x?",
+      "options": [
+        {
+          "id": "a",
+          "text": "−4"
+        },
+        {
+          "id": "b",
+          "text": "3"
+        },
+        {
+          "id": "c",
+          "text": "1"
+        },
+        {
+          "id": "d",
+          "text": "−12"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "With q = x + y, ∂f/∂q = z = −4 and ∂q/∂x = 1, so by the chain rule ∂f/∂x = −4 × 1 = −4.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300009",
+          "startSec": 780.301,
+          "endSec": 802.958,
+          "quote": "Take x equals negative two, y equals five, z equals negative four."
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000a",
+          "startSec": 832.975,
+          "endSec": 862.044,
+          "quote": "d f by d x equals d f by d q times one, which is negative four"
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:35:05.315Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-21T09:35:05.315Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600006",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400004",
+      "type": "mcq",
+      "difficulty": "hard",
+      "stem": "Why do deep stacks of sigmoid layers suffer from vanishing gradients?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The sigmoid derivative h(1 − h) is at most 0.25, so multiplying through many layers shrinks the gradient"
+        },
+        {
+          "id": "b",
+          "text": "Sigmoid outputs can be negative, which cancels gradients"
+        },
+        {
+          "id": "c",
+          "text": "The learning rate is divided by the number of layers"
+        },
+        {
+          "id": "d",
+          "text": "Bias gradients are always zero for sigmoid layers"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Backprop multiplies by h(1 − h) at every sigmoid layer, and that factor is at most 1/4; ten layers multiply the gradient by at most (1/4)¹⁰.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000d",
+          "startSec": 1083.141,
+          "endSec": 1111.59,
+          "quote": "h times one minus h is at most one quarter, at h equals one half"
+        }
+      ],
+      "status": "pending_review",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-20T15:12:08.377Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a600007",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400004",
+      "type": "mcq",
+      "difficulty": "medium",
+      "stem": "In the two-layer network from the lecture, with output error δ₂ = ŷ − y, what is the gradient of the loss with respect to W₂?",
+      "options": [
+        {
+          "id": "a",
+          "text": "δ₂ hᵀ"
+        },
+        {
+          "id": "b",
+          "text": "δ₁ xᵀ"
+        },
+        {
+          "id": "c",
+          "text": "W₂ᵀ δ₂"
+        },
+        {
+          "id": "d",
+          "text": "δ₂ xᵀ"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The gradient for a weight matrix is the error at that layer times the (transposed) input to that layer; the input to W₂ is h.",
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000c",
+          "startSec": 1014.718,
+          "endSec": 1039.186,
+          "quote": "the gradient for W two is delta two times h transpose"
+        }
+      ],
+      "status": "pending_review",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "mcq-v1",
+      "createdAt": "2026-10-20T15:12:08.377Z",
+      "updatedAt": "2026-10-20T15:12:08.377Z"
+    }
+  ],
+  "page": 1,
+  "limit": 20,
+  "total": 8
+}

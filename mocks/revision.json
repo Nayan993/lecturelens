@@ -1,0 +1,53 @@
+{
+  "id": "6650c3a0c3b2e41d8a900001",
+  "studentId": "6650c3a0c3b2e41d8a000002",
+  "lectureId": "6650c3a0c3b2e41d8a100001",
+  "generatedAt": "2026-10-26T18:39:28.204Z",
+  "basedOnAttemptIds": [
+    "6650c3a0c3b2e41d8a800001",
+    "6650c3a0c3b2e41d8a800002",
+    "6650c3a0c3b2e41d8a800003"
+  ],
+  "lectureAccuracy": 0.6,
+  "items": [
+    {
+      "rank": 1,
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400002",
+      "topicLabel": "Stochastic and mini-batch gradient descent",
+      "startSec": 492.332,
+      "endSec": 699.039,
+      "deepLink": "/lectures/6650c3a0c3b2e41d8a100001/play?t=492.332",
+      "correct": 1,
+      "attempted": 3,
+      "accuracy": 0.333,
+      "reason": "Across your 3 quiz attempts you got 1 of 3 answers on stochastic and mini-batch gradient descent right (33%), including a miss on your latest attempt on 26 Oct — your weakest topic, against 60% (9 of 15) for the lecture overall. Rewatch the 3.4-minute section on epochs and iterations."
+    },
+    {
+      "rank": 2,
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400001",
+      "topicLabel": "Gradient descent and the learning rate",
+      "startSec": 221.199,
+      "endSec": 492.332,
+      "deepLink": "/lectures/6650c3a0c3b2e41d8a100001/play?t=221.199",
+      "correct": 3,
+      "attempted": 6,
+      "accuracy": 0.5,
+      "reason": "You got 3 of 6 answers on gradient descent and the learning rate right (50%): the update-rule question was right in all 3 attempts, but the divergence question (η = 1.1 on L(w) = w²) was wrong in all 3. Rewatch the worked η = 0.1 / 0.9 / 1.1 example in this 4.5-minute section."
+    },
+    {
+      "rank": 3,
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400003",
+      "topicLabel": "Chain rule and computational graphs",
+      "startSec": 699.039,
+      "endSec": 965.174,
+      "deepLink": "/lectures/6650c3a0c3b2e41d8a100001/play?t=699.039",
+      "correct": 2,
+      "attempted": 3,
+      "accuracy": 0.667,
+      "reason": "You got 2 of 3 answers on the chain rule and computational graphs right (67%) — you missed the ∂f/∂x question on 23 Oct but answered it correctly on 24 and 26 Oct, so a quick review of this 4.4-minute section should lock it in."
+    }
+  ]
+}
