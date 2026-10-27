@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# environment (never commit real secrets; .env.example IS committed)
+.env
+.env.local
+.env.*.local
+
+# runtime media / uploads — keep the folder, ignore its contents
+storage/*
+!storage/.gitkeep
+
+# logs
+*.log
+
+# test coverage
+coverage/
+
+# tooling caches
+.vite/
+
+# os
+.DS_Store
+
+# claude code local overrides
+.claude/settings.local.json
