@@ -1,3 +1,39 @@
+/* @import must precede all other statements, so tokens come first. */
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-ink-1 antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Serif reading text: transcript segments, summary prose, answer bodies — nothing else. */
+  .prose-lecture {
+    @apply font-serif text-ink-1;
+    font-size: 16.5px;
+    line-height: 1.7;
+    max-width: 68ch;
+  }
+}
