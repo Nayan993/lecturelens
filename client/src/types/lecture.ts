@@ -17,7 +17,8 @@ export type LectureErrorCode =
   | 'TRANSCRIPTION_FAILED'
   | 'PROVIDER_UNAVAILABLE'
   | 'PIPELINE_INTERRUPTED'
-  | 'INTERNAL_ERROR';
+  | 'INTERNAL_ERROR'
+  | 'NOT_IMPLEMENTED';
 
 /** Set only when status is "failed". */
 export interface LectureError {
@@ -47,6 +48,9 @@ export interface Lecture {
   /** Float seconds; null until extraction has probed the file. */
   durationSec: number | null;
   transcriptApproved: boolean;
+  /** Who approved the transcript, and when; null until approved (CONTRACTS §4.2). */
+  transcriptApprovedBy: Id | null;
+  transcriptApprovedAt: IsoDateTime | null;
   /** Computed: topic sections visible to the caller (students: approved only); null before segmenting. */
   topicCount: number | null;
   uploadedBy: Id;
@@ -92,6 +96,8 @@ export interface ProcessingStatus {
   statusDetail: string;
   error: LectureError | null;
   durationSec: number | null;
+  /** Share of the six stages done, 0–100 (100 only when ready). */
+  progressPct: number;
   stages: ProcessingStage[];
   updatedAt: IsoDateTime;
 }

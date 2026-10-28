@@ -76,8 +76,28 @@
     gets `403 FORBIDDEN`.
   - **student** — `role === "student"`.
 - Lecture visibility (single-course MVP): teachers see lectures they uploaded;
-  students see every lecture with `status: "ready"`. Students only see a lecture's
-  transcript, and only get it in search/ask results, when `transcriptApproved: true`.
+  students see a lecture only when `status: "ready"` **and** `transcriptApproved: true` —
+  in lists, detail, search and ask alike.
+- Tokens: missing, malformed or invalid → `401` with `details: {}`; expired →
+  `401` with `details: { "reason": "expired" }` so the client can say "your session expired".
+  `requireAuth` reloads the user on every request, so a deleted account loses access at once.
+
+### 1.6 RBAC matrix
+
+Enforced **on the server** (`requireAuth`, then `requireRole` / `requireOwnerOrRole` from
+`server/src/middleware/`). Hiding a button in the UI is not access control: every
+teacher-only route rejects a student token with `403 FORBIDDEN` even if the client never
+calls it.
+
+| Who | May |
+| --- | --- |
+| **student** | read lectures whose `status` is `ready` **and** `transcriptApproved` is `true`; read **approved** topic sections, summaries and questions; build quizzes and create attempts; read **own** attempts and **own** revision plan |
+| **teacher** | everything a student can do, plus: upload; patch segments; approve transcripts, topics, summaries and questions; generate questions; reprocess; delete own lectures; read `pending_review` content |
+| **nobody** | read another user's attempts; call any route except `GET /health`, `POST /auth/register`, `POST /auth/login` and the signed `GET /lectures/:id/media` without a valid token |
+
+Ownership still applies to teachers: every teacher action and every `pending_review` read
+above is limited to lectures the teacher uploaded (`lecture.uploadedBy`). Another teacher's
+lecture answers `404 NOT_FOUND` (§1.5), not `403`, so its existence is not revealed.
 
 ---
 
@@ -144,11 +164,11 @@ uploaded → extracting → transcribing → chunking → segmenting → summari
 
 | Code | HTTP | When | `details` |
 | --- | --- | --- | --- |
-| `UNAUTHENTICATED` | 401 | Missing/invalid/expired JWT; wrong email or password on login. | `{}` |
+| `UNAUTHENTICATED` | 401 | Missing/invalid/expired JWT; wrong email or password on login. | `{}`, or `{ "reason": "expired" }` for an expired JWT |
 | `FORBIDDEN` | 403 | Authenticated but the role may not do this. | `{}` or `{ "reason": "..." }` |
 | `NOT_FOUND` | 404 | Unknown route, unknown/invalid id, or another teacher's lecture. | `{}` |
 | `VALIDATION_FAILED` | 422 | Any invalid input: body, query, params, multipart fields, malformed JSON. | **field → message map**, dotted paths for nested fields, e.g. `{ "options.2.text": "Required" }` |
-| `NOT_IMPLEMENTED` | 501 | Route exists in this contract but its owner has not built it yet (§7). | `{ "owner": "C", "prompt": "..." }` |
+| `NOT_IMPLEMENTED` | 501 | Route exists in this contract but its owner has not built it yet (§7). | `{ "owner": "C", "prompt": "PC.2" }` |
 | `PROVIDER_UNAVAILABLE` | 503 | AssemblyAI / LLM provider down, timed out, or rate-limited us. | `{ "provider": "groq" }` |
 | `INTERNAL_ERROR` | 500 | Anything unexpected. Logged with `requestId`. | `{}` |
 
@@ -161,6 +181,7 @@ There is **no 400**. All bad-input cases, including unparseable JSON, are `422 V
 | `CONFLICT` | 409 | Duplicate email on register; illegal state transition (e.g. reprocess while processing, generate questions before `ready`). `details` names the current state, e.g. `{ "status": "transcribing" }`. |
 | `PAYLOAD_TOO_LARGE` | 413 | Upload exceeds `MAX_UPLOAD_MB`. `details: { "maxMb": 512 }` |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | Upload MIME type not in the accepted list (§5.3). `details: { "mimeType": "..." }` |
+| `RATE_LIMITED` | 429 | Too many attempts from one IP: `POST /auth/login` and `POST /auth/register` each allow 10 per 15 minutes. `details: { "retryAfterSec": 412 }`, plus a `Retry-After` header. |
 
 Adding a new code is a contract change.
 
@@ -178,8 +199,8 @@ Every `*Id` / `*By` field is an `ObjectId` reference.
 | --- | --- | --- |
 | `_id` | ObjectId | → `id` |
 | `email` | string R | unique, trimmed, lowercased |
-| `passwordHash` | string R S | bcrypt, cost 12, `select: false` |
-| `name` | string R | 1–100 chars |
+| `passwordHash` | string R S | bcrypt, cost 10, `select: false` |
+| `name` | string R | 2–80 chars |
 | `role` | enum R | `student` \| `teacher`; immutable after register |
 | `lastLoginAt` | Date \| null | |
 | `createdAt`, `updatedAt` | Date | |
@@ -204,12 +225,13 @@ Indexes: `{ email: 1 }` unique.
 | `consent.grantedAt` | Date R | server time of upload |
 | `status` | enum R | default `uploaded` |
 | `statusDetail` | string R | one human sentence about the current status; no relative times ("3 min ago") |
-| `error` | object \| null | `null` unless `status === "failed"`: `{ stage, code, message, at }` — `stage` is a stage name, `code` one of `NO_AUDIO_STREAM`, `UNSUPPORTED_CODEC`, `TRANSCRIPTION_FAILED`, `PROVIDER_UNAVAILABLE`, `PIPELINE_INTERRUPTED`, `INTERNAL_ERROR` |
+| `error` | object \| null | `null` unless `status === "failed"`: `{ stage, code, message, at }` — `stage` is a stage name, `code` one of `NO_AUDIO_STREAM`, `UNSUPPORTED_CODEC`, `TRANSCRIPTION_FAILED`, `PROVIDER_UNAVAILABLE`, `PIPELINE_INTERRUPTED`, `INTERNAL_ERROR`, `NOT_IMPLEMENTED` (the placeholder pipeline, §7) |
 | `stages` | array S* | `[{ name, state, ms, startedAt, finishedAt }]`, one per stage name in order. *Exposed only via `GET /lectures/:id/status`. |
 | `durationSec` | float \| null | from ffprobe during `extracting`; `null` before that |
-| `mediaPath` | string R S | path of original upload, relative to `STORAGE_DIR` |
+| `mediaPath` | string R S | path of original upload, relative to `STORAGE_DIR`: `<lectureId>/<uuid><ext>` (the client's filename is never used as a path) |
 | `audioPath` | string \| null S | extracted mono audio, relative to `STORAGE_DIR` |
 | `media` | object R | `{ originalFilename, mimeType, sizeBytes }` |
+| `provider` | object R S | `{ asr, asrModel, externalId }` — ASR provider name, model and job id for the transcript; each `null` until `transcribing` starts |
 | `transcriptApproved` | boolean R | default `false`; set by `POST /lectures/:id/transcript/approve`; reset to `false` by reprocess from `extracting`/`transcribing` |
 | `transcriptApprovedBy` | ObjectId \| null | |
 | `transcriptApprovedAt` | Date \| null | |
@@ -251,7 +273,7 @@ Retrieval unit: consecutive whole segments (never split a segment), no overlap,
 | `startSec`, `endSec` | float R | `= segments[segmentStart].startSec`, `= segments[segmentEnd].endSec` |
 | `text` | string R | segment texts joined by a single space |
 | `segmentStart`, `segmentEnd` | int R | inclusive segment indexes |
-| `embedding` | float[384] R S | `EMBEDDING_MODEL` output, **L2-normalised on write** (‖v‖ = 1 ± 1e-6); `select: false` |
+| `embedding` | float[384] R S | `EMBEDDING_MODEL` output, **L2-normalised on write** (‖v‖ = 1 ± 1e-6); `select: false`. `[]` until the `indexing` stage writes it (the seed inserts `[]`); any other length than 0 or 384 is rejected |
 | `embeddingModel` | string R | e.g. `"Xenova/all-MiniLM-L6-v2"` |
 
 Indexes:
@@ -408,7 +430,8 @@ Indexes: `{ key: 1 }` unique; `{ expiresAt: 1 }` with `expireAfterSeconds: 0` (T
 `status` **defaults to `pending_review`** on `summaries`, `questions` and `topicsections`.
 
 **Every student-facing query on those three collections MUST filter `status: "approved"` at
-the Mongoose level** — via the shared query helper (`Model.find(...).approvedOnly()`) applied
+the Mongoose level** — via the shared query helper (`Model.find(...).approvedOnly()`, or the
+static `Model.approvedFor(lectureId)`; `APPROVED` is the matching filter for `populate({ match })`) applied
 in the service layer whenever `req.user.role === "student"`, including `populate()` calls,
 quiz assembly, search and ask. **Filtering in the UI is not a substitute** — unapproved
 content must never leave the server for a student.
@@ -429,11 +452,11 @@ Routes marked **(+)** were added beyond the minimum list to make the flows compl
 | POST | `/auth/login` | D | public | Exchange email+password for JWT → `200 { token, user }` |
 | GET | `/auth/me` | D | any | Validate token, return `{ user }` |
 | GET | `/users/me` | D | any | Current user's profile `{ user }` |
-| PATCH | `/users/me` | D | any | Update `name`, or password (`currentPassword` + `newPassword`) → `{ user }` |
+| PATCH | `/users/me` | D | any | Update `name` only → `{ user }` |
 | GET | `/health` | D | public | Liveness + DB state |
 | POST | `/lectures` | D | teacher | Multipart upload with consent; starts pipeline → `202 { lecture }` |
-| GET | `/lectures` | D | any | Paginated lecture list (teacher: own; student: `ready` only) |
-| GET | `/lectures/:id` | D | owner / student if `ready` | Lecture detail `{ lecture, mediaUrl }` |
+| GET | `/lectures` | D | any | Paginated lecture list (teacher: own; student: `ready` and `transcriptApproved` only) |
+| GET | `/lectures/:id` | D | owner / student if `ready` and `transcriptApproved` | Lecture detail `{ lecture, mediaUrl }` |
 | DELETE | `/lectures/:id` | D | owner | Delete lecture, all derived docs and files → `204` |
 | GET | `/lectures/:id/status` | D | owner | Processing status with per-stage timings |
 | POST | `/lectures/:id/reprocess` | D | owner | Re-run pipeline from a stage → `202 { lecture }` |
@@ -457,21 +480,27 @@ Routes marked **(+)** were added beyond the minimum list to make the flows compl
 | POST | `/quizzes` | C | any | Build a quiz from approved questions → `201 { quiz }` |
 | GET | `/quizzes` **(+)** | C | any | Paginated `QuizSummary` list of the caller's quizzes, with best score |
 | GET | `/quizzes/:id` | C | quiz creator / owner | Get quiz `{ quiz }` |
-| POST | `/quizzes/:id/attempts` | C | student | Submit answers, get scored attempt → `201 { attempt }` |
-| GET | `/attempts/:id` | C | attempt's student / owner | Get scored attempt `{ attempt }` |
-| GET | `/revision-plan` | C | student | Latest ranked revision plan `{ plan }` |
+| POST | `/quizzes/:id/attempts` | C | any | Submit answers, get scored attempt → `201 { attempt }` |
+| GET | `/attempts/:id` | C | the attempt's own user only | Get scored attempt `{ attempt }` |
+| GET | `/revision-plan` | C | any (own plan) | Latest ranked revision plan `{ plan }` |
 
 Single-resource responses are wrapped in a named key (`{ lecture }`, `{ topic }`, …);
 lists use `{ items, ... }` as in §1.4.
 
 ### 5.2 Auth & users (D)
 
-- `POST /auth/register` body `{ email, password, name, role }`; `password` 8–128 chars.
-  Duplicate email → `409 CONFLICT`.
-- `POST /auth/login` body `{ email, password }`. Wrong email *or* password → `401 UNAUTHENTICATED`
-  with the same message (do not reveal which).
+- `POST /auth/register` body `{ email, password, name, role }` → `201 { user, token }`.
+  `name` 2–80 chars (trimmed); `email` valid, trimmed and lowercased; `password` 8–128 chars with
+  at least one letter and one digit; `role` `student` | `teacher`. Duplicate email (any case) →
+  `409 CONFLICT`.
+- `POST /auth/login` body `{ email, password }` → `200 { user, token }`. Wrong email *or* password →
+  `401 UNAUTHENTICATED` with the same message, `"Invalid email or password"` (do not reveal which).
+- Both are rate-limited per IP (10 per 15 minutes each) → `429 RATE_LIMITED`.
+- `PATCH /users/me` body `{ name }` only; any other field → `422` with `{ "body": "Only \"name\" can be changed" }`.
+  Password change is not in v1.
 - `user` object: `{ id, email, name, role, lastLoginAt, createdAt, updatedAt }`.
-- `GET /health` → `200 { "status": "ok", "uptimeSec": 812.441, "db": "connected" | "not_connected", "timestamp": "<ISO>" }`.
+- `GET /health` → `200 { "status": "ok", "uptimeSec": 812.441, "db": "connected" | "not_connected", "version": "0.0.0", "timestamp": "<ISO>" }`.
+  `version` is the server package version.
 
 ### 5.3 Lectures (D)
 
@@ -481,7 +510,7 @@ lists use `{ items, ... }` as in §1.4.
 | --- | --- | --- |
 | `file` | file R | `.mp4` `.mkv` `.mov` `.webm` `.mp3` `.wav` `.m4a` — MIME `video/mp4`, `video/x-matroska`, `video/quicktime`, `video/webm`, `audio/mpeg`, `audio/wav` (also `audio/x-wav`, `audio/wave`), `audio/mp4` (also `audio/x-m4a`); ≤ `MAX_UPLOAD_MB`. Browsers often send an empty or generic type (notably for `.mkv`), so the server decides by extension plus content sniffing, not the declared type alone. |
 | `title` | text R | 1–200 chars |
-| `courseCode` | text | optional |
+| `courseCode` | text | optional, ≤ 100 chars |
 | `description` | text | optional, ≤ 2000 chars |
 | `recordedOn` | text | optional calendar date `YYYY-MM-DD` (a date, not a time — §1.2 does not apply); not in the future |
 | `notes` | text | optional lecture notes, ≤ 10000 chars; stored for later use (e.g. LLM context), not serialised in v1 |
@@ -489,7 +518,13 @@ lists use `{ items, ... }` as in §1.4.
 | `purposeShown` | text R | must be `"true"` |
 | `processorNamed` | text R | must be `"true"` |
 
-Any consent field not `"true"` → `422` with e.g. `{ "consent.lecturerConsent": "Lecturer consent is required" }`.
+Any consent field not `"true"` → `422` with e.g. `{ "consent.lecturerConsent": "Lecturer consent is required" }`,
+and the uploaded file is deleted — no media is kept or processed without consent. Other upload errors:
+missing `file` → `422 { "file": "Required" }`; an extension outside the list, a declared MIME type that
+is neither generic nor listed, or content whose magic bytes do not match the extension →
+`415 UNSUPPORTED_MEDIA_TYPE`; larger than `MAX_UPLOAD_MB` → `413 PAYLOAD_TOO_LARGE { "maxMb": 512 }`.
+The file is stored at `STORAGE_DIR/<lectureId>/<uuid><ext>` (a relative `STORAGE_DIR` is resolved from
+the repository root).
 `consent.grantedBy` = caller, `consent.grantedAt` = server time. Returns `202 { lecture }` with
 `status: "uploaded"`; the pipeline starts in-process immediately.
 
@@ -507,10 +542,23 @@ Sorted by `createdAt` desc.
 valid 6 hours. `GET /lectures/:id/media` checks `sig`/`exp` instead of the Bearer header
 (`401` if invalid/expired) and supports `Range` → `206`.
 
-`POST /lectures/:id/reprocess` body `{ "fromStage": "<stage name>" }` (default `"extracting"`).
-Only from `ready` or `failed`, otherwise `409 CONFLICT`. Deletes derived docs from that stage on.
+`GET /lectures/:id/status` → §6.2, plus `progressPct` (0–100: share of the six stages `done`).
+Stage states are derived from `status` in the §2 order, so they can never contradict it.
+
+`POST /lectures/:id/reprocess` body `{ "fromStage": "<stage name>" }` (or `?fromStage=`; default
+`"extracting"`) → `202 { lecture }`. Allowed from `ready`, or from `failed` at or before the failing
+stage; otherwise `409 CONFLICT { status }`. **Idempotent:** repeating the same request while that
+restart is still queued returns `202` with the lecture and starts nothing new. Deletes derived docs
+from that stage on (`transcribing`: segments and everything after; `chunking`: chunks, topics,
+summaries, questions; `segmenting`: topics, summaries, questions; `summarising`: summaries;
+`indexing`: clears chunk embeddings). Quizzes and attempts are kept as history.
 Reprocessing from `extracting` or `transcribing` resets `transcriptApproved` and **discards
 corrections**; from `chunking` onward keeps corrected segments.
+
+`DELETE /lectures/:id` → `204`. Deletes every document with this `lectureId` (segments, chunks,
+topics, summaries, questions, quizzes, attempts, revision plans), then the lecture, then
+`STORAGE_DIR/<lectureId>/`. If any derived collection fails, the lecture is kept so the delete can be
+retried, the failure is logged, and the response is `500`.
 
 ### 5.4 Transcript (A)
 
@@ -646,6 +694,7 @@ All examples are taken from or consistent with `mocks/` (lecture `6650c3a0c3b2e4
   "statusDetail": "Transcribing 49.2 minutes of audio with AssemblyAI.",
   "error": null,
   "durationSec": 2954.88,
+  "progressPct": 17,
   "stages": [
     { "name": "extracting",   "state": "done",    "ms": 30489 },
     { "name": "transcribing", "state": "running", "ms": 183406 },
@@ -978,15 +1027,24 @@ This is the student's 3rd attempt; `mocks/revision.json` is generated from attem
   {
     "error": {
       "code": "NOT_IMPLEMENTED",
-      "message": "POST /api/v1/ask is not implemented yet.",
-      "details": { "owner": "C", "prompt": "C3 — grounded Q&A with citations" },
+      "message": "Grounded Q&A is not yet implemented (owner: Member C).",
+      "details": { "owner": "C", "prompt": "PC.2" },
       "requestId": "req_Q1v9x"
     }
   }
   ```
 
-  `details.owner` is the owner letter from §5.1; `details.prompt` names the playbook prompt
-  that implements it.
+  `message` is exactly `"<Feature> is not yet implemented (owner: Member <X>)."`; `details.owner` is
+  the owner letter from §5.1; `details.prompt` is the playbook prompt id that implements it (`PA.1`
+  transcript; `PB.1` topics, `PB.2` summaries; `PC.1` search, `PC.2` ask, `PC.3` questions, quizzes,
+  attempts and revision).
+- Stubs are mounted with their **real** guards and validation (`server/src/modules/<name>/routes.ts`),
+  so a request is authenticated, role-checked and validated (`401`/`403`/`404`/`422`) before the
+  `501`. Owners replace the handler body only.
+- The processing pipeline (`server/src/services/processing/pipeline.ts`, interface by D, implementation
+  by A) is a placeholder until Member A's PA.1/PA.2: it marks each new or reprocessed lecture
+  `failed` with `statusDetail` "Transcription pipeline not yet implemented (Member A, prompt PA.1)"
+  and `error.code: "NOT_IMPLEMENTED"`. Uploads therefore work end to end without faking success.
 - **Returning fabricated success data from a server route is forbidden** — no hard-coded
   lectures, no canned answers, no `200` with empty placeholder objects. The client handles
   `501` by showing a "coming soon" state. Fixtures in `mocks/` are for client development and
@@ -1018,14 +1076,16 @@ keys from quiz questions, §5.7).
 
 ## 9. Demo accounts
 
-Seeded accounts for development and the project demo. The client's mock auth adapter serves
-exactly these, and the server's seed script (owner D) must create exactly these, with the fixture
-ids from §8 so seeded data lines up with `mocks/`.
+Seeded accounts for development and the project demo, all with the fixture ids from §8 so seeded
+data lines up with `mocks/`. The server's seed script (`npm run seed --workspace server`, owner D)
+creates all three. The client's mock auth adapter and the login page's demo block serve the first
+two; the second student exists only in a seeded database (it owns the second seeded quiz attempt).
 
 | Role | id | Name | Email | Password |
 | --- | --- | --- | --- | --- |
 | teacher | `6650c3a0c3b2e41d8a000001` | Dr. Ananya Rao | `teacher@lecturelens.dev` | `lecturelens` |
 | student | `6650c3a0c3b2e41d8a000002` | Rohan Mehta | `student@lecturelens.dev` | `lecturelens` |
+| student | `6650c3a0c3b2e41d8a000003` | Meera Iyer | `student2@lecturelens.dev` | `lecturelens` |
 
 - These are **demo credentials, not secrets**. They must never exist in a production database:
   the seed script refuses to run when `NODE_ENV=production`.

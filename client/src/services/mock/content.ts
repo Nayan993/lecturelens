@@ -71,9 +71,12 @@ export const mockTranscriptService: TranscriptService = {
 
   async approve(lectureId) {
     await delay();
-    const lecture = ownedLecture(requireUser(), lectureId);
+    const user = requireUser();
+    const lecture = ownedLecture(user, lectureId);
     if (lecture.status !== 'ready') fail(409, 'CONFLICT', 'The lecture must finish processing first.', { status: lecture.status });
     lecture.transcriptApproved = true;
+    lecture.transcriptApprovedBy ??= user.id;
+    lecture.transcriptApprovedAt ??= nowIso();
     lecture.updatedAt = nowIso();
     return clone(lecture);
   },

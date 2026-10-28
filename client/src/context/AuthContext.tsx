@@ -18,6 +18,8 @@ export interface AuthContextValue {
   user: User | null;
   token: string | null;
   status: AuthStatus;
+  /** True after the user logged out themselves (not after an expired/401 session). */
+  loggedOut: boolean;
   login(email: string, password: string, options?: LoginOptions): Promise<User>;
   register(payload: RegisterPayload): Promise<User>;
   logout(): void;
@@ -31,6 +33,7 @@ export function AuthProvider({ children, service = services.auth }: { children: 
   const [token, setToken] = useState<string | null>(() => readToken());
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>(() => (readToken() ? 'loading' : 'anonymous'));
+  const [loggedOut, setLoggedOut] = useState(false);
   const serviceRef = useRef(service);
   serviceRef.current = service;
 
@@ -47,7 +50,14 @@ export function AuthProvider({ children, service = services.auth }: { children: 
     setToken(nextToken);
     setUser(nextUser);
     setStatus('authenticated');
+    setLoggedOut(false);
   }, []);
+
+  // A deliberate logout: the next sign-in (possibly someone else) starts from home, not this page.
+  const logout = useCallback(() => {
+    setLoggedOut(true);
+    clearSession();
+  }, [clearSession]);
 
   const refresh = useCallback(async () => {
     const stored = readToken();
@@ -116,8 +126,8 @@ export function AuthProvider({ children, service = services.auth }: { children: 
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, token, status, login, register, logout: clearSession, refresh }),
-    [user, token, status, login, register, clearSession, refresh],
+    () => ({ user, token, status, loggedOut, login, register, logout, refresh }),
+    [user, token, status, loggedOut, login, register, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -28,8 +28,8 @@ export function SettingsPage() {
   const onSave = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
-    if (!trimmed || trimmed.length > 100) {
-      setNameError('Use 1–100 characters.');
+    if (trimmed.length < 2 || trimmed.length > 80) {
+      setNameError('Use 2–80 characters.');
       return;
     }
     setNameError(null);
