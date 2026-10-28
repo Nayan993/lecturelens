@@ -16,6 +16,7 @@ export const ERROR_CODES = [
   'CONFLICT',
   'PAYLOAD_TOO_LARGE',
   'UNSUPPORTED_MEDIA_TYPE',
+  'RATE_LIMITED',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
@@ -31,6 +32,7 @@ export const ERROR_STATUS: Readonly<Record<ErrorCode, number>> = Object.freeze({
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
+  RATE_LIMITED: 429,
 });
 
 /** `details` is always an object — `{}` when there is nothing to add, never null. */
@@ -55,8 +57,11 @@ export class AppError extends Error {
   }
 }
 
-export const unauthenticated = (message = 'You need to sign in to do that.'): AppError =>
-  new AppError('UNAUTHENTICATED', message);
+/** `reason: 'expired'` tells the client the token was valid but has run out (§3.1). */
+export const unauthenticated = (
+  message = 'You need to sign in to do that.',
+  details: { reason?: 'expired' } = {},
+): AppError => new AppError('UNAUTHENTICATED', message, ERROR_STATUS.UNAUTHENTICATED, details);
 
 export const forbidden = (reason?: string): AppError =>
   new AppError(
@@ -99,6 +104,14 @@ export const providerUnavailable = (provider: string): AppError =>
     ERROR_STATUS.PROVIDER_UNAVAILABLE,
     { provider },
   );
+
+export const conflict = (message: string, details: ErrorDetails = {}): AppError =>
+  new AppError('CONFLICT', message, ERROR_STATUS.CONFLICT, details);
+
+export const rateLimited = (retryAfterSec: number): AppError =>
+  new AppError('RATE_LIMITED', 'Too many attempts. Please wait a few minutes and try again.', ERROR_STATUS.RATE_LIMITED, {
+    retryAfterSec,
+  });
 
 export const internal = (): AppError =>
   new AppError('INTERNAL_ERROR', 'Something went wrong on our side. Please try again.');

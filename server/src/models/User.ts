@@ -7,7 +7,7 @@ export { ROLES, type Role };
 /** `users` — docs/CONTRACTS.md §4.1. */
 export interface IUser {
   email: string;
-  /** bcrypt, cost 12. Server-only: `select: false` and always stripped from JSON. */
+  /** bcrypt, cost 10. Server-only: `select: false` and always stripped from JSON. */
   passwordHash: string;
   name: string;
   /** Immutable after register. */
@@ -27,7 +27,7 @@ const userSchema = new Schema<IUser>(
       match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email address'],
     },
     passwordHash: { type: String, required: true, select: false },
-    name: { type: String, required: true, trim: true, minlength: 1, maxlength: 100 },
+    name: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
     role: { type: String, enum: ROLES, required: true, immutable: true },
     lastLoginAt: { type: Date, default: null },
   },

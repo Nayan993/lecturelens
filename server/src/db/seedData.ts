@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import bcrypt from 'bcryptjs';
 import type { HydratedDocument, Model } from 'mongoose';
 import {
   Attempt,
@@ -20,6 +19,7 @@ import {
   type StageName,
   type StageState,
 } from '../models/index.js';
+import { BCRYPT_COST, hashPassword } from '../modules/auth/password.js';
 
 /**
  * Builds (but does not write) every seed document from the shared fixtures in /mocks, so
@@ -171,7 +171,7 @@ export interface SeedCollection {
   docs: HydratedDocument<unknown>[];
 }
 
-export async function buildSeed({ bcryptCost = 12 } = {}): Promise<SeedCollection[]> {
+export async function buildSeed({ bcryptCost = BCRYPT_COST } = {}): Promise<SeedCollection[]> {
   const lectures = readFixture<ListFixture<LectureFixture>>('lectures.json').items;
   const transcript = readFixture<ListFixture & { lectureId: string }>('transcript.json');
   const chunks = readFixture<ListFixture>('chunks.json').items;
@@ -186,8 +186,21 @@ export async function buildSeed({ bcryptCost = 12 } = {}): Promise<SeedCollectio
     return { createdAt: lecture.createdAt, updatedAt: lecture.createdAt };
   };
 
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, bcryptCost);
-  const users = DEMO_USERS.map((u) => new User({ _id: u.id, email: u.email, name: u.name, role: u.role, passwordHash }));
+  const passwordHash = await hashPassword(DEMO_PASSWORD, bcryptCost);
+  // Fixed timestamps (the raw insert in seed.ts does not stamp any) — before every fixture date.
+  const accountsCreatedAt = '2026-09-01T08:00:00.000Z';
+  const users = DEMO_USERS.map(
+    (u) =>
+      new User({
+        _id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        passwordHash,
+        createdAt: accountsCreatedAt,
+        updatedAt: accountsCreatedAt,
+      }),
+  );
 
   const quizQuestions = questions.filter((q) => q.status === 'approved');
   const lectureId = quizQuestions[0]?.lectureId;

@@ -15,7 +15,7 @@ import { FormError } from './LoginPage';
 import { H1 } from '../../components/layout/Page';
 
 const identitySchema = z.object({
-  name: z.string().trim().min(1, 'Enter your name').max(100, 'Use at most 100 characters'),
+  name: z.string().trim().min(1, 'Enter your name').min(2, 'Use at least 2 characters').max(80, 'Use at most 80 characters'),
   email: z.string().trim().min(1, 'Enter your email address').email('Enter a valid email address, like name@university.edu'),
   role: z.enum(ROLES, { errorMap: () => ({ message: 'Choose Student or Teacher' }) }),
 });
@@ -23,7 +23,12 @@ const identitySchema = z.object({
 // A separate object so the match refinement runs even while name/email are still invalid.
 const passwordSchema = z
   .object({
-    password: z.string().min(8, 'Use at least 8 characters').max(128, 'Use at most 128 characters'),
+    password: z
+      .string()
+      .min(8, 'Use at least 8 characters')
+      .max(128, 'Use at most 128 characters')
+      .regex(/[A-Za-z]/, 'Include at least one letter')
+      .regex(/\d/, 'Include at least one number'),
     confirmPassword: z.string().min(1, 'Re-enter your password'),
   })
   .refine((v) => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords don’t match' });

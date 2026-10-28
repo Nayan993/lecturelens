@@ -94,7 +94,8 @@ export const mockLectureService: LectureService = {
     db.lectures.forEach(advance);
     const q = params.q?.trim().toLowerCase();
     const visible = db.lectures
-      .filter((l) => (user.role === 'teacher' ? l.uploadedBy === user.id : l.status === 'ready'))
+      // Students see a lecture only once it is ready AND its transcript is approved (CONTRACTS §1.5).
+      .filter((l) => (user.role === 'teacher' ? l.uploadedBy === user.id : l.status === 'ready' && l.transcriptApproved))
       .filter((l) => !params.status || l.status === params.status)
       .filter((l) => !q || l.title.toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));

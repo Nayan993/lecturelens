@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authRouter, usersRouter } from '../modules/auth/auth.routes.js';
 import { healthRouter } from './health.js';
 
 /**
@@ -15,8 +16,8 @@ import { healthRouter } from './health.js';
  *  Mount point              Router (planned file)              Owner
  *  -----------------------  ---------------------------------  -----
  *  /health                  routes/health.ts        (live)      D
- *  /auth                    routes/auth.routes.ts               D   register, login, me
- *  /users                   routes/users.routes.ts              D   GET/PATCH /users/me
+ *  /auth                    modules/auth/auth.routes.ts (live)  D   register, login, me
+ *  /users                   modules/auth/auth.routes.ts (live)  D   GET/PATCH /users/me
  *  /lectures                routes/lectures.routes.ts           D   upload, list, detail, delete,
  *                                                                   status, reprocess, media
  *  /lectures/:id/transcript routes/transcript.routes.ts         A   transcript, approve
@@ -33,6 +34,10 @@ import { healthRouter } from './health.js';
  *  /attempts                routes/quizzes.routes.ts            C   GET /:id
  *  /revision-plan           routes/revision.routes.ts           C   latest plan
  *
+ *  Access control: requireAuth (middleware/auth.ts) on everything except /health,
+ *  /auth/register, /auth/login and the signed media URL; then requireRole /
+ *  requireOwnerOrRole (middleware/rbac.ts) per the RBAC matrix in CONTRACTS.md §1.6.
+ *
  *  Until a router exists its routes must answer 501 NOT_IMPLEMENTED via
  *  notImplemented(owner, prompt) from utils/errors.ts — never fake success data.
  *  Anything unmatched falls through to middleware/notFound.ts (404).
@@ -40,3 +45,5 @@ import { healthRouter } from './health.js';
 export const apiRouter = Router();
 
 apiRouter.use('/health', healthRouter); // D
+apiRouter.use('/auth', authRouter); // D
+apiRouter.use('/users', usersRouter); // D

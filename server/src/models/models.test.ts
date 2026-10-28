@@ -88,6 +88,15 @@ describe('seed documents', () => {
     expect(first.timeTakenSec).toBe(397.512);
   });
 
+  it('gives every document createdAt (and updatedAt, except immutable attempts)', () => {
+    for (const { model, docs } of seed) {
+      for (const doc of docs.map((d) => json(d))) {
+        expect(doc.createdAt, model.modelName).toEqual(expect.any(String));
+        if (model.modelName !== 'Attempt') expect(doc.updatedAt, model.modelName).toEqual(expect.any(String));
+      }
+    }
+  });
+
   it('gives the demo users the §9 ids', () => {
     expect(seeded('User').map((u) => String(u._id))).toEqual(DEMO_USERS.map((u) => u.id));
   });

@@ -128,7 +128,7 @@ export function requireUser(role?: Role): User {
 /** A lecture the user may see (teacher: own; student: ready only), else 404 like the server. */
 export function visibleLecture(user: User, lectureId: Id): Lecture {
   const lecture = lectures.find((l) => l.id === lectureId);
-  const visible = lecture && (user.role === 'teacher' ? lecture.uploadedBy === user.id : lecture.status === 'ready');
+  const visible = lecture && (user.role === 'teacher' ? lecture.uploadedBy === user.id : lecture.status === 'ready' && lecture.transcriptApproved);
   if (!visible) fail(404, 'NOT_FOUND', 'Lecture not found.');
   return lecture;
 }

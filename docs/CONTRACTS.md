@@ -76,8 +76,28 @@
     gets `403 FORBIDDEN`.
   - **student** — `role === "student"`.
 - Lecture visibility (single-course MVP): teachers see lectures they uploaded;
-  students see every lecture with `status: "ready"`. Students only see a lecture's
-  transcript, and only get it in search/ask results, when `transcriptApproved: true`.
+  students see a lecture only when `status: "ready"` **and** `transcriptApproved: true` —
+  in lists, detail, search and ask alike.
+- Tokens: missing, malformed or invalid → `401` with `details: {}`; expired →
+  `401` with `details: { "reason": "expired" }` so the client can say "your session expired".
+  `requireAuth` reloads the user on every request, so a deleted account loses access at once.
+
+### 1.6 RBAC matrix
+
+Enforced **on the server** (`requireAuth`, then `requireRole` / `requireOwnerOrRole` from
+`server/src/middleware/`). Hiding a button in the UI is not access control: every
+teacher-only route rejects a student token with `403 FORBIDDEN` even if the client never
+calls it.
+
+| Who | May |
+| --- | --- |
+| **student** | read lectures whose `status` is `ready` **and** `transcriptApproved` is `true`; read **approved** topic sections, summaries and questions; build quizzes and create attempts; read **own** attempts and **own** revision plan |
+| **teacher** | everything a student can do, plus: upload; patch segments; approve transcripts, topics, summaries and questions; generate questions; reprocess; delete own lectures; read `pending_review` content |
+| **nobody** | read another user's attempts; call any route except `GET /health`, `POST /auth/register`, `POST /auth/login` and the signed `GET /lectures/:id/media` without a valid token |
+
+Ownership still applies to teachers: every teacher action and every `pending_review` read
+above is limited to lectures the teacher uploaded (`lecture.uploadedBy`). Another teacher's
+lecture answers `404 NOT_FOUND` (§1.5), not `403`, so its existence is not revealed.
 
 ---
 
@@ -144,7 +164,7 @@ uploaded → extracting → transcribing → chunking → segmenting → summari
 
 | Code | HTTP | When | `details` |
 | --- | --- | --- | --- |
-| `UNAUTHENTICATED` | 401 | Missing/invalid/expired JWT; wrong email or password on login. | `{}` |
+| `UNAUTHENTICATED` | 401 | Missing/invalid/expired JWT; wrong email or password on login. | `{}`, or `{ "reason": "expired" }` for an expired JWT |
 | `FORBIDDEN` | 403 | Authenticated but the role may not do this. | `{}` or `{ "reason": "..." }` |
 | `NOT_FOUND` | 404 | Unknown route, unknown/invalid id, or another teacher's lecture. | `{}` |
 | `VALIDATION_FAILED` | 422 | Any invalid input: body, query, params, multipart fields, malformed JSON. | **field → message map**, dotted paths for nested fields, e.g. `{ "options.2.text": "Required" }` |
@@ -161,6 +181,7 @@ There is **no 400**. All bad-input cases, including unparseable JSON, are `422 V
 | `CONFLICT` | 409 | Duplicate email on register; illegal state transition (e.g. reprocess while processing, generate questions before `ready`). `details` names the current state, e.g. `{ "status": "transcribing" }`. |
 | `PAYLOAD_TOO_LARGE` | 413 | Upload exceeds `MAX_UPLOAD_MB`. `details: { "maxMb": 512 }` |
 | `UNSUPPORTED_MEDIA_TYPE` | 415 | Upload MIME type not in the accepted list (§5.3). `details: { "mimeType": "..." }` |
+| `RATE_LIMITED` | 429 | Too many attempts from one IP: `POST /auth/login` and `POST /auth/register` each allow 10 per 15 minutes. `details: { "retryAfterSec": 412 }`, plus a `Retry-After` header. |
 
 Adding a new code is a contract change.
 
@@ -178,8 +199,8 @@ Every `*Id` / `*By` field is an `ObjectId` reference.
 | --- | --- | --- |
 | `_id` | ObjectId | → `id` |
 | `email` | string R | unique, trimmed, lowercased |
-| `passwordHash` | string R S | bcrypt, cost 12, `select: false` |
-| `name` | string R | 1–100 chars |
+| `passwordHash` | string R S | bcrypt, cost 10, `select: false` |
+| `name` | string R | 2–80 chars |
 | `role` | enum R | `student` \| `teacher`; immutable after register |
 | `lastLoginAt` | Date \| null | |
 | `createdAt`, `updatedAt` | Date | |
@@ -431,11 +452,11 @@ Routes marked **(+)** were added beyond the minimum list to make the flows compl
 | POST | `/auth/login` | D | public | Exchange email+password for JWT → `200 { token, user }` |
 | GET | `/auth/me` | D | any | Validate token, return `{ user }` |
 | GET | `/users/me` | D | any | Current user's profile `{ user }` |
-| PATCH | `/users/me` | D | any | Update `name`, or password (`currentPassword` + `newPassword`) → `{ user }` |
+| PATCH | `/users/me` | D | any | Update `name` only → `{ user }` |
 | GET | `/health` | D | public | Liveness + DB state |
 | POST | `/lectures` | D | teacher | Multipart upload with consent; starts pipeline → `202 { lecture }` |
-| GET | `/lectures` | D | any | Paginated lecture list (teacher: own; student: `ready` only) |
-| GET | `/lectures/:id` | D | owner / student if `ready` | Lecture detail `{ lecture, mediaUrl }` |
+| GET | `/lectures` | D | any | Paginated lecture list (teacher: own; student: `ready` and `transcriptApproved` only) |
+| GET | `/lectures/:id` | D | owner / student if `ready` and `transcriptApproved` | Lecture detail `{ lecture, mediaUrl }` |
 | DELETE | `/lectures/:id` | D | owner | Delete lecture, all derived docs and files → `204` |
 | GET | `/lectures/:id/status` | D | owner | Processing status with per-stage timings |
 | POST | `/lectures/:id/reprocess` | D | owner | Re-run pipeline from a stage → `202 { lecture }` |
@@ -459,19 +480,24 @@ Routes marked **(+)** were added beyond the minimum list to make the flows compl
 | POST | `/quizzes` | C | any | Build a quiz from approved questions → `201 { quiz }` |
 | GET | `/quizzes` **(+)** | C | any | Paginated `QuizSummary` list of the caller's quizzes, with best score |
 | GET | `/quizzes/:id` | C | quiz creator / owner | Get quiz `{ quiz }` |
-| POST | `/quizzes/:id/attempts` | C | student | Submit answers, get scored attempt → `201 { attempt }` |
-| GET | `/attempts/:id` | C | attempt's student / owner | Get scored attempt `{ attempt }` |
-| GET | `/revision-plan` | C | student | Latest ranked revision plan `{ plan }` |
+| POST | `/quizzes/:id/attempts` | C | any | Submit answers, get scored attempt → `201 { attempt }` |
+| GET | `/attempts/:id` | C | the attempt's own user only | Get scored attempt `{ attempt }` |
+| GET | `/revision-plan` | C | any (own plan) | Latest ranked revision plan `{ plan }` |
 
 Single-resource responses are wrapped in a named key (`{ lecture }`, `{ topic }`, …);
 lists use `{ items, ... }` as in §1.4.
 
 ### 5.2 Auth & users (D)
 
-- `POST /auth/register` body `{ email, password, name, role }`; `password` 8–128 chars.
-  Duplicate email → `409 CONFLICT`.
-- `POST /auth/login` body `{ email, password }`. Wrong email *or* password → `401 UNAUTHENTICATED`
-  with the same message (do not reveal which).
+- `POST /auth/register` body `{ email, password, name, role }` → `201 { user, token }`.
+  `name` 2–80 chars (trimmed); `email` valid, trimmed and lowercased; `password` 8–128 chars with
+  at least one letter and one digit; `role` `student` | `teacher`. Duplicate email (any case) →
+  `409 CONFLICT`.
+- `POST /auth/login` body `{ email, password }` → `200 { user, token }`. Wrong email *or* password →
+  `401 UNAUTHENTICATED` with the same message, `"Invalid email or password"` (do not reveal which).
+- Both are rate-limited per IP (10 per 15 minutes each) → `429 RATE_LIMITED`.
+- `PATCH /users/me` body `{ name }` only; any other field → `422` with `{ "body": "Only \"name\" can be changed" }`.
+  Password change is not in v1.
 - `user` object: `{ id, email, name, role, lastLoginAt, createdAt, updatedAt }`.
 - `GET /health` → `200 { "status": "ok", "uptimeSec": 812.441, "db": "connected" | "not_connected", "version": "0.0.0", "timestamp": "<ISO>" }`.
   `version` is the server package version.

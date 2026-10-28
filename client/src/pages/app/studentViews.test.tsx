@@ -288,7 +288,7 @@ describe('student dashboard', () => {
     savePlayback(STUDENT, L7, 612.34, 1199.398);
     renderAs(STUDENT, '/app/dashboard');
     expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Rohan$/ })).toBeTruthy();
-    expect(await screen.findByText('3 lectures are ready for you.')).toBeTruthy();
+    expect(await screen.findByText('2 lectures are ready for you.')).toBeTruthy();
     const resume = await screen.findByRole('link', { name: 'Resume' });
     expect(resume.getAttribute('href')).toBe(`/app/lectures/${L7}?t=612.34`);
     expect(screen.getByText(/10:12 of 19:59/)).toBeTruthy();

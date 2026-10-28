@@ -11,7 +11,8 @@ export type ContractErrorCode =
   | 'INTERNAL_ERROR'
   | 'CONFLICT'
   | 'PAYLOAD_TOO_LARGE'
-  | 'UNSUPPORTED_MEDIA_TYPE';
+  | 'UNSUPPORTED_MEDIA_TYPE'
+  | 'RATE_LIMITED';
 
 /** Client-only code for requests that never got an HTTP response (offline, DNS, CORS, timeout). */
 export type ClientErrorCode = 'NETWORK_ERROR';

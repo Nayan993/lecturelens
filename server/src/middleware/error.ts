@@ -28,11 +28,9 @@ function toAppError(err: unknown): AppError {
 
   // TokenExpiredError and NotBeforeError both extend JsonWebTokenError.
   if (err instanceof jwt.JsonWebTokenError) {
-    return unauthenticated(
-      err instanceof jwt.TokenExpiredError
-        ? 'Your session has expired. Please sign in again.'
-        : 'Your session is invalid. Please sign in again.',
-    );
+    return err instanceof jwt.TokenExpiredError
+      ? unauthenticated('Your session has expired. Please sign in again.', { reason: 'expired' })
+      : unauthenticated('Your session is invalid. Please sign in again.');
   }
 
   switch (bodyParserType(err)) {

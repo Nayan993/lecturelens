@@ -44,7 +44,10 @@ const envSchema = z.object({
     (v) => v.length >= 32,
     'must be at least 32 characters long',
   ),
-  JWT_EXPIRES_IN: required('must be a token lifetime such as 7d or 12h'),
+  JWT_EXPIRES_IN: required('must be a token lifetime such as 7d or 12h').regex(
+    /^\d+\s*(ms|s|m|h|d|w|y)?$/,
+    'must be a number of seconds or a duration such as 15m, 12h or 7d',
+  ),
   STORAGE_DIR: required('must be the directory where uploaded media is stored, e.g. ./storage'),
   MAX_UPLOAD_MB: positiveInt('must be a positive integer number of megabytes, e.g. 512'),
 

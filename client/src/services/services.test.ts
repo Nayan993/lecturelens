@@ -110,16 +110,17 @@ describe('mock adapters follow the contract', () => {
 
   it('wrong password → 401; duplicate email → 409', async () => {
     await expect(mockServices.auth.login(TEACHER, 'nope')).rejects.toMatchObject({ status: 401 });
-    await expect(mockServices.auth.register({ email: TEACHER, password: 'password1', name: 'X', role: 'teacher' })).rejects.toMatchObject({
+    await expect(mockServices.auth.register({ email: TEACHER, password: 'password1', name: 'Xi Chen', role: 'teacher' })).rejects.toMatchObject({
       status: 409,
       code: 'CONFLICT',
     });
   });
 
-  it('students only receive approved topics, summaries and ready lectures', async () => {
+  it('students only receive approved topics, summaries and ready, transcript-approved lectures', async () => {
     await signIn(STUDENT);
     const lectures = await mockServices.lectures.list();
-    expect(lectures.items.every((l) => l.status === 'ready')).toBe(true);
+    expect(lectures.items.length).toBe(2);
+    expect(lectures.items.every((l) => l.status === 'ready' && l.transcriptApproved)).toBe(true);
     expect((await mockServices.topics.list(L7)).items.map((t) => t.status)).toEqual(['approved', 'approved', 'approved', 'approved']);
     expect((await mockServices.summaries.list(L7)).items.every((s) => s.status === 'approved')).toBe(true);
     await expect(mockServices.lectures.getStatus(L7)).rejects.toMatchObject({ status: 403 });
