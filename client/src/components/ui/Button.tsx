@@ -28,7 +28,12 @@ export const buttonSizeClasses: Record<ButtonSize, string> = {
 
 const LINK_SIZE_CLASSES: Record<ButtonSize, string> = { sm: 'text-sm', md: 'text-sm', lg: 'text-base' };
 
-const iconSlot = 'inline-flex shrink-0 [&>svg]:h-4 [&>svg]:w-4';
+/** Button styling for non-button elements, e.g. a router <Link> that should look like a Button. */
+export function buttonClasses({ variant = 'primary', size = 'md' }: { variant?: ButtonVariant; size?: ButtonSize } = {}) {
+  return cn(buttonBase, buttonVariantClasses[variant], variant === 'link' ? LINK_SIZE_CLASSES[size] : buttonSizeClasses[size]);
+}
+
+const iconSlot ='inline-flex shrink-0 [&>svg]:h-4 [&>svg]:w-4';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;

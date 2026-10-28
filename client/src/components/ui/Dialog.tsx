@@ -1,22 +1,10 @@
-import { forwardRef, useEffect, useId, useRef, type MouseEvent, type ReactNode } from 'react';
+import { forwardRef, useId, useRef, type MouseEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { mergeRefs } from '../../lib/mergeRefs';
 import { IconButton } from './IconButton';
-
-const FOCUSABLE = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled]):not([type="hidden"])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-  '[contenteditable="true"]',
-].join(',');
-
-const focusablesIn = (root: HTMLElement): HTMLElement[] =>
-  Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => !el.hasAttribute('hidden'));
+import { focusablesIn, useModalBehavior } from './useModalBehavior';
 
 export type DialogSize = 'sm' | 'md' | 'lg';
 
@@ -44,68 +32,13 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
     const panelRef = useRef<HTMLDivElement>(null);
     const bodyRef = useRef<HTMLDivElement>(null);
     const pointerDownOnBackdrop = useRef(false);
-    const onOpenChangeRef = useRef(onOpenChange);
-    onOpenChangeRef.current = onOpenChange;
     const titleId = useId();
     const descriptionId = useId();
 
-    useEffect(() => {
-      if (!open) return;
-      const panel = panelRef.current;
-      if (!panel) return;
-      const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-      // Scroll lock, compensating for the scrollbar so the page does not shift.
-      const { overflow, paddingRight } = document.body.style;
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = 'hidden';
-      if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
-
-      // Initial focus: first focusable in the body, else first anywhere (close button), else the panel.
-      const initial = (bodyRef.current && focusablesIn(bodyRef.current)[0]) ?? focusablesIn(panel)[0] ?? panel;
-      initial.focus();
-
-      const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          event.stopPropagation();
-          onOpenChangeRef.current(false);
-          return;
-        }
-        if (event.key !== 'Tab') return;
-        const items = focusablesIn(panel);
-        if (items.length === 0) {
-          event.preventDefault();
-          panel.focus();
-          return;
-        }
-        const first = items[0];
-        const last = items[items.length - 1];
-        const active = document.activeElement;
-        if (event.shiftKey && (active === first || !panel.contains(active))) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
-          event.preventDefault();
-          first.focus();
-        }
-      };
-      // Pull focus back if it escapes (e.g. a click on the backdrop area of another layer).
-      const onFocusIn = (event: FocusEvent) => {
-        if (event.target instanceof Node && !panel.contains(event.target)) {
-          (focusablesIn(panel)[0] ?? panel).focus();
-        }
-      };
-
-      document.addEventListener('keydown', onKeyDown);
-      document.addEventListener('focusin', onFocusIn);
-      return () => {
-        document.removeEventListener('keydown', onKeyDown);
-        document.removeEventListener('focusin', onFocusIn);
-        document.body.style.overflow = overflow;
-        document.body.style.paddingRight = paddingRight;
-        if (trigger && document.contains(trigger)) trigger.focus();
-      };
-    }, [open]);
+    // Initial focus: first focusable in the body, else the first anywhere (close button), else the panel.
+    useModalBehavior(open, panelRef, () => onOpenChange(false), () =>
+      bodyRef.current ? focusablesIn(bodyRef.current)[0] : undefined,
+    );
 
     if (!open) return null;
 
