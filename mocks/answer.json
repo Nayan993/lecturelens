@@ -1,0 +1,53 @@
+{
+  "answered": {
+    "question": "Why does a learning rate that is too large make the loss blow up?",
+    "lectureId": "6650c3a0c3b2e41d8a100001",
+    "answerable": true,
+    "abstained": false,
+    "abstainReason": null,
+    "answer": "On L(w) = w² each gradient descent step multiplies w by (1 − 2η). With η = 0.1 that factor is 0.8, so w shrinks smoothly toward the minimum [1]. With η = 1.1 the factor is −1.2: every step overshoots the minimum by more than the last, the magnitude grows each iteration and the loss diverges to infinity, which in practice shows up as NaN within the first few iterations [2].",
+    "citations": [
+      {
+        "chunkId": "6650c3a0c3b2e41d8a300003",
+        "startSec": 299.059,
+        "endSec": 329.254,
+        "quote": "With eta equal to point one, each step multiplies w by point eight, so we shrink smoothly toward zero.",
+        "lectureId": "6650c3a0c3b2e41d8a100001",
+        "deepLink": "/lectures/6650c3a0c3b2e41d8a100001/play?t=299.059",
+        "marker": 1
+      },
+      {
+        "chunkId": "6650c3a0c3b2e41d8a300004",
+        "startSec": 357.43,
+        "endSec": 385.149,
+        "quote": "The magnitude grows every step. We overshoot further and further and the loss blows up to infinity.",
+        "lectureId": "6650c3a0c3b2e41d8a100001",
+        "deepLink": "/lectures/6650c3a0c3b2e41d8a100001/play?t=357.43",
+        "marker": 2
+      }
+    ],
+    "confidence": 0.86,
+    "retriever": "hybrid",
+    "topScore": 0.0325,
+    "model": "llama-3.3-70b-versatile",
+    "promptVersion": "answer-v1",
+    "cached": false,
+    "latencyMs": 1874
+  },
+  "abstained": {
+    "question": "What values did the lecturer recommend for Adam's beta1 and beta2?",
+    "lectureId": "6650c3a0c3b2e41d8a100001",
+    "answerable": false,
+    "abstained": true,
+    "abstainReason": "NO_RELEVANT_PASSAGE",
+    "answer": null,
+    "citations": [],
+    "confidence": null,
+    "retriever": "hybrid",
+    "topScore": 0.0091,
+    "model": "llama-3.3-70b-versatile",
+    "promptVersion": "answer-v1",
+    "cached": false,
+    "latencyMs": 412
+  }
+}

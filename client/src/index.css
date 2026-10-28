@@ -1,3 +1,47 @@
+/* @import must precede all other statements, so tokens come first. */
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-ink-1 antialiased;
+  }
+
+  /* The hidden attribute must win over display utilities like `flex` (tab panels, tooltips). */
+  [hidden] {
+    display: none !important;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Serif reading text: transcript segments, summary prose, answer bodies — nothing else. */
+  .prose-lecture {
+    @apply font-serif text-reading text-ink-1;
+    max-width: 68ch;
+  }
+
+  /* Standalone text links (not inside running text) get a 44px touch target on small screens. */
+  .tap-target {
+    @apply max-sm:inline-flex max-sm:min-h-11 max-sm:min-w-11 max-sm:items-center;
+  }
+}

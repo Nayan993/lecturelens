@@ -29,3 +29,6 @@ coverage/
 
 # claude code local overrides
 .claude/settings.local.json
+
+# local demo media for VITE_MOCK_MEDIA_URL
+client/public/dev-media/

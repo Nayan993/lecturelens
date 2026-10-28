@@ -1,0 +1,180 @@
+{
+  "lectureId": "6650c3a0c3b2e41d8a100001",
+  "items": [
+    {
+      "id": "6650c3a0c3b2e41d8a500000",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400000",
+      "title": "Recap: training as minimising a loss over parameters",
+      "text": "Training is reframed as minimising the loss L(θ) as a function of the parameters θ, with the data held fixed. Linear regression admits a closed-form solution via the normal equations, but its O(d³) cost and the absence of any closed form for neural networks motivate an iterative method that walks downhill on the loss landscape.",
+      "keyPoints": [
+        "The loss is treated as a function of the parameters, not the data.",
+        "Closed-form least squares needs a d×d matrix inverse (about d³ work) and does not exist for neural networks.",
+        "Linear-regression loss is a convex bowl; neural-network losses have local minima, plateaus and saddle points."
+      ],
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300000",
+          "startSec": 66.201,
+          "endSec": 95.359,
+          "quote": "Think of it as a function of theta."
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300001",
+          "startSec": 97.723,
+          "endSec": 126.77,
+          "quote": "for a neural network there is no closed form at all"
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:10:40.200Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "summary-v1",
+      "createdAt": "2026-10-20T09:29:51.604Z",
+      "updatedAt": "2026-10-21T09:10:40.200Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a500001",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400001",
+      "title": "Gradient descent and the learning rate",
+      "text": "Gradient descent repeatedly steps against the gradient: θ ← θ − η∇L(θ). The learning rate η is a hand-chosen hyperparameter. On L(w) = w² starting from w = 1, η = 0.1 converges smoothly, η = 0.9 oscillates but converges, and η = 1.1 diverges; a very small η converges slowly and can stall on plateaus.",
+      "keyPoints": [
+        "Update rule: θ_new = θ_old − η ∇L(θ_old).",
+        "Too large a learning rate overshoots and diverges (loss becomes NaN); too small is slow.",
+        "Choose η by sweeping a log scale and keeping the largest value that still decreases the loss steadily."
+      ],
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300003",
+          "startSec": 249.396,
+          "endSec": 274.907,
+          "quote": "theta new equals theta old minus eta times the gradient of L evaluated at theta old"
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300004",
+          "startSec": 357.43,
+          "endSec": 385.149,
+          "quote": "the loss blows up to infinity"
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:11:41.201Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "summary-v1",
+      "createdAt": "2026-10-20T09:29:51.604Z",
+      "updatedAt": "2026-10-21T09:11:41.201Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a500002",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400002",
+      "title": "Stochastic and mini-batch gradient descent",
+      "text": "Stochastic gradient descent replaces the full-batch gradient with the gradient of a random example, which is noisy but unbiased. Mini-batches of 32–512 examples reduce variance and parallelise well on GPUs. An epoch is one pass over the data; shuffling every epoch avoids biased batches, and decaying the learning rate lets SGD settle near a minimum.",
+      "keyPoints": [
+        "The single-example gradient is an unbiased estimate of the full-batch gradient.",
+        "Iteration = one mini-batch update; epoch = one full pass (50,000 examples / batch 100 = 500 iterations).",
+        "SGD noise helps escape saddle points; a decaying learning rate lets the iterates settle."
+      ],
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300006",
+          "startSec": 517.092,
+          "endSec": 540.686,
+          "quote": "That estimate is noisy, but it's unbiased."
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300007",
+          "startSec": 568.51,
+          "endSec": 593.967,
+          "quote": "One epoch is one full pass over the training set."
+        }
+      ],
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:12:42.202Z",
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "summary-v1",
+      "createdAt": "2026-10-20T09:29:51.604Z",
+      "updatedAt": "2026-10-21T09:12:42.202Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a500003",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400003",
+      "title": "Chain rule and computational graphs",
+      "text": "Backpropagation is an efficient application of the chain rule over a computational graph, not a new learning algorithm. The forward pass stores intermediate values; the backward pass multiplies each node's upstream gradient by its local derivative. Add gates distribute, multiply gates swap, max gates route, and gradients from multiple branches are summed.",
+      "keyPoints": [
+        "Worked example f = (x + y)·z at x = −2, y = 5, z = −4 gives ∂f/∂x = ∂f/∂y = −4 and ∂f/∂z = 3.",
+        "Each node needs only its upstream gradient and its local derivative.",
+        "The backward pass costs about the same as one or two forward passes."
+      ],
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a300008",
+          "startSec": 699.039,
+          "endSec": 719.664,
+          "quote": "It is just an efficient way of computing gradients"
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000b",
+          "startSec": 888.848,
+          "endSec": 915.081,
+          "quote": "An add gate distributes the upstream gradient unchanged to all its inputs."
+        }
+      ],
+      "status": "pending_review",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "summary-v1",
+      "createdAt": "2026-10-20T09:29:51.604Z",
+      "updatedAt": "2026-10-20T09:29:51.604Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a500004",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "topicId": "6650c3a0c3b2e41d8a400004",
+      "title": "Backpropagation through a two-layer network",
+      "text": "For a two-layer sigmoid network with squared error, the output error δ₂ = ŷ − y gives ∂L/∂W₂ = δ₂hᵀ; propagating back through the sigmoid gives δ₁ = (W₂ᵀδ₂) ⊙ h(1 − h) and ∂L/∂W₁ = δ₁xᵀ. Because the sigmoid derivative is at most 0.25, deep sigmoid stacks suffer vanishing gradients. Gradient checking with centred differences validates an implementation.",
+      "keyPoints": [
+        "Every weight gradient is the layer's error times the layer's input (transposed).",
+        "Sigmoid derivative h(1 − h) ≤ 0.25, so gradients shrink through many layers; ReLU avoids this.",
+        "Gradient check: relative error around 1e-7 indicates a correct implementation."
+      ],
+      "evidence": [
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000d",
+          "startSec": 1041.122,
+          "endSec": 1070.69,
+          "quote": "delta one equals W two transpose delta two, times h times one minus h"
+        },
+        {
+          "chunkId": "6650c3a0c3b2e41d8a30000d",
+          "startSec": 1083.141,
+          "endSec": 1111.59,
+          "quote": "h times one minus h is at most one quarter"
+        }
+      ],
+      "status": "pending_review",
+      "rejectionReason": null,
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "model": "llama-3.3-70b-versatile",
+      "promptVersion": "summary-v1",
+      "createdAt": "2026-10-20T09:29:51.604Z",
+      "updatedAt": "2026-10-20T09:29:51.604Z"
+    }
+  ]
+}

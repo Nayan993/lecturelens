@@ -1,0 +1,120 @@
+{
+  "lectureId": "6650c3a0c3b2e41d8a100001",
+  "items": [
+    {
+      "id": "6650c3a0c3b2e41d8a400000",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "index": 0,
+      "startSec": 0,
+      "endSec": 221.199,
+      "segmentStart": 0,
+      "segmentEnd": 7,
+      "label": "Recap: training as minimising a loss over parameters",
+      "keywords": [
+        "loss function",
+        "mean squared error",
+        "parameters",
+        "normal equations",
+        "loss landscape"
+      ],
+      "method": "embedding_similarity",
+      "boundaryScore": null,
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:02:10.500Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a400001",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "index": 1,
+      "startSec": 221.199,
+      "endSec": 492.332,
+      "segmentStart": 8,
+      "segmentEnd": 17,
+      "label": "Gradient descent and the learning rate",
+      "keywords": [
+        "gradient",
+        "update rule",
+        "learning rate",
+        "oscillation",
+        "divergence"
+      ],
+      "method": "embedding_similarity",
+      "boundaryScore": 0.412,
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:03:11.510Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a400002",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "index": 2,
+      "startSec": 492.332,
+      "endSec": 699.039,
+      "segmentStart": 18,
+      "segmentEnd": 25,
+      "label": "Stochastic and mini-batch gradient descent",
+      "keywords": [
+        "SGD",
+        "mini-batch",
+        "epoch",
+        "unbiased estimate",
+        "learning rate decay"
+      ],
+      "method": "embedding_similarity",
+      "boundaryScore": 0.367,
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:04:12.520Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a400003",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "index": 3,
+      "startSec": 699.039,
+      "endSec": 965.174,
+      "segmentStart": 26,
+      "segmentEnd": 35,
+      "label": "Chain rule and computational graphs",
+      "keywords": [
+        "chain rule",
+        "computational graph",
+        "upstream gradient",
+        "local gradient",
+        "gate patterns"
+      ],
+      "method": "embedding_similarity",
+      "boundaryScore": 0.538,
+      "status": "approved",
+      "rejectionReason": null,
+      "reviewedBy": "6650c3a0c3b2e41d8a000001",
+      "reviewedAt": "2026-10-21T09:05:13.530Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a400004",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "index": 4,
+      "startSec": 965.174,
+      "endSec": 1199.398,
+      "segmentStart": 36,
+      "segmentEnd": 44,
+      "label": "Backpropagation through a two-layer network",
+      "keywords": [
+        "backpropagation",
+        "sigmoid",
+        "vanishing gradients",
+        "delta",
+        "gradient checking"
+      ],
+      "method": "embedding_similarity",
+      "boundaryScore": 0.291,
+      "status": "pending_review",
+      "rejectionReason": null,
+      "reviewedBy": null,
+      "reviewedAt": null
+    }
+  ]
+}

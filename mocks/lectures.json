@@ -1,0 +1,186 @@
+{
+  "items": [
+    {
+      "id": "6650c3a0c3b2e41d8a100005",
+      "title": "Lecture 10 — Convolutional Neural Networks",
+      "courseCode": "CS 3410",
+      "description": "Convolution, padding and stride, pooling, and parameter sharing.",
+      "recordedOn": "2026-10-27",
+      "status": "uploaded",
+      "statusDetail": "Upload received; waiting to start audio extraction.",
+      "error": null,
+      "durationSec": null,
+      "transcriptApproved": false,
+      "topicCount": null,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-27T10:21:07.226Z"
+      },
+      "media": {
+        "originalFilename": "cs3410-lec10-cnns.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 912384512
+      },
+      "createdAt": "2026-10-27T10:21:07.226Z",
+      "updatedAt": "2026-10-27T10:21:07.226Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a100004",
+      "title": "Lecture 9 — Regularisation: Weight Decay and Dropout",
+      "courseCode": "CS 3410",
+      "description": "Overfitting, L2 weight decay, early stopping and dropout.",
+      "recordedOn": "2026-10-27",
+      "status": "transcribing",
+      "statusDetail": "Transcribing 49.2 minutes of audio with AssemblyAI.",
+      "error": null,
+      "durationSec": 2954.88,
+      "transcriptApproved": false,
+      "topicCount": null,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-27T10:02:41.903Z"
+      },
+      "media": {
+        "originalFilename": "cs3410-lec09-regularisation.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 1048576000
+      },
+      "createdAt": "2026-10-27T10:02:41.903Z",
+      "updatedAt": "2026-10-27T10:03:12.517Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a100006",
+      "title": "Tutorial 4 — Worked Examples on Backpropagation",
+      "courseCode": "CS 3410",
+      "description": "Screen recording of the Tutorial 4 worked solutions.",
+      "recordedOn": "2026-10-25",
+      "status": "failed",
+      "statusDetail": "Failed while extracting audio: the uploaded file has no audio track. Re-export the recording with microphone audio enabled and upload it again.",
+      "error": {
+        "stage": "extracting",
+        "code": "NO_AUDIO_STREAM",
+        "message": "ffmpeg exited with code 1: Output file #0 does not contain any stream (input has 1 video stream, 0 audio streams).",
+        "at": "2026-10-25T16:48:19.731Z"
+      },
+      "durationSec": 1830.4,
+      "transcriptApproved": false,
+      "topicCount": null,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-25T16:48:12.004Z"
+      },
+      "media": {
+        "originalFilename": "tutorial4-screen-recording.mov",
+        "mimeType": "video/quicktime",
+        "sizeBytes": 402653184
+      },
+      "createdAt": "2026-10-25T16:48:12.004Z",
+      "updatedAt": "2026-10-25T16:48:19.731Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a100003",
+      "title": "Lecture 8 — Optimisers: Momentum, RMSProp and Adam",
+      "courseCode": "CS 3410",
+      "description": "Beyond plain SGD: momentum, adaptive learning rates and Adam.",
+      "recordedOn": "2026-10-22",
+      "status": "ready",
+      "statusDetail": "Ready.",
+      "error": null,
+      "durationSec": 2871.104,
+      "transcriptApproved": false,
+      "topicCount": 7,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-22T09:11:36.840Z"
+      },
+      "media": {
+        "originalFilename": "cs3410-lec08-optimisers.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 987234304
+      },
+      "createdAt": "2026-10-22T09:11:36.840Z",
+      "updatedAt": "2026-10-22T09:38:02.115Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a100001",
+      "title": "Lecture 7 — Gradient Descent and Backpropagation",
+      "courseCode": "CS 3410",
+      "description": "Gradient descent, learning rates, SGD and mini-batches, the chain rule, and backpropagation through a two-layer network.",
+      "recordedOn": "2026-10-20",
+      "status": "ready",
+      "statusDetail": "Ready.",
+      "error": null,
+      "durationSec": 1199.398,
+      "transcriptApproved": true,
+      "topicCount": 5,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-20T09:14:22.418Z"
+      },
+      "media": {
+        "originalFilename": "cs3410-lec07-gd-backprop.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 412090368
+      },
+      "createdAt": "2026-10-20T09:14:22.418Z",
+      "updatedAt": "2026-10-21T09:25:40.006Z"
+    },
+    {
+      "id": "6650c3a0c3b2e41d8a100002",
+      "title": "Lecture 6 — Linear Regression and Loss Functions",
+      "courseCode": "CS 3410",
+      "description": "Least squares, mean squared error, the normal equations and probabilistic interpretation.",
+      "recordedOn": "2026-10-13",
+      "status": "ready",
+      "statusDetail": "Ready.",
+      "error": null,
+      "durationSec": 3012.736,
+      "transcriptApproved": true,
+      "topicCount": 6,
+      "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
+      "consent": {
+        "lecturerConsent": true,
+        "purposeShown": true,
+        "processorNamed": true,
+        "grantedBy": "6650c3a0c3b2e41d8a000001",
+        "grantedAt": "2026-10-13T09:09:58.271Z"
+      },
+      "media": {
+        "originalFilename": "cs3410-lec06-linreg.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 1031798784
+      },
+      "createdAt": "2026-10-13T09:09:58.271Z",
+      "updatedAt": "2026-10-14T11:02:45.660Z"
+    }
+  ],
+  "page": 1,
+  "limit": 20,
+  "total": 6
+}
