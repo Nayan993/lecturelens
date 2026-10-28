@@ -210,6 +210,7 @@ Indexes: `{ email: 1 }` unique.
 | `mediaPath` | string R S | path of original upload, relative to `STORAGE_DIR` |
 | `audioPath` | string \| null S | extracted mono audio, relative to `STORAGE_DIR` |
 | `media` | object R | `{ originalFilename, mimeType, sizeBytes }` |
+| `provider` | object R S | `{ asr, asrModel, externalId }` — ASR provider name, model and job id for the transcript; each `null` until `transcribing` starts |
 | `transcriptApproved` | boolean R | default `false`; set by `POST /lectures/:id/transcript/approve`; reset to `false` by reprocess from `extracting`/`transcribing` |
 | `transcriptApprovedBy` | ObjectId \| null | |
 | `transcriptApprovedAt` | Date \| null | |
@@ -251,7 +252,7 @@ Retrieval unit: consecutive whole segments (never split a segment), no overlap,
 | `startSec`, `endSec` | float R | `= segments[segmentStart].startSec`, `= segments[segmentEnd].endSec` |
 | `text` | string R | segment texts joined by a single space |
 | `segmentStart`, `segmentEnd` | int R | inclusive segment indexes |
-| `embedding` | float[384] R S | `EMBEDDING_MODEL` output, **L2-normalised on write** (‖v‖ = 1 ± 1e-6); `select: false` |
+| `embedding` | float[384] R S | `EMBEDDING_MODEL` output, **L2-normalised on write** (‖v‖ = 1 ± 1e-6); `select: false`. `[]` until the `indexing` stage writes it (the seed inserts `[]`); any other length than 0 or 384 is rejected |
 | `embeddingModel` | string R | e.g. `"Xenova/all-MiniLM-L6-v2"` |
 
 Indexes:
@@ -408,7 +409,8 @@ Indexes: `{ key: 1 }` unique; `{ expiresAt: 1 }` with `expireAfterSeconds: 0` (T
 `status` **defaults to `pending_review`** on `summaries`, `questions` and `topicsections`.
 
 **Every student-facing query on those three collections MUST filter `status: "approved"` at
-the Mongoose level** — via the shared query helper (`Model.find(...).approvedOnly()`) applied
+the Mongoose level** — via the shared query helper (`Model.find(...).approvedOnly()`, or the
+static `Model.approvedFor(lectureId)`; `APPROVED` is the matching filter for `populate({ match })`) applied
 in the service layer whenever `req.user.role === "student"`, including `populate()` calls,
 quiz assembly, search and ask. **Filtering in the UI is not a substitute** — unapproved
 content must never leave the server for a student.
@@ -1019,14 +1021,16 @@ keys from quiz questions, §5.7).
 
 ## 9. Demo accounts
 
-Seeded accounts for development and the project demo. The client's mock auth adapter serves
-exactly these, and the server's seed script (owner D) must create exactly these, with the fixture
-ids from §8 so seeded data lines up with `mocks/`.
+Seeded accounts for development and the project demo, all with the fixture ids from §8 so seeded
+data lines up with `mocks/`. The server's seed script (`npm run seed --workspace server`, owner D)
+creates all three. The client's mock auth adapter and the login page's demo block serve the first
+two; the second student exists only in a seeded database (it owns the second seeded quiz attempt).
 
 | Role | id | Name | Email | Password |
 | --- | --- | --- | --- | --- |
 | teacher | `6650c3a0c3b2e41d8a000001` | Dr. Ananya Rao | `teacher@lecturelens.dev` | `lecturelens` |
 | student | `6650c3a0c3b2e41d8a000002` | Rohan Mehta | `student@lecturelens.dev` | `lecturelens` |
+| student | `6650c3a0c3b2e41d8a000003` | Meera Iyer | `student2@lecturelens.dev` | `lecturelens` |
 
 - These are **demo credentials, not secrets**. They must never exist in a production database:
   the seed script refuses to run when `NODE_ENV=production`.
