@@ -56,6 +56,12 @@ function advance(lecture: Lecture): void {
   lecture.updatedAt = nowIso();
 }
 
+/** Share of the six stages done, as the server computes it (CONTRACTS §6.2). */
+function progressPctFor(lecture: Lecture): number {
+  const done = stagesFor(lecture).filter((s) => s.state === 'done').length;
+  return Math.round((done / STAGE_NAMES.length) * 100);
+}
+
 function stagesFor(lecture: Lecture): ProcessingStage[] {
   const run = db.runtime.get(lecture.id);
   const current = STAGE_NAMES.indexOf(lecture.status as StageName);
@@ -124,6 +130,7 @@ export const mockLectureService: LectureService = {
       statusDetail: lecture.statusDetail,
       error: clone(lecture.error),
       durationSec: lecture.durationSec,
+      progressPct: progressPctFor(lecture),
       stages: stagesFor(lecture),
       updatedAt: lecture.updatedAt,
     };

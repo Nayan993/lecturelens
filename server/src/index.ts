@@ -1,12 +1,15 @@
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { connectDb, disconnectDb } from './db/connect.js';
+import { failInterruptedLectures } from './services/processing/pipeline.js';
 import { logger } from './utils/logger.js';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 async function main(): Promise<void> {
   await connectDb();
+  // No job queue to resume from (CONTRACTS.md §2): lectures left mid-pipeline are failed.
+  await failInterruptedLectures();
 
   const server = app.listen(env.PORT, () => {
     logger.info('LectureLens API listening', {

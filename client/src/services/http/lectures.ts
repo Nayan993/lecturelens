@@ -1,4 +1,4 @@
-import { apiClient } from '../../lib/apiClient';
+import { apiClient, resolveApiUrl } from '../../lib/apiClient';
 import type { Lecture, Paginated, ProcessingStatus } from '../../types';
 import type { LectureService } from '../types';
 
@@ -8,7 +8,7 @@ export const httpLectureService: LectureService = {
   },
   async get(id) {
     const { lecture, mediaUrl } = (await apiClient.get<{ lecture: Lecture; mediaUrl: string }>(`/lectures/${id}`)).data;
-    return { ...lecture, mediaUrl };
+    return { ...lecture, mediaUrl: resolveApiUrl(mediaUrl) };
   },
   async getStatus(id) {
     return (await apiClient.get<ProcessingStatus>(`/lectures/${id}/status`)).data;

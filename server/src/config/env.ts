@@ -9,8 +9,13 @@ import { z } from 'zod';
  * print a variable's value (only its name) when validation fails.
  */
 
+const here = path.dirname(fileURLToPath(import.meta.url));
+
 // server/.env, resolved from this file so it works from src/ (tsx) and dist/ (node).
-dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.env') });
+dotenv.config({ path: path.resolve(here, '../../.env') });
+
+/** The repository root (same relative path from src/config and dist/config). */
+const REPO_ROOT = path.resolve(here, '../../..');
 
 /** Empty strings count as "not set" for optional variables. */
 const optional = <T extends z.ZodTypeAny>(schema: T) =>
@@ -90,4 +95,7 @@ if (!parsed.success) {
 
 export const env: Env = Object.freeze(parsed.data);
 export const isDev = env.NODE_ENV === 'development';
+
+/** Absolute STORAGE_DIR. A relative value is resolved from the repository root, not the cwd. */
+export const storageRoot = path.resolve(REPO_ROOT, env.STORAGE_DIR);
 export const isProd = env.NODE_ENV === 'production';

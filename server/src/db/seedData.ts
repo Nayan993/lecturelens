@@ -17,9 +17,9 @@ import {
   type OptionId,
   type ProcessingStage,
   type StageName,
-  type StageState,
 } from '../models/index.js';
 import { BCRYPT_COST, hashPassword } from '../modules/auth/password.js';
+import { stageStatesFor } from '../modules/lectures/stages.js';
 
 /**
  * Builds (but does not write) every seed document from the shared fixtures in /mocks, so
@@ -86,17 +86,12 @@ const FAILED_MS = 7727;
 
 /** Stage history consistent with the lecture's status, laid out from its createdAt. */
 function stagesFor(lecture: LectureFixture): ProcessingStage[] {
-  const running = STAGE_NAMES.indexOf(lecture.status as StageName); // -1 unless mid-pipeline
-  const failedAt = lecture.status === 'failed' && lecture.error ? STAGE_NAMES.indexOf(lecture.error.stage) : -1;
+  const states = stageStatesFor(lecture.status, lecture.error?.stage ?? null);
   let cursor = Date.parse(lecture.createdAt);
 
   return STAGE_NAMES.map((name, i): ProcessingStage => {
-    let state: StageState;
-    let ms: number | null;
-    if (lecture.status === 'ready' || i < running || i < failedAt) [state, ms] = ['done', DONE_MS[name]];
-    else if (i === failedAt) [state, ms] = ['failed', FAILED_MS];
-    else if (i === running) [state, ms] = ['running', RUNNING_MS];
-    else [state, ms] = [failedAt >= 0 ? 'skipped' : 'pending', null];
+    const state = states[i]!;
+    const ms = { done: DONE_MS[name], failed: FAILED_MS, running: RUNNING_MS, pending: null, skipped: null }[state];
 
     if (ms === null) return { name, state, ms, startedAt: null, finishedAt: null };
     const startedAt = new Date(cursor);

@@ -67,6 +67,7 @@ export const LECTURE_ERROR_CODES = [
   'PROVIDER_UNAVAILABLE',
   'PIPELINE_INTERRUPTED',
   'INTERNAL_ERROR',
+  'NOT_IMPLEMENTED',
 ] as const;
 export type LectureErrorCode = (typeof LECTURE_ERROR_CODES)[number];
 

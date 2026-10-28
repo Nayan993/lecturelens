@@ -17,7 +17,8 @@ export type LectureErrorCode =
   | 'TRANSCRIPTION_FAILED'
   | 'PROVIDER_UNAVAILABLE'
   | 'PIPELINE_INTERRUPTED'
-  | 'INTERNAL_ERROR';
+  | 'INTERNAL_ERROR'
+  | 'NOT_IMPLEMENTED';
 
 /** Set only when status is "failed". */
 export interface LectureError {
@@ -92,6 +93,8 @@ export interface ProcessingStatus {
   statusDetail: string;
   error: LectureError | null;
   durationSec: number | null;
+  /** Share of the six stages done, 0–100 (100 only when ready). */
+  progressPct: number;
   stages: ProcessingStage[];
   updatedAt: IsoDateTime;
 }

@@ -1,7 +1,5 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { app } from '../../app.js';
@@ -12,20 +10,11 @@ import { requestId } from '../../middleware/requestId.js';
 import { resetRateLimits } from '../../middleware/rateLimit.js';
 import { requireOwnerOrRole, requireRole } from '../../middleware/rbac.js';
 import { User } from '../../models/index.js';
+import { startTestDb, stopTestDb } from '../../test/db.js';
 import { INVALID_CREDENTIALS } from './auth.service.js';
 
-let mongod: MongoMemoryServer;
-
-beforeAll(async () => {
-  mongod = await MongoMemoryServer.create();
-  await mongoose.connect(mongod.getUri(), { dbName: 'lecturelens-test' });
-  await User.init(); // build the unique email index before the duplicate test
-});
-
-afterAll(async () => {
-  await mongoose.disconnect();
-  await mongod.stop();
-});
+beforeAll(startTestDb);
+afterAll(stopTestDb);
 
 beforeEach(async () => {
   await User.deleteMany({});

@@ -9,6 +9,11 @@ export const UNAUTHORISED_EVENT = 'll:unauthorised';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1';
 
+/** A server-relative URL from the API (e.g. a signed `mediaUrl`) made absolute against the API origin. */
+export function resolveApiUrl(url: string): string {
+  return new URL(url, new URL(API_BASE_URL, window.location.href)).toString();
+}
+
 /** Every failed API call (HTTP adapters and mock adapters alike) rejects with one of these. */
 export class ApiRequestError extends Error implements ApiError {
   readonly code: ApiErrorCode;

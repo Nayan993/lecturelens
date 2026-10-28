@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRouter, usersRouter } from '../modules/auth/auth.routes.js';
+import { lecturesRouter } from '../modules/lectures/lectures.routes.js';
 import { healthRouter } from './health.js';
 
 /**
@@ -18,7 +19,7 @@ import { healthRouter } from './health.js';
  *  /health                  routes/health.ts        (live)      D
  *  /auth                    modules/auth/auth.routes.ts (live)  D   register, login, me
  *  /users                   modules/auth/auth.routes.ts (live)  D   GET/PATCH /users/me
- *  /lectures                routes/lectures.routes.ts           D   upload, list, detail, delete,
+ *  /lectures                modules/lectures/ (live)            D   upload, list, detail, delete,
  *                                                                   status, reprocess, media
  *  /lectures/:id/transcript routes/transcript.routes.ts         A   transcript, approve
  *  /lectures/:id/segments   routes/transcript.routes.ts         A   PATCH /:index correction
@@ -47,3 +48,4 @@ export const apiRouter = Router();
 apiRouter.use('/health', healthRouter); // D
 apiRouter.use('/auth', authRouter); // D
 apiRouter.use('/users', usersRouter); // D
+apiRouter.use('/lectures', lecturesRouter); // D

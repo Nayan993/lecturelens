@@ -225,10 +225,10 @@ Indexes: `{ email: 1 }` unique.
 | `consent.grantedAt` | Date R | server time of upload |
 | `status` | enum R | default `uploaded` |
 | `statusDetail` | string R | one human sentence about the current status; no relative times ("3 min ago") |
-| `error` | object \| null | `null` unless `status === "failed"`: `{ stage, code, message, at }` — `stage` is a stage name, `code` one of `NO_AUDIO_STREAM`, `UNSUPPORTED_CODEC`, `TRANSCRIPTION_FAILED`, `PROVIDER_UNAVAILABLE`, `PIPELINE_INTERRUPTED`, `INTERNAL_ERROR` |
+| `error` | object \| null | `null` unless `status === "failed"`: `{ stage, code, message, at }` — `stage` is a stage name, `code` one of `NO_AUDIO_STREAM`, `UNSUPPORTED_CODEC`, `TRANSCRIPTION_FAILED`, `PROVIDER_UNAVAILABLE`, `PIPELINE_INTERRUPTED`, `INTERNAL_ERROR`, `NOT_IMPLEMENTED` (the placeholder pipeline, §7) |
 | `stages` | array S* | `[{ name, state, ms, startedAt, finishedAt }]`, one per stage name in order. *Exposed only via `GET /lectures/:id/status`. |
 | `durationSec` | float \| null | from ffprobe during `extracting`; `null` before that |
-| `mediaPath` | string R S | path of original upload, relative to `STORAGE_DIR` |
+| `mediaPath` | string R S | path of original upload, relative to `STORAGE_DIR`: `<lectureId>/<uuid><ext>` (the client's filename is never used as a path) |
 | `audioPath` | string \| null S | extracted mono audio, relative to `STORAGE_DIR` |
 | `media` | object R | `{ originalFilename, mimeType, sizeBytes }` |
 | `provider` | object R S | `{ asr, asrModel, externalId }` — ASR provider name, model and job id for the transcript; each `null` until `transcribing` starts |
@@ -510,7 +510,7 @@ lists use `{ items, ... }` as in §1.4.
 | --- | --- | --- |
 | `file` | file R | `.mp4` `.mkv` `.mov` `.webm` `.mp3` `.wav` `.m4a` — MIME `video/mp4`, `video/x-matroska`, `video/quicktime`, `video/webm`, `audio/mpeg`, `audio/wav` (also `audio/x-wav`, `audio/wave`), `audio/mp4` (also `audio/x-m4a`); ≤ `MAX_UPLOAD_MB`. Browsers often send an empty or generic type (notably for `.mkv`), so the server decides by extension plus content sniffing, not the declared type alone. |
 | `title` | text R | 1–200 chars |
-| `courseCode` | text | optional |
+| `courseCode` | text | optional, ≤ 100 chars |
 | `description` | text | optional, ≤ 2000 chars |
 | `recordedOn` | text | optional calendar date `YYYY-MM-DD` (a date, not a time — §1.2 does not apply); not in the future |
 | `notes` | text | optional lecture notes, ≤ 10000 chars; stored for later use (e.g. LLM context), not serialised in v1 |
@@ -518,7 +518,13 @@ lists use `{ items, ... }` as in §1.4.
 | `purposeShown` | text R | must be `"true"` |
 | `processorNamed` | text R | must be `"true"` |
 
-Any consent field not `"true"` → `422` with e.g. `{ "consent.lecturerConsent": "Lecturer consent is required" }`.
+Any consent field not `"true"` → `422` with e.g. `{ "consent.lecturerConsent": "Lecturer consent is required" }`,
+and the uploaded file is deleted — no media is kept or processed without consent. Other upload errors:
+missing `file` → `422 { "file": "Required" }`; an extension outside the list, a declared MIME type that
+is neither generic nor listed, or content whose magic bytes do not match the extension →
+`415 UNSUPPORTED_MEDIA_TYPE`; larger than `MAX_UPLOAD_MB` → `413 PAYLOAD_TOO_LARGE { "maxMb": 512 }`.
+The file is stored at `STORAGE_DIR/<lectureId>/<uuid><ext>` (a relative `STORAGE_DIR` is resolved from
+the repository root).
 `consent.grantedBy` = caller, `consent.grantedAt` = server time. Returns `202 { lecture }` with
 `status: "uploaded"`; the pipeline starts in-process immediately.
 
@@ -536,10 +542,23 @@ Sorted by `createdAt` desc.
 valid 6 hours. `GET /lectures/:id/media` checks `sig`/`exp` instead of the Bearer header
 (`401` if invalid/expired) and supports `Range` → `206`.
 
-`POST /lectures/:id/reprocess` body `{ "fromStage": "<stage name>" }` (default `"extracting"`).
-Only from `ready` or `failed`, otherwise `409 CONFLICT`. Deletes derived docs from that stage on.
+`GET /lectures/:id/status` → §6.2, plus `progressPct` (0–100: share of the six stages `done`).
+Stage states are derived from `status` in the §2 order, so they can never contradict it.
+
+`POST /lectures/:id/reprocess` body `{ "fromStage": "<stage name>" }` (or `?fromStage=`; default
+`"extracting"`) → `202 { lecture }`. Allowed from `ready`, or from `failed` at or before the failing
+stage; otherwise `409 CONFLICT { status }`. **Idempotent:** repeating the same request while that
+restart is still queued returns `202` with the lecture and starts nothing new. Deletes derived docs
+from that stage on (`transcribing`: segments and everything after; `chunking`: chunks, topics,
+summaries, questions; `segmenting`: topics, summaries, questions; `summarising`: summaries;
+`indexing`: clears chunk embeddings). Quizzes and attempts are kept as history.
 Reprocessing from `extracting` or `transcribing` resets `transcriptApproved` and **discards
 corrections**; from `chunking` onward keeps corrected segments.
+
+`DELETE /lectures/:id` → `204`. Deletes every document with this `lectureId` (segments, chunks,
+topics, summaries, questions, quizzes, attempts, revision plans), then the lecture, then
+`STORAGE_DIR/<lectureId>/`. If any derived collection fails, the lecture is kept so the delete can be
+retried, the failure is logged, and the response is `500`.
 
 ### 5.4 Transcript (A)
 
@@ -675,6 +694,7 @@ All examples are taken from or consistent with `mocks/` (lecture `6650c3a0c3b2e4
   "statusDetail": "Transcribing 49.2 minutes of audio with AssemblyAI.",
   "error": null,
   "durationSec": 2954.88,
+  "progressPct": 17,
   "stages": [
     { "name": "extracting",   "state": "done",    "ms": 30489 },
     { "name": "transcribing", "state": "running", "ms": 183406 },
@@ -1016,6 +1036,10 @@ This is the student's 3rd attempt; `mocks/revision.json` is generated from attem
 
   `details.owner` is the owner letter from §5.1; `details.prompt` names the playbook prompt
   that implements it.
+- The processing pipeline (`server/src/services/processing/pipeline.ts`, interface by D, implementation
+  by A) is a placeholder until Member A's PA.1/PA.2: it marks each new or reprocessed lecture
+  `failed` with `statusDetail` "Transcription pipeline not yet implemented (Member A, prompt PA.1)"
+  and `error.code: "NOT_IMPLEMENTED"`. Uploads therefore work end to end without faking success.
 - **Returning fabricated success data from a server route is forbidden** — no hard-coded
   lectures, no canned answers, no `200` with empty placeholder objects. The client handles
   `501` by showing a "coming soon" state. Fixtures in `mocks/` are for client development and
