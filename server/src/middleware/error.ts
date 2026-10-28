@@ -52,7 +52,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
 
   const appError = toAppError(err);
 
-  if (appError.status >= 500) {
+  if (appError.code === 'INTERNAL_ERROR') {
     // The stack only ever goes to the server log, never to the client.
     logger.error('Request failed', {
       method: req.method,
@@ -60,6 +60,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
       status: appError.status,
       code: appError.code,
       error: err,
+    });
+  } else if (appError.status >= 500) {
+    // Expected server-side states (501 placeholder, 503 provider down): no stack needed.
+    logger.warn('Request not served', {
+      method: req.method,
+      path: req.originalUrl,
+      status: appError.status,
+      code: appError.code,
+      details: appError.details,
     });
   } else {
     logger.debug('Request rejected', {

@@ -168,7 +168,7 @@ uploaded → extracting → transcribing → chunking → segmenting → summari
 | `FORBIDDEN` | 403 | Authenticated but the role may not do this. | `{}` or `{ "reason": "..." }` |
 | `NOT_FOUND` | 404 | Unknown route, unknown/invalid id, or another teacher's lecture. | `{}` |
 | `VALIDATION_FAILED` | 422 | Any invalid input: body, query, params, multipart fields, malformed JSON. | **field → message map**, dotted paths for nested fields, e.g. `{ "options.2.text": "Required" }` |
-| `NOT_IMPLEMENTED` | 501 | Route exists in this contract but its owner has not built it yet (§7). | `{ "owner": "C", "prompt": "..." }` |
+| `NOT_IMPLEMENTED` | 501 | Route exists in this contract but its owner has not built it yet (§7). | `{ "owner": "C", "prompt": "PC.2" }` |
 | `PROVIDER_UNAVAILABLE` | 503 | AssemblyAI / LLM provider down, timed out, or rate-limited us. | `{ "provider": "groq" }` |
 | `INTERNAL_ERROR` | 500 | Anything unexpected. Logged with `requestId`. | `{}` |
 
@@ -1027,15 +1027,20 @@ This is the student's 3rd attempt; `mocks/revision.json` is generated from attem
   {
     "error": {
       "code": "NOT_IMPLEMENTED",
-      "message": "POST /api/v1/ask is not implemented yet.",
-      "details": { "owner": "C", "prompt": "C3 — grounded Q&A with citations" },
+      "message": "Grounded Q&A is not yet implemented (owner: Member C).",
+      "details": { "owner": "C", "prompt": "PC.2" },
       "requestId": "req_Q1v9x"
     }
   }
   ```
 
-  `details.owner` is the owner letter from §5.1; `details.prompt` names the playbook prompt
-  that implements it.
+  `message` is exactly `"<Feature> is not yet implemented (owner: Member <X>)."`; `details.owner` is
+  the owner letter from §5.1; `details.prompt` is the playbook prompt id that implements it (`PA.1`
+  transcript; `PB.1` topics, `PB.2` summaries; `PC.1` search, `PC.2` ask, `PC.3` questions, quizzes,
+  attempts and revision).
+- Stubs are mounted with their **real** guards and validation (`server/src/modules/<name>/routes.ts`),
+  so a request is authenticated, role-checked and validated (`401`/`403`/`404`/`422`) before the
+  `501`. Owners replace the handler body only.
 - The processing pipeline (`server/src/services/processing/pipeline.ts`, interface by D, implementation
   by A) is a placeholder until Member A's PA.1/PA.2: it marks each new or reprocessed lecture
   `failed` with `statusDetail` "Transcription pipeline not yet implemented (Member A, prompt PA.1)"

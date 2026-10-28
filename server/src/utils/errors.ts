@@ -82,19 +82,17 @@ export const validationFailed = (
 ): AppError => new AppError('VALIDATION_FAILED', message, ERROR_STATUS.VALIDATION_FAILED, details);
 
 /**
- * For contract routes whose owner has not built them yet (§7).
- * `owner` is the member letter, `prompt` the playbook prompt that implements it,
- * `route` e.g. "POST /api/v1/ask".
+ * For contract routes whose owner has not built them yet (§7). `owner` is the member letter,
+ * `prompt` the playbook prompt that implements it (e.g. "PC.2"), `feature` a human name
+ * (e.g. "Grounded Q&A") → "Grounded Q&A is not yet implemented (owner: Member C)."
  */
-export const notImplemented = (
-  owner: 'A' | 'B' | 'C' | 'D',
-  prompt: string,
-  route = 'This endpoint',
-): AppError =>
-  new AppError('NOT_IMPLEMENTED', `${route} is not implemented yet.`, ERROR_STATUS.NOT_IMPLEMENTED, {
-    owner,
-    prompt,
-  });
+export const notImplemented = (owner: 'A' | 'B' | 'C' | 'D', prompt: string, feature = 'This endpoint'): AppError =>
+  new AppError(
+    'NOT_IMPLEMENTED',
+    `${feature} is not yet implemented (owner: Member ${owner}).`,
+    ERROR_STATUS.NOT_IMPLEMENTED,
+    { owner, prompt },
+  );
 
 /** `provider` e.g. "assemblyai", "groq", "openrouter". */
 export const providerUnavailable = (provider: string): AppError =>

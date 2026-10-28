@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { LECTURE_STATUSES, STAGE_NAMES } from '../../models/index.js';
+import { paging } from '../../utils/schemas.js';
 
 /** Request validation for /lectures (CONTRACTS.md §1.4, §5.3). */
 
-/** A 24-hex-char ObjectId. Anything else is answered 404, never 500 (§3.1). */
-export const objectIdString = z.string().regex(/^[0-9a-f]{24}$/i);
+export { objectIdString } from '../../utils/schemas.js';
 
 /** Form fields arrive as strings; an empty one means "not supplied". */
 const optionalText = (max: number) =>
@@ -58,19 +58,8 @@ export function uploadFieldsInput(body: Record<string, unknown>) {
   return { ...rest, consent: { lecturerConsent, purposeShown, processorNamed } };
 }
 
-const intInRange = (min: number, max: number, fallback: number) =>
-  z.preprocess(
-    (v) => (v === undefined || v === '' ? fallback : Number(v)),
-    z
-      .number({ invalid_type_error: `Must be an integer ${min}–${max}` })
-      .int(`Must be an integer ${min}–${max}`)
-      .min(min, `Must be an integer ${min}–${max}`)
-      .max(max, `Must be an integer ${min}–${max}`),
-  );
-
 export const listQuery = z.object({
-  page: intInRange(1, Number.MAX_SAFE_INTEGER, 1),
-  limit: intInRange(1, 100, 20),
+  ...paging,
   status: z.enum(LECTURE_STATUSES, { errorMap: () => ({ message: `Must be one of ${LECTURE_STATUSES.join(', ')}` }) }).optional(),
   q: z.string().trim().max(200, 'Must be at most 200 characters').optional(),
 });
