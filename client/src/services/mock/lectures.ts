@@ -176,6 +176,8 @@ export const mockLectureService: LectureService = {
       error: null,
       durationSec: null,
       transcriptApproved: false,
+      transcriptApprovedBy: null,
+      transcriptApprovedAt: null,
       topicCount: null,
       uploadedBy: user.id,
       uploadedByName: user.name,
@@ -222,7 +224,11 @@ export const mockLectureService: LectureService = {
     lecture.status = fromStage;
     lecture.statusDetail = STAGE_DETAIL[fromStage];
     lecture.error = null;
-    if (fromStage === 'extracting' || fromStage === 'transcribing') lecture.transcriptApproved = false;
+    if (fromStage === 'extracting' || fromStage === 'transcribing') {
+      lecture.transcriptApproved = false;
+      lecture.transcriptApprovedBy = null;
+      lecture.transcriptApprovedAt = null;
+    }
     lecture.updatedAt = nowIso();
     const previous = db.runtime.get(id);
     db.runtime.set(id, { startedAtMs: Date.now(), fromStage, mediaUrl: previous?.mediaUrl });

@@ -208,7 +208,10 @@ describe('GET /lectures and /lectures/:id — visibility', () => {
     const partial = await request(app).get(res.body.mediaUrl).set('Range', 'bytes=0-2').expect(206);
     expect(partial.headers['content-range']).toBe(`bytes 0-2/${MP3.length}`);
     expect(Buffer.from(partial.body).toString('latin1')).toBe('ID3');
-    await request(app).get(res.body.mediaUrl.replace(/sig=[0-9a-f]/, 'sig=0')).expect(401);
+    expect(partial.headers['cross-origin-resource-policy']).toBe('cross-origin');
+    const refused = await request(app).get(res.body.mediaUrl.replace(/sig=[0-9a-f]/, 'sig=0')).expect(401);
+    // Errors too, or the browser blocks the response outright instead of reporting the status.
+    expect(refused.headers['cross-origin-resource-policy']).toBe('cross-origin');
   });
 });
 

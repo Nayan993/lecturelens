@@ -108,9 +108,36 @@ export const db = {
 
 export const tokenFor = (userId: Id) => `mock-token.${userId}`;
 
+/** `{ sub, role }` from a real API JWT (payload only — the server verified it when it was issued). */
+function claimsOf(token: string): { sub: string; role: Role } | null {
+  const payload = token.split('.')[1];
+  if (!payload || token.split('.').length !== 3) return null;
+  try {
+    const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { sub?: unknown; role?: unknown; exp?: unknown };
+    if (typeof json.sub !== 'string' || (json.role !== 'student' && json.role !== 'teacher')) return null;
+    if (typeof json.exp === 'number' && json.exp * 1000 <= Date.now()) return null;
+    return { sub: json.sub, role: json.role };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The user behind a token: a mock token (`mock-token.<id>`), or — in mixed mode, when `auth` uses the
+ * real API but this domain is mocked — the real JWT's subject. Seeded demo users share their ids with
+ * the fixtures, so they own the same lectures here; any other real user simply owns no fixture data.
+ */
 export function userForToken(token: string | null): User | null {
-  const id = token?.startsWith('mock-token.') ? token.slice('mock-token.'.length) : null;
-  return accounts.find((a) => a.user.id === id)?.user ?? null;
+  if (!token) return null;
+  if (token.startsWith('mock-token.')) {
+    const id = token.slice('mock-token.'.length);
+    return accounts.find((a) => a.user.id === id)?.user ?? null;
+  }
+  const claims = claimsOf(token);
+  if (!claims) return null;
+  const known = accounts.find((a) => a.user.id === claims.sub)?.user;
+  if (known) return known;
+  return { id: claims.sub, email: '', name: '', role: claims.role, lastLoginAt: null, createdAt: '', updatedAt: '' };
 }
 
 /** The signed-in mock user, or a 401 that also ends the session exactly like the HTTP adapter. */

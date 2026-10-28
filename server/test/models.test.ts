@@ -68,10 +68,7 @@ describe('seed documents', () => {
     const expected = fixture('lectures.json').items.map((l: Record<string, unknown>) =>
       omit(l, ['uploadedByName', 'topicCount']),
     );
-    // transcriptApprovedBy/At are contract fields (§4.2) the client fixture does not carry.
-    expect(out.map((l: Record<string, unknown>) => omit(l, ['transcriptApprovedBy', 'transcriptApprovedAt']))).toEqual(
-      expected,
-    );
+    expect(out).toEqual(expected);
   });
 
   it('scores attempts from the fixture answer keys', () => {

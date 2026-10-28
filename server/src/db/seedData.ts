@@ -108,8 +108,6 @@ function lectureDoc(lecture: LectureFixture) {
     // The media files themselves are not seeded; playback of seeded lectures needs real files here.
     mediaPath: `lectures/${lecture.id}/${lecture.media.originalFilename}`,
     audioPath: null,
-    transcriptApprovedBy: lecture.transcriptApproved ? lecture.uploadedBy : null,
-    transcriptApprovedAt: lecture.transcriptApproved ? lecture.updatedAt : null,
   });
 }
 

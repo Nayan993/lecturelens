@@ -31,6 +31,11 @@ describe('VITE_USE_MOCKS', () => {
     warn.mockRestore();
   });
 
+  it('unset means none in a production build (fixtures never ship as real data)', () => {
+    expect(parseMockFlag(undefined, 'none').size).toBe(0);
+    expect(parseMockFlag('qa', 'none').size).toBe(1);
+  });
+
   it('selects the adapter per domain', () => {
     const s = selectServices(parseMockFlag('auth,search'));
     expect(s.auth).toBe(mockServices.auth);
@@ -100,6 +105,41 @@ describe('apiClient', () => {
     await apiClient.post('/auth/login').catch(() => undefined);
     expect(onEvent).not.toHaveBeenCalled();
     window.removeEventListener(UNAUTHORISED_EVENT, onEvent);
+  });
+
+  it('login and register never carry a stale token, so their 401 never ends a session', async () => {
+    localStorage.setItem(TOKEN_KEY, 'stale-token');
+    const onEvent = vi.fn();
+    window.addEventListener(UNAUTHORISED_EVENT, onEvent);
+    const sent: Array<string | undefined> = [];
+    apiClient.defaults.adapter = async (config) => {
+      sent.push(config.headers.get('Authorization') as string | undefined);
+      return respond(401, envelope('UNAUTHENTICATED', 401))(config);
+    };
+    await apiClient.post('/auth/login', {}).catch(() => undefined);
+    await apiClient.post('/auth/register', {}).catch(() => undefined);
+    expect(sent).toEqual([undefined, undefined]);
+    expect(onEvent).not.toHaveBeenCalled();
+    expect(localStorage.getItem(TOKEN_KEY)).toBe('stale-token');
+    window.removeEventListener(UNAUTHORISED_EVENT, onEvent);
+  });
+});
+
+describe('mixed mode: real auth, mocked domains', () => {
+  const jwt = (claims: object) =>
+    `eyJhbGciOiJIUzI1NiJ9.${btoa(JSON.stringify(claims)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')}.sig`;
+  afterEach(() => localStorage.clear());
+
+  it('mocked domains accept the real API token of a seeded demo user', async () => {
+    localStorage.setItem(TOKEN_KEY, jwt({ sub: '6650c3a0c3b2e41d8a000001', role: 'teacher', exp: Date.now() / 1000 + 3600 }));
+    expect((await mockServices.lectures.list()).total).toBe(6);
+  });
+
+  it('a newly registered real user owns no fixture data, and an expired token is a 401', async () => {
+    localStorage.setItem(TOKEN_KEY, jwt({ sub: '6ae21655e84cced2342afc47', role: 'teacher', exp: Date.now() / 1000 + 3600 }));
+    expect((await mockServices.lectures.list()).total).toBe(0);
+    localStorage.setItem(TOKEN_KEY, jwt({ sub: '6650c3a0c3b2e41d8a000001', role: 'teacher', exp: 1 }));
+    await expect(mockServices.lectures.list()).rejects.toMatchObject({ status: 401 });
   });
 });
 

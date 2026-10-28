@@ -49,6 +49,9 @@ lecturesRouter.param('id', (_req, _res, next, id: string) => {
 lecturesRouter.get(
   '/:id/media',
   asyncHandler(async (req, res) => {
+    // The client app is on another origin: every answer here, errors included, must be readable by
+    // <video>, which helmet's default same-origin CORP would block (net::ERR_BLOCKED_BY_RESPONSE).
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     // A missing or malformed signature is an invalid link (401), not a validation error.
     const query = mediaQuery.safeParse(req.query);
     if (!query.success) throw unauthenticated('This media link is invalid.');

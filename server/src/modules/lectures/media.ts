@@ -46,8 +46,6 @@ export async function streamMedia(res: Response, filePath: string, mimeType: str
   res.setHeader('Accept-Ranges', 'bytes');
   res.setHeader('Content-Type', mimeType);
   res.setHeader('Cache-Control', 'private, max-age=3600');
-  // The client app is on another origin; helmet's default same-origin CORP would block <video>.
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   const match = range ? /^bytes=(\d*)-(\d*)$/.exec(range.trim()) : null;
   if (match && (match[1] || match[2]) && size > 0) {
