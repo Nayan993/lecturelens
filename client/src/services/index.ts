@@ -55,6 +55,11 @@ export const mockedDomains: ReadonlySet<ServiceDomain> = parseMockFlag(import.me
 
 export const services: Services = selectServices(new Set(mockedDomains));
 
+export { DEMO_ACCOUNTS, type DemoAccount } from './demoAccounts';
+
+/** Show the "Demo accounts" block on /login: when auth is mocked, or when the seeded server is used for a demo. */
+export const showDemoAccounts: boolean = mockedDomains.has('auth') || import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === 'true';
+
 if (import.meta.env.DEV && mockedDomains.size > 0) {
   console.info(
     `[services] Mock data for: ${[...mockedDomains].join(', ')}. Demo login: teacher@lecturelens.dev or student@lecturelens.dev, password "lecturelens".`,

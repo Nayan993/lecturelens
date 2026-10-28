@@ -150,8 +150,8 @@ describe('route table', () => {
   ];
 
   it.each([
-    ['/', /^LectureLens$/],
-    ['/login', /^Log in$/],
+    ['/', /^Turn recorded lectures/],
+    ['/login', /^Sign in$/],
     ['/register', /^Create an account$/],
   ])('public %s renders without a session', async (path, heading) => {
     renderApp(path, null);
@@ -183,7 +183,7 @@ describe('route table', () => {
 
   it('anonymous users are sent to /login with the intended path preserved', async () => {
     renderApp('/app/quizzes/abc?x=1', null);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeTruthy();
     const probe = screen.getByTestId('location');
     expect(probe.textContent).toBe('/login');
     const state = JSON.parse(probe.getAttribute('data-state')!);
@@ -227,7 +227,7 @@ describe('navigation', () => {
     expect(trigger.textContent).toContain('teacher');
     fireEvent.click(trigger);
     fireEvent.click(screen.getByRole('menuitem', { name: 'Log out' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Log in' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeTruthy();
     expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
   });
 

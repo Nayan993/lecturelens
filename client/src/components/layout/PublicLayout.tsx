@@ -22,7 +22,7 @@ export function PublicLayout() {
             ) : (
               <>
                 <Link to="/login" className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-                  Log in
+                  Sign in
                 </Link>
                 <Link to="/register" className={buttonClasses({ size: 'sm' })}>
                   Get started
@@ -38,9 +38,12 @@ export function PublicLayout() {
         </Suspense>
       </main>
       <footer className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-ink-3 sm:px-6">
-          <span>LectureLens — lectures you can search, ask and revise from.</span>
-          <span>Recordings are processed only with lecturer consent.</span>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 py-6 text-xs leading-relaxed text-ink-2 sm:px-6">
+          <p>
+            <span className="font-semibold text-ink-1">LectureLens</span> is an academic project built by a student team. It is
+            not a commercial product, and recordings are processed only with the lecturer’s consent.
+          </p>
+          {/* TODO(team): add the team members' names here, e.g. "Built by A. Name, B. Name, C. Name and D. Name." */}
         </div>
       </footer>
     </div>

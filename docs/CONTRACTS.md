@@ -987,3 +987,21 @@ summaries `…50000x`, questions `…60000x`, quiz `…700001`, attempts `…800
 
 Student views are derived by keeping only `status: "approved"` items (and stripping answer
 keys from quiz questions, §5.7).
+
+---
+
+## 9. Demo accounts
+
+Seeded accounts for development and the project demo. The client's mock auth adapter serves
+exactly these, and the server's seed script (owner D) must create exactly these, with the fixture
+ids from §8 so seeded data lines up with `mocks/`.
+
+| Role | id | Name | Email | Password |
+| --- | --- | --- | --- | --- |
+| teacher | `6650c3a0c3b2e41d8a000001` | Dr. Ananya Rao | `teacher@lecturelens.dev` | `lecturelens` |
+| student | `6650c3a0c3b2e41d8a000002` | Rohan Mehta | `student@lecturelens.dev` | `lecturelens` |
+
+- These are **demo credentials, not secrets**. They must never exist in a production database:
+  the seed script refuses to run when `NODE_ENV=production`.
+- The login page shows a plainly labelled "Demo accounts" block when the `auth` domain is mocked or
+  `VITE_SHOW_DEMO_ACCOUNTS=true`.

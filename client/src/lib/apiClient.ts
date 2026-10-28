@@ -1,8 +1,8 @@
 import axios, { isAxiosError, type AxiosError } from 'axios';
 import type { ApiError, ApiErrorBody, ApiErrorCode } from '../types';
+import { clearToken, readToken, TOKEN_KEY } from './tokenStorage';
 
-/** localStorage key holding the JWT. */
-export const TOKEN_KEY = 'll.token';
+export { TOKEN_KEY };
 
 /** Fired on window when an authenticated request gets a 401; AuthContext listens and signs out. */
 export const UNAUTHORISED_EVENT = 'll:unauthorised';
@@ -33,14 +33,6 @@ export function isApiError(e: unknown): e is ApiError {
 /** True for HTTP 501 / NOT_IMPLEMENTED — render the calm "coming soon" state, not a red error. */
 export function isNotImplemented(e: unknown): boolean {
   return isApiError(e) && (e.status === 501 || e.code === 'NOT_IMPLEMENTED');
-}
-
-function readToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
 }
 
 /** Map any Axios failure onto the contract's error envelope. */
@@ -81,11 +73,7 @@ export function normaliseError(err: unknown): ApiRequestError {
 
 /** Session ended: drop the token and tell AuthContext. Used by the HTTP interceptor and the mock adapters. */
 export function signalUnauthorised(requestId: string | null = null): void {
-  try {
-    localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // storage unavailable
-  }
+  clearToken();
   window.dispatchEvent(new CustomEvent(UNAUTHORISED_EVENT, { detail: { requestId } }));
 }
 

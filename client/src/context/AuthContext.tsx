@@ -1,18 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { services, type AuthService } from '../services';
-import { isApiError, TOKEN_KEY, UNAUTHORISED_EVENT } from '../lib/apiClient';
+import { isApiError, UNAUTHORISED_EVENT } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
+import { clearToken, readToken, TOKEN_KEY, writeToken } from '../lib/tokenStorage';
 import type { RegisterPayload, User } from '../types';
 
 export { TOKEN_KEY };
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
+export interface LoginOptions {
+  /** true (default): keep the session across browser restarts; false: end it when the tab closes. */
+  remember?: boolean;
+}
+
 export interface AuthContextValue {
   user: User | null;
   token: string | null;
   status: AuthStatus;
-  login(email: string, password: string): Promise<User>;
+  login(email: string, password: string, options?: LoginOptions): Promise<User>;
   register(payload: RegisterPayload): Promise<User>;
   logout(): void;
   /** Re-fetch the current user with the stored token. */
@@ -20,23 +26,6 @@ export interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function readToken(): string | null {
-  try {
-    return localStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeToken(token: string | null): void {
-  try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // Storage unavailable (private mode, blocked): the session simply won't persist.
-  }
-}
 
 export function AuthProvider({ children, service = services.auth }: { children: ReactNode; service?: AuthService }) {
   const [token, setToken] = useState<string | null>(() => readToken());
@@ -46,15 +35,15 @@ export function AuthProvider({ children, service = services.auth }: { children: 
   serviceRef.current = service;
 
   const clearSession = useCallback(() => {
-    writeToken(null);
+    clearToken();
     setToken(null);
     setUser(null);
     setStatus('anonymous');
     queryClient.clear(); // never let one user's cached data leak to the next
   }, []);
 
-  const startSession = useCallback((nextToken: string, nextUser: User) => {
-    writeToken(nextToken);
+  const startSession = useCallback((nextToken: string, nextUser: User, remember = true) => {
+    writeToken(nextToken, remember);
     setToken(nextToken);
     setUser(nextUser);
     setStatus('authenticated');
@@ -109,9 +98,9 @@ export function AuthProvider({ children, service = services.auth }: { children: 
   }, [refresh]);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, { remember = true }: LoginOptions = {}) => {
       const res = await serviceRef.current.login(email, password);
-      startSession(res.token, res.user);
+      startSession(res.token, res.user, remember);
       return res.user;
     },
     [startSession],

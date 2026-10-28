@@ -82,6 +82,7 @@ export function AppRoutes() {
       </Route>
 
       <Route path="403" element={<ForbiddenPage standalone />} />
+      <Route path="404" element={<NotFoundPage standalone />} />
       {Kitchen && (
         <Route
           path="_kitchen"

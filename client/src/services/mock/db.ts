@@ -11,7 +11,9 @@ import summariesJson from '../../../../mocks/summaries.json';
 import questionsJson from '../../../../mocks/questions.json';
 import answerJson from '../../../../mocks/answer.json';
 import revisionJson from '../../../../mocks/revision.json';
-import { ApiRequestError, signalUnauthorised, TOKEN_KEY } from '../../lib/apiClient';
+import { ApiRequestError, signalUnauthorised } from '../../lib/apiClient';
+import { readToken } from '../../lib/tokenStorage';
+import { DEMO_ACCOUNTS } from '../demoAccounts';
 import type {
   ApiErrorCode,
   Attempt,
@@ -67,17 +69,15 @@ export interface MockAccount {
 
 const lectures = fixture<{ items: Lecture[] }>(lecturesJson).items;
 const revision = fixture<RevisionPlan>(revisionJson);
-const TEACHER_ID = lectures[0].uploadedBy;
-const STUDENT_ID = revision.studentId;
 
 const stamp = { lastLoginAt: null, createdAt: '2026-09-01T08:00:00.000Z', updatedAt: '2026-09-01T08:00:00.000Z' };
 
-/** Demo accounts. Password for both: "lecturelens". */
-export const DEMO_PASSWORD = 'lecturelens';
-const accounts: MockAccount[] = [
-  { user: { id: TEACHER_ID, email: 'teacher@lecturelens.dev', name: 'Dr. Ananya Rao', role: 'teacher', ...stamp }, password: DEMO_PASSWORD },
-  { user: { id: STUDENT_ID, email: 'student@lecturelens.dev', name: 'Rohan Mehta', role: 'student', ...stamp }, password: DEMO_PASSWORD },
-];
+/** Demo accounts from CONTRACTS.md §9; their ids own / took the fixture lectures and attempts. */
+export const DEMO_PASSWORD = DEMO_ACCOUNTS[0].password;
+const accounts: MockAccount[] = DEMO_ACCOUNTS.map(({ id, role, name, email, password }) => ({
+  user: { id, email, name, role, ...stamp },
+  password,
+}));
 
 // ---- the store ------------------------------------------------------------------------------
 
@@ -115,12 +115,7 @@ export function userForToken(token: string | null): User | null {
 
 /** The signed-in mock user, or a 401 that also ends the session exactly like the HTTP adapter. */
 export function requireUser(role?: Role): User {
-  let token: string | null = null;
-  try {
-    token = localStorage.getItem(TOKEN_KEY);
-  } catch {
-    // storage unavailable
-  }
+  const token = readToken();
   const user = userForToken(token);
   if (!user) {
     if (token) signalUnauthorised();
