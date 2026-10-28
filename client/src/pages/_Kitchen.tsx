@@ -19,8 +19,6 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import lecturesFixture from '../../../mocks/lectures.json';
-import transcriptFixture from '../../../mocks/transcript.json';
 import { formatDuration, formatTimestamp } from '../lib/formatTime';
 import { LECTURE_STATUSES, type LectureStatus } from '../types';
 import {
@@ -69,14 +67,19 @@ const TOKENS = [
   'accent', 'accent-soft', 'success', 'warning', 'danger', 'info',
 ] as const;
 
-const lectures = lecturesFixture.items as Array<{
-  id: string;
-  title: string;
-  status: LectureStatus;
-  durationSec: number | null;
-  courseCode: string | null;
-}>;
-const segment = transcriptFixture.items[13];
+// Static sample rows for visual checks only. Components never import /mocks — real data comes from hooks.
+const lectures: Array<{ id: string; title: string; status: LectureStatus; durationSec: number | null; courseCode: string }> = [
+  { id: 'k5', title: 'Lecture 10 — Convolutional Neural Networks', status: 'uploaded', durationSec: null, courseCode: 'CS 3410' },
+  { id: 'k4', title: 'Lecture 9 — Regularisation: Weight Decay and Dropout', status: 'transcribing', durationSec: 2954.88, courseCode: 'CS 3410' },
+  { id: 'k6', title: 'Tutorial 4 — Worked Examples on Backpropagation', status: 'failed', durationSec: 1830.4, courseCode: 'CS 3410' },
+  { id: 'k3', title: 'Lecture 8 — Optimisers: Momentum, RMSProp and Adam', status: 'ready', durationSec: 2871.104, courseCode: 'CS 3410' },
+  { id: 'k1', title: 'Lecture 7 — Gradient Descent and Backpropagation', status: 'ready', durationSec: 1199.398, courseCode: 'CS 3410' },
+  { id: 'k2', title: 'Lecture 6 — Linear Regression and Loss Functions', status: 'ready', durationSec: 3012.736, courseCode: 'CS 3410' },
+];
+const segment = {
+  startSec: 357.43,
+  text: 'And with eta equal to one point one, the multiplier is negative one point two. The magnitude grows every step. We overshoot further and further and the loss blows up to infinity. If you ever see your loss turn into NaN in the first few iterations, a learning rate that is too large is the first suspect.',
+};
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
@@ -423,7 +426,7 @@ export default function Kitchen() {
         <p className="text-xs text-ink-3">Selected: {tab}. Focus a tab, then use ← → Home End.</p>
       </Section>
 
-      <Section id="table" title="10 · Table (mocks/lectures.json, sticky header, zebra)">
+      <Section id="table" title="10 · Table (sample rows, sticky header, zebra)">
         <Table stickyHeader containerClassName="max-h-64">
           <Thead>
             <Tr>

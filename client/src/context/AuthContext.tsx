@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ApiError, httpAuthService, type AuthService } from '../services/auth';
+import { services, type AuthService } from '../services';
+import { isApiError, TOKEN_KEY, UNAUTHORISED_EVENT } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
 import type { RegisterPayload, User } from '../types';
 
-export const TOKEN_KEY = 'll.token';
+export { TOKEN_KEY };
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -37,7 +38,7 @@ function writeToken(token: string | null): void {
   }
 }
 
-export function AuthProvider({ children, service = httpAuthService }: { children: ReactNode; service?: AuthService }) {
+export function AuthProvider({ children, service = services.auth }: { children: ReactNode; service?: AuthService }) {
   const [token, setToken] = useState<string | null>(() => readToken());
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>(() => (readToken() ? 'loading' : 'anonymous'));
@@ -72,7 +73,7 @@ export function AuthProvider({ children, service = httpAuthService }: { children
       setStatus('authenticated');
     } catch (err) {
       // An invalid/expired token is discarded; a network failure keeps it so a later refresh can recover.
-      if (err instanceof ApiError && err.status === 401) clearSession();
+      if (isApiError(err) && err.status === 401) clearSession();
       else {
         setUser(null);
         setStatus('anonymous');
@@ -84,6 +85,13 @@ export function AuthProvider({ children, service = httpAuthService }: { children
   useEffect(() => {
     if (readToken()) void refresh();
   }, [refresh]);
+
+  // Any authenticated request that comes back 401 (lib/apiClient.ts) ends the session here.
+  useEffect(() => {
+    const onUnauthorised = () => clearSession();
+    window.addEventListener(UNAUTHORISED_EVENT, onUnauthorised);
+    return () => window.removeEventListener(UNAUTHORISED_EVENT, onUnauthorised);
+  }, [clearSession]);
 
   // Logging out (or in) in another tab applies here too.
   useEffect(() => {

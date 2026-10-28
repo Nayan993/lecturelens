@@ -20,6 +20,7 @@
       "method": "embedding_similarity",
       "boundaryScore": null,
       "status": "approved",
+      "rejectionReason": null,
       "reviewedBy": "6650c3a0c3b2e41d8a000001",
       "reviewedAt": "2026-10-21T09:02:10.500Z"
     },
@@ -42,6 +43,7 @@
       "method": "embedding_similarity",
       "boundaryScore": 0.412,
       "status": "approved",
+      "rejectionReason": null,
       "reviewedBy": "6650c3a0c3b2e41d8a000001",
       "reviewedAt": "2026-10-21T09:03:11.510Z"
     },
@@ -64,6 +66,7 @@
       "method": "embedding_similarity",
       "boundaryScore": 0.367,
       "status": "approved",
+      "rejectionReason": null,
       "reviewedBy": "6650c3a0c3b2e41d8a000001",
       "reviewedAt": "2026-10-21T09:04:12.520Z"
     },
@@ -86,6 +89,7 @@
       "method": "embedding_similarity",
       "boundaryScore": 0.538,
       "status": "approved",
+      "rejectionReason": null,
       "reviewedBy": "6650c3a0c3b2e41d8a000001",
       "reviewedAt": "2026-10-21T09:05:13.530Z"
     },
@@ -108,6 +112,7 @@
       "method": "embedding_similarity",
       "boundaryScore": 0.291,
       "status": "pending_review",
+      "rejectionReason": null,
       "reviewedBy": null,
       "reviewedAt": null
     }

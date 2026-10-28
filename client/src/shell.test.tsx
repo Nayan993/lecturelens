@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, TOKEN_KEY, useAuth } from './context/AuthContext';
-import { ApiError, type AuthService } from './services/auth';
+import { ApiRequestError, UNAUTHORISED_EVENT } from './lib/apiClient';
+import type { AuthService } from './services';
 import { AppRoutes } from './routes';
 import { ToastProvider } from './components/ui';
 import { buildBreadcrumbs } from './components/layout/navigation';
@@ -32,8 +33,9 @@ const fakeService = (): AuthService => ({
   me: vi.fn(async (token: string) => {
     if (token === 'teacher-token') return makeUser('teacher');
     if (token === 'student-token') return makeUser('student');
-    throw new ApiError(401, 'UNAUTHENTICATED', 'Invalid token');
+    throw new ApiRequestError({ status: 401, code: 'UNAUTHENTICATED', message: 'Invalid token' });
   }),
+  updateProfile: vi.fn(async (p) => ({ ...makeUser('teacher'), name: p.name ?? 'Dr. Ananya Rao' })),
 });
 
 function LocationProbe() {
@@ -100,7 +102,7 @@ describe('AuthContext', () => {
     localStorage.setItem(TOKEN_KEY, 'teacher-token');
     const service = fakeService();
     service.me = vi.fn(async () => {
-      throw new ApiError(0, 'NETWORK_ERROR', 'down');
+      throw new ApiRequestError({ status: 0, code: 'NETWORK_ERROR', message: 'down' });
     });
     renderProbe(service);
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('anonymous'));
@@ -115,6 +117,17 @@ describe('AuthContext', () => {
     fireEvent.click(screen.getByText('logout'));
     expect(screen.getByTestId('status').textContent).toBe('anonymous');
     expect(localStorage.getItem('ll.token')).toBeNull();
+  });
+
+  it('signs out when the API client dispatches ll:unauthorised', async () => {
+    localStorage.setItem(TOKEN_KEY, 'teacher-token');
+    renderProbe(fakeService());
+    await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('authenticated'));
+    act(() => {
+      window.dispatchEvent(new CustomEvent(UNAUTHORISED_EVENT));
+    });
+    expect(screen.getByTestId('status').textContent).toBe('anonymous');
+    expect(screen.getByTestId('user').textContent).toBe('');
   });
 });
 

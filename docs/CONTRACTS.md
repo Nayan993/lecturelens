@@ -690,6 +690,7 @@ L2 norm 1. It is never sent to clients.
   "method": "embedding_similarity",
   "boundaryScore": 0.412,
   "status": "approved",
+  "rejectionReason": null,
   "reviewedBy": "6650c3a0c3b2e41d8a000001",
   "reviewedAt": "2026-10-21T09:03:11.510Z"
 }
