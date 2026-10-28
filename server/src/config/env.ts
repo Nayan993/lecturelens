@@ -1,42 +1,90 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config();
-
 /**
- * Environment schema. Secrets must come from the environment — never hardcode.
- * Required for the app to boot: MONGODB_URI, JWT_SECRET.
- * External API keys are optional at this stage (features that need them come later).
+ * Validated, typed, frozen environment. Owned by Member D.
+ * Secrets come only from the environment — never hardcode a key or URI, and never
+ * print a variable's value (only its name) when validation fails.
  */
+
+// server/.env, resolved from this file so it works from src/ (tsx) and dist/ (node).
+dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.env') });
+
+/** Empty strings count as "not set" for optional variables. */
+const optional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), schema.optional());
+
+const required = (explanation: string) =>
+  z.string({ required_error: explanation }).trim().min(1, explanation);
+
+const positiveInt = (explanation: string) =>
+  z.coerce
+    .number({ required_error: explanation, invalid_type_error: explanation })
+    .int(explanation)
+    .positive(explanation);
+
 const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(5000),
-  CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
-  MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
-  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
-  JWT_EXPIRES_IN: z.string().min(1).default('7d'),
-  ASSEMBLYAI_API_KEY: z.string().default(''),
-  GROQ_API_KEY: z.string().default(''),
-  OPENROUTER_API_KEY: z.string().default(''),
-  LLM_BASE_URL: z.string().url().default('https://api.groq.com/openai/v1'),
-  LLM_MODEL: z.string().min(1).default('llama-3.3-70b-versatile'),
-  EMBEDDING_MODEL: z.string().min(1).default('Xenova/all-MiniLM-L6-v2'),
-  STORAGE_DIR: z.string().min(1).default('./storage'),
-  MAX_UPLOAD_MB: z.coerce.number().int().positive().default(512),
+  NODE_ENV: z.enum(['development', 'test', 'production'], {
+    errorMap: () => ({ message: 'must be one of development, test, production' }),
+  }),
+  PORT: positiveInt('must be a positive integer port number, e.g. 5000').refine(
+    (n) => n <= 65535,
+    'must be a port number between 1 and 65535',
+  ),
+  CLIENT_ORIGIN: required('must be the client URL allowed by CORS, e.g. http://localhost:5173').url(
+    'must be a full URL including the scheme, e.g. http://localhost:5173',
+  ),
+  MONGODB_URI: required('must be a MongoDB connection string').refine(
+    (v) => v.startsWith('mongodb://') || v.startsWith('mongodb+srv://'),
+    'must start with mongodb:// or mongodb+srv://',
+  ),
+  JWT_SECRET: required('must be set to a long random string used to sign JWTs').refine(
+    (v) => v.length >= 32,
+    'must be at least 32 characters long',
+  ),
+  JWT_EXPIRES_IN: required('must be a token lifetime such as 7d or 12h'),
+  STORAGE_DIR: required('must be the directory where uploaded media is stored, e.g. ./storage'),
+  MAX_UPLOAD_MB: positiveInt('must be a positive integer number of megabytes, e.g. 512'),
+
+  // Optional until Members A and C need them.
+  ASSEMBLYAI_API_KEY: optional(z.string()),
+  GROQ_API_KEY: optional(z.string()),
+  OPENROUTER_API_KEY: optional(z.string()),
+  LLM_BASE_URL: optional(z.string().url('must be a full URL, e.g. https://api.groq.com/openai/v1')),
+  LLM_MODEL: optional(z.string()),
+  EMBEDDING_MODEL: optional(z.string()),
 });
 
-export type Env = z.infer<typeof envSchema>;
+export type Env = Readonly<z.infer<typeof envSchema>>;
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  const problems = parsed.error.issues.map(
-    (issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`,
+  // Messages are ours (see above) and never include the received value.
+  const firstIssuePerVariable = new Map<string, string>();
+  for (const issue of parsed.error.issues) {
+    const name = issue.path.join('.') || '(environment)';
+    if (!firstIssuePerVariable.has(name)) firstIssuePerVariable.set(name, issue.message);
+  }
+  const lines = [...firstIssuePerVariable].map(([name, message]) => {
+    const isMissing = process.env[name] === undefined || process.env[name]?.trim() === '';
+    return `  - ${name} ${isMissing ? '(missing)' : '(invalid)'}: ${message}`;
+  });
+  console.error(
+    [
+      '',
+      'LectureLens server cannot start: invalid environment configuration.',
+      ...lines,
+      '',
+      'Set these in server/.env (see server/.env.example).',
+      '',
+    ].join('\n'),
   );
-  console.error('\n❌ Invalid environment configuration. Fix these variables:\n');
-  console.error(problems.join('\n'));
-  console.error('\nSee server/.env.example for the full list of expected variables.\n');
   process.exit(1);
 }
 
-export const env: Env = parsed.data;
+export const env: Env = Object.freeze(parsed.data);
+export const isDev = env.NODE_ENV === 'development';
+export const isProd = env.NODE_ENV === 'production';

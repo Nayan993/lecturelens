@@ -471,7 +471,8 @@ lists use `{ items, ... }` as in §1.4.
 - `POST /auth/login` body `{ email, password }`. Wrong email *or* password → `401 UNAUTHENTICATED`
   with the same message (do not reveal which).
 - `user` object: `{ id, email, name, role, lastLoginAt, createdAt, updatedAt }`.
-- `GET /health` → `200 { "status": "ok", "uptimeSec": 812.441, "db": "connected" | "not_connected", "timestamp": "<ISO>" }`.
+- `GET /health` → `200 { "status": "ok", "uptimeSec": 812.441, "db": "connected" | "not_connected", "version": "0.0.0", "timestamp": "<ISO>" }`.
+  `version` is the server package version.
 
 ### 5.3 Lectures (D)
 
