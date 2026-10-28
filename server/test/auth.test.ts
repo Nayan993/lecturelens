@@ -70,6 +70,27 @@ describe('POST /auth/register', () => {
   });
 });
 
+describe('registration persists', () => {
+  it('a newly registered user is saved in MongoDB before 201, and can log in afterwards', async () => {
+    const before = await User.countDocuments();
+    const reg = await api().post('/api/v1/auth/register').send(student).expect(201);
+
+    // Persisted by the time the response arrived — not deferred, not mocked.
+    const stored = await User.findById(reg.body.user.id).select('+passwordHash').lean();
+    expect(await User.countDocuments()).toBe(before + 1);
+    expect(stored).toMatchObject({ email: student.email, name: student.name, role: 'student' });
+    expect(stored?.passwordHash).toMatch(/^\$2[aby]\$10\$/); // hashed, never the plain password
+    expect(stored?.passwordHash).not.toContain(student.password);
+    expect(stored?.createdAt).toBeInstanceOf(Date);
+
+    // A completely separate login with the same credentials finds that same document.
+    const login = await api().post('/api/v1/auth/login').send({ email: student.email, password: student.password }).expect(200);
+    expect(login.body.user.id).toBe(reg.body.user.id);
+    const me = await api().get('/api/v1/auth/me').set('Authorization', `Bearer ${login.body.token}`).expect(200);
+    expect(me.body.user).toMatchObject({ id: reg.body.user.id, email: student.email });
+  });
+});
+
 describe('POST /auth/login', () => {
   beforeEach(async () => {
     await registerAndGetToken(teacher);
