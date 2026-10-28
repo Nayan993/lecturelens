@@ -9,7 +9,7 @@ export const mockAuthService: AuthService = {
   async login(email, password) {
     await delay();
     const account = db.accounts.find((a) => a.user.email === email.trim().toLowerCase());
-    if (!account || account.password !== password) fail(401, 'UNAUTHENTICATED', 'Email or password is incorrect.');
+    if (!account || account.password !== password) fail(401, 'UNAUTHENTICATED', 'Invalid email or password');
     account.user.lastLoginAt = nowIso();
     return { token: tokenFor(account.user.id), user: clone(account.user) };
   },
@@ -19,9 +19,12 @@ export const mockAuthService: AuthService = {
     const details: Record<string, string> = {};
     const normalised = email.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(normalised)) details.email = 'Enter a valid email address';
-    if (password.length < 8 || password.length > 128) details.password = 'Must be 8–128 characters';
-    if (!name.trim() || name.trim().length > 100) details.name = 'Must be 1–100 characters';
-    if (role !== 'student' && role !== 'teacher') details.role = 'Must be student or teacher';
+    if (password.length < 8) details.password = 'Must be at least 8 characters';
+    else if (password.length > 128) details.password = 'Must be at most 128 characters';
+    else if (!/[A-Za-z]/.test(password)) details.password = 'Must contain at least one letter';
+    else if (!/\d/.test(password)) details.password = 'Must contain at least one digit';
+    if (name.trim().length < 2 || name.trim().length > 80) details.name = 'Must be 2–80 characters';
+    if (role !== 'student' && role !== 'teacher') details.role = 'Must be "student" or "teacher"';
     if (Object.keys(details).length) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', details);
     if (db.accounts.some((a) => a.user.email === normalised)) fail(409, 'CONFLICT', 'An account with this email already exists.');
     const at = nowIso();
@@ -37,19 +40,12 @@ export const mockAuthService: AuthService = {
     return clone(user);
   },
 
-  async updateProfile({ name, currentPassword, newPassword }) {
+  async updateProfile({ name }) {
     await delay();
     const user = requireUser();
     const account = db.accounts.find((a) => a.user.id === user.id)!;
-    if (name !== undefined) {
-      if (!name.trim() || name.trim().length > 100) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { name: 'Must be 1–100 characters' });
-      account.user.name = name.trim();
-    }
-    if (newPassword !== undefined) {
-      if (currentPassword !== account.password) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { currentPassword: 'Incorrect password' });
-      if (newPassword.length < 8 || newPassword.length > 128) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { newPassword: 'Must be 8–128 characters' });
-      account.password = newPassword;
-    }
+    if (name.trim().length < 2 || name.trim().length > 80) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { name: 'Must be 2–80 characters' });
+    account.user.name = name.trim();
     account.user.updatedAt = nowIso();
     return clone(account.user);
   },

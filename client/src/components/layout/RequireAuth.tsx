@@ -17,10 +17,12 @@ export function getReturnPath(state: unknown): string {
 
 /** Renders children (or the nested route) only for an authenticated user; otherwise redirects to /login. */
 export function RequireAuth({ children }: { children?: ReactNode }) {
-  const { status } = useAuth();
+  const { status, loggedOut } = useAuth();
   const location = useLocation();
 
   if (status === 'loading') return <PageSkeleton fullScreen />;
+  // After a deliberate logout, do not offer this page back to whoever signs in next.
+  if (status === 'anonymous' && loggedOut) return <Navigate to="/login" replace />;
   if (status === 'anonymous') {
     const state: LoginRedirectState = {
       from: { pathname: location.pathname, search: location.search, hash: location.hash },

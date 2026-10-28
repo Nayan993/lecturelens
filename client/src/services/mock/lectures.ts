@@ -56,6 +56,12 @@ function advance(lecture: Lecture): void {
   lecture.updatedAt = nowIso();
 }
 
+/** Share of the six stages done, as the server computes it (CONTRACTS §6.2). */
+function progressPctFor(lecture: Lecture): number {
+  const done = stagesFor(lecture).filter((s) => s.state === 'done').length;
+  return Math.round((done / STAGE_NAMES.length) * 100);
+}
+
 function stagesFor(lecture: Lecture): ProcessingStage[] {
   const run = db.runtime.get(lecture.id);
   const current = STAGE_NAMES.indexOf(lecture.status as StageName);
@@ -94,7 +100,8 @@ export const mockLectureService: LectureService = {
     db.lectures.forEach(advance);
     const q = params.q?.trim().toLowerCase();
     const visible = db.lectures
-      .filter((l) => (user.role === 'teacher' ? l.uploadedBy === user.id : l.status === 'ready'))
+      // Students see a lecture only once it is ready AND its transcript is approved (CONTRACTS §1.5).
+      .filter((l) => (user.role === 'teacher' ? l.uploadedBy === user.id : l.status === 'ready' && l.transcriptApproved))
       .filter((l) => !params.status || l.status === params.status)
       .filter((l) => !q || l.title.toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -123,6 +130,7 @@ export const mockLectureService: LectureService = {
       statusDetail: lecture.statusDetail,
       error: clone(lecture.error),
       durationSec: lecture.durationSec,
+      progressPct: progressPctFor(lecture),
       stages: stagesFor(lecture),
       updatedAt: lecture.updatedAt,
     };
@@ -168,6 +176,8 @@ export const mockLectureService: LectureService = {
       error: null,
       durationSec: null,
       transcriptApproved: false,
+      transcriptApprovedBy: null,
+      transcriptApprovedAt: null,
       topicCount: null,
       uploadedBy: user.id,
       uploadedByName: user.name,
@@ -214,7 +224,11 @@ export const mockLectureService: LectureService = {
     lecture.status = fromStage;
     lecture.statusDetail = STAGE_DETAIL[fromStage];
     lecture.error = null;
-    if (fromStage === 'extracting' || fromStage === 'transcribing') lecture.transcriptApproved = false;
+    if (fromStage === 'extracting' || fromStage === 'transcribing') {
+      lecture.transcriptApproved = false;
+      lecture.transcriptApprovedBy = null;
+      lecture.transcriptApprovedAt = null;
+    }
     lecture.updatedAt = nowIso();
     const previous = db.runtime.get(id);
     db.runtime.set(id, { startedAtMs: Date.now(), fromStage, mediaUrl: previous?.mediaUrl });

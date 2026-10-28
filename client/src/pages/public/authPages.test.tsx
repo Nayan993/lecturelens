@@ -96,8 +96,8 @@ describe('login', () => {
     fireEvent.change(screen.getByLabelText(/^Password\*$/), { target: { value: 'wrong-password' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    const formError = await screen.findByText('Email or password is incorrect.', { selector: '#login-form-error p' });
-    expect(formError.textContent).toBe('Error: Email or password is incorrect.');
+    const formError = await screen.findByText('Invalid email or password', { selector: '#login-form-error p' });
+    expect(formError.textContent).toBe('Error: Invalid email or password');
     const region = screen.getByRole('status', { name: 'Status messages' });
     expect(region.getAttribute('aria-live')).toBe('polite');
     expect(within(region).getByText('Sign-in failed')).toBeTruthy();

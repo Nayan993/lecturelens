@@ -9,6 +9,11 @@ export const UNAUTHORISED_EVENT = 'll:unauthorised';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1';
 
+/** A server-relative URL from the API (e.g. a signed `mediaUrl`) made absolute against the API origin. */
+export function resolveApiUrl(url: string): string {
+  return new URL(url, new URL(API_BASE_URL, window.location.href)).toString();
+}
+
 /** Every failed API call (HTTP adapters and mock adapters alike) rejects with one of these. */
 export class ApiRequestError extends Error implements ApiError {
   readonly code: ApiErrorCode;
@@ -79,9 +84,14 @@ export function signalUnauthorised(requestId: string | null = null): void {
 
 export const apiClient = axios.create({ baseURL: API_BASE_URL, timeout: 30_000 });
 
+/** Routes that take no token (CONTRACTS §1.5). A 401 from these is a wrong password, not an ended session. */
+const PUBLIC_PATHS = ['/auth/login', '/auth/register'];
+const isPublic = (url: string | undefined) => PUBLIC_PATHS.some((p) => url?.split('?')[0]?.endsWith(p));
+
 apiClient.interceptors.request.use((config) => {
   const token = readToken();
-  if (token && !config.headers.has('Authorization')) config.headers.set('Authorization', `Bearer ${token}`);
+  // Never send a stale token to login/register: it is not needed and would muddle the 401 below.
+  if (token && !isPublic(config.url) && !config.headers.has('Authorization')) config.headers.set('Authorization', `Bearer ${token}`);
   return config;
 });
 
@@ -89,8 +99,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (err: AxiosError) => {
     const error = normaliseError(err);
-    // Only a request that carried a token means "your session ended"; a failed login is just a 401.
-    if (error.status === 401 && err.config?.headers?.has('Authorization')) signalUnauthorised(error.requestId);
+    // Only an authenticated request's 401 means "your session ended" — never a failed login or register.
+    if (error.status === 401 && !isPublic(err.config?.url) && err.config?.headers?.has('Authorization')) {
+      signalUnauthorised(error.requestId);
+    }
     return Promise.reject(error);
   },
 );

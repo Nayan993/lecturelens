@@ -22,6 +22,7 @@ const status = (s: ProcessingStatus['status']): ProcessingStatus => ({
   statusDetail: s,
   error: null,
   durationSec: null,
+  progressPct: s === 'ready' ? 100 : 0,
   stages: [],
   updatedAt: '2026-10-27T10:03:12.517Z',
 });

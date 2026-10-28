@@ -240,6 +240,18 @@ describe('navigation', () => {
     expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
   });
 
+  it('after a deliberate logout, the next sign-in starts at home, not the previous user\'s page', async () => {
+    renderApp('/app/upload', TEACHER_TOKEN);
+    fireEvent.click(await screen.findByRole('button', { name: /Dr\. Ananya Rao/ }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Log out' }));
+    await screen.findByRole('heading', { level: 1, name: 'Sign in' });
+    expect(screen.getByTestId('location').dataset.state).toBe('null'); // no return path offered
+    fireEvent.change(screen.getByLabelText(/^Email/), { target: { value: 'someone@example.edu' } });
+    fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: 'lecturelens' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(screen.getByTestId('location').textContent).toBe('/app/dashboard'));
+  });
+
   it('mobile drawer opens from the header, closes on Escape and returns focus', async () => {
     renderApp('/app/dashboard', STUDENT_TOKEN);
     const button = await screen.findByRole('button', { name: 'Open navigation' });

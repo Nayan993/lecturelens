@@ -9,10 +9,11 @@
  *  Enforced by src/services/boundaries.test.ts, which fails the test suite on a violation.
  *
  *  Adapter per domain comes from VITE_USE_MOCKS (parsed once, at module load):
- *    all                       every domain uses services/mock   (default)
+ *    all                       every domain uses services/mock   (default in dev only)
  *    none                      every domain uses services/http
  *    auth,lectures,transcript  only the listed domains are mocked; the rest use http
  *  Domains: auth, lectures, transcript, topics, summaries, search, qa, quizzes, revision.
+ *  Unset in a production build means `none`: fixture data must never ship as real data.
  * ============================================================================================
  */
 import { httpServices } from './http';
@@ -22,9 +23,12 @@ import { SERVICE_DOMAINS, type ServiceDomain, type Services } from './types';
 export type { Services, ServiceDomain } from './types';
 export * from './types';
 
-/** Parse a VITE_USE_MOCKS value into the set of mocked domains. Unknown names are ignored with a warning. */
-export function parseMockFlag(raw: string | undefined): Set<ServiceDomain> {
-  const value = (raw ?? 'all').trim().toLowerCase();
+/**
+ * Parse a VITE_USE_MOCKS value into the set of mocked domains. Unknown names are ignored with a
+ * warning. When unset: `all` in development, `none` in production builds.
+ */
+export function parseMockFlag(raw: string | undefined, fallback: 'all' | 'none' = 'all'): Set<ServiceDomain> {
+  const value = (raw ?? fallback).trim().toLowerCase();
   if (value === '' || value === 'all') return new Set(SERVICE_DOMAINS);
   if (value === 'none') return new Set();
   const mocked = new Set<ServiceDomain>();
@@ -51,7 +55,10 @@ export function selectServices(mocked: Set<ServiceDomain>): Services {
   };
 }
 
-export const mockedDomains: ReadonlySet<ServiceDomain> = parseMockFlag(import.meta.env.VITE_USE_MOCKS);
+export const mockedDomains: ReadonlySet<ServiceDomain> = parseMockFlag(
+  import.meta.env.VITE_USE_MOCKS,
+  import.meta.env.PROD ? 'none' : 'all',
+);
 
 export const services: Services = selectServices(new Set(mockedDomains));
 
