@@ -1,4 +1,4 @@
-import type { Id, IsoDateTime } from './common';
+import type { Id, IsoDateTime, PageParams } from './common';
 import type { OptionId, Question, StudentQuestion } from './question';
 
 /** docs/CONTRACTS.md §5.7. Students get StudentQuestion[]; the owning teacher gets Question[]. */
@@ -11,6 +11,27 @@ export interface Quiz {
   topicIds: Id[];
   questions: StudentQuestion[] | Question[];
   createdAt: IsoDateTime;
+}
+
+/** One row of GET /quizzes — docs/CONTRACTS.md §5.7. */
+export interface QuizSummary {
+  id: Id;
+  lectureId: Id;
+  lectureTitle: string;
+  title: string;
+  /** Approved topics covered by the quiz's questions. */
+  topics: Array<{ id: Id; label: string }>;
+  questionCount: number;
+  createdAt: IsoDateTime;
+  attemptCount: number;
+  bestScore: Score | null;
+  lastAttemptId: Id | null;
+  lastAttemptAt: IsoDateTime | null;
+}
+
+/** GET /quizzes query. */
+export interface ListQuizzesParams extends PageParams {
+  lectureId?: Id;
 }
 
 /** POST /quizzes body. */

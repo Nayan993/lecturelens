@@ -17,6 +17,10 @@ import App from './App.tsx';
 import { queryClient } from './lib/queryClient';
 import { ToastProvider } from './components/ui';
 import { AuthProvider } from './context/AuthContext';
+import { initTheme } from './lib/theme';
+
+// Before the first render, so a saved dark theme doesn't flash light.
+initTheme();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

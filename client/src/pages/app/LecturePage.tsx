@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { ListChecks, MessageCircleQuestion, NotebookText } from 'lucide-react';
+import { NotebookText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isApiError, isNotImplemented } from '../../lib/apiClient';
 import { formatDuration, parseTimeParam } from '../../lib/formatTime';
@@ -16,6 +16,8 @@ import { TranscriptPanel, type FollowRequest } from '../../features/transcript/c
 import { SummaryPanel } from '../../features/topics/components/SummaryPanel';
 import { TopicRail } from '../../features/topics/components/TopicRail';
 import { useTopics } from '../../features/topics/hooks';
+import { AskPanel } from '../../features/qa/components/AskPanel';
+import { QuizPanel } from '../../features/quizzes/components/QuizPanel';
 
 /** Save "where I stopped" at most every 5 s of playback movement, and on leaving the page. */
 const SAVE_EVERY_SEC = 5;
@@ -43,10 +45,6 @@ function ReadingSkeleton() {
       </div>
     </div>
   );
-}
-
-function PartTwoPlaceholder({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
-  return <EmptyState icon={icon} title={title} description={description} />;
 }
 
 function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: number | null }) {
@@ -120,24 +118,8 @@ function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: nu
             items={[
               { value: 'transcript', label: 'Transcript', content: <TranscriptPanel lectureId={lecture.id} followRequest={followRequest} /> },
               { value: 'summary', label: 'Summary', content: <SummaryPanel lectureId={lecture.id} durationSec={lecture.durationSec} /> },
-              {
-                value: 'ask',
-                label: 'Ask',
-                content: (
-                  <PartTwoPlaceholder
-                    icon={<MessageCircleQuestion />}
-                    title="Ask about this lecture"
-                    description="Questions answered from the lecture, with timestamp citations, arrive in the next build."
-                  />
-                ),
-              },
-              {
-                value: 'quiz',
-                label: 'Quiz',
-                content: (
-                  <PartTwoPlaceholder icon={<ListChecks />} title="Practice quiz" description="Teacher-approved quizzes for this lecture arrive in the next build." />
-                ),
-              },
+              { value: 'ask', label: 'Ask', content: <AskPanel lectureId={lecture.id} onScreenLectureId={lecture.id} /> },
+              { value: 'quiz', label: 'Quiz', content: <QuizPanel lectureId={lecture.id} /> },
             ]}
           />
         </section>

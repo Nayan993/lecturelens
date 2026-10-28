@@ -88,6 +88,7 @@ export const mockQaService: QaService = {
       question,
       lectureId: lectureId ?? null,
       retriever,
+      topScore: top[0]?.score ?? null,
       latencyMs: Math.round(performance.now() - started),
     };
     return result;

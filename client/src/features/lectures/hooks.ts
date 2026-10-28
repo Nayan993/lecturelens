@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { services } from '../../services';
 import { queryKeys } from '../../lib/queryKeys';
 import type { Id, ListLecturesParams, ProcessingStatus, StageName } from '../../types';
@@ -82,4 +82,19 @@ export function useReprocessLecture() {
     mutationFn: ({ id, fromStage }: { id: Id; fromStage?: StageName }) => services.lectures.reprocess(id, fromStage),
     onSuccess: (_lecture, { id }) => queryClient.invalidateQueries({ queryKey: queryKeys.lectures.all, predicate: (q) => q.queryKey.includes(id) || q.queryKey[1] === 'list' }),
   });
+}
+
+/** id → title for a handful of lectures (citations, revision items), one cached query each. */
+export function useLectureTitles(ids: Id[]): Map<Id, string> {
+  const unique = [...new Set(ids)];
+  const results = useQueries({
+    queries: unique.map((id) => ({
+      queryKey: queryKeys.lectures.detail(id),
+      queryFn: () => services.lectures.get(id),
+      staleTime: 5 * 60_000,
+    })),
+  });
+  const titles = new Map<Id, string>();
+  results.forEach((r, i) => r.data && titles.set(unique[i], r.data.title));
+  return titles;
 }

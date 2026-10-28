@@ -1,4 +1,4 @@
-import type { Id, ListLecturesParams, ListQuestionsParams, SearchRequest } from '../types';
+import type { Id, ListLecturesParams, ListQuestionsParams, ListQuizzesParams, SearchRequest } from '../types';
 
 /**
  * Every TanStack Query key in the app. Keys are hierarchical so a prefix invalidates a family,
@@ -21,7 +21,9 @@ export const queryKeys = {
     list: (params: ListQuestionsParams) => [...queryKeys.questions.all, params] as const,
   },
   quizzes: {
-    detail: (id: Id) => ['quizzes', id] as const,
+    all: ['quizzes'] as const,
+    list: (params: ListQuizzesParams = {}) => ['quizzes', 'list', params] as const,
+    detail: (id: Id) => ['quizzes', 'detail', id] as const,
   },
   attempts: {
     detail: (id: Id) => ['attempts', id] as const,

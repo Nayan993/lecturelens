@@ -37,3 +37,12 @@ export function parseTimeParam(value: string | null): number | null {
   const n = Number(trimmed);
   return Number.isFinite(n) ? Math.round(n * 1000) / 1000 : null;
 }
+
+/**
+ * Server processing time (integer ms, e.g. latencyMs) for quiet metadata: 412 → "412 ms",
+ * 1874 → "1.9 s". Not for media offsets — use formatTimestamp for those.
+ */
+export function formatLatency(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return '—';
+  return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+}

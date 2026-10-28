@@ -19,6 +19,8 @@ interface GroundedAnswerBase {
   question: string;
   lectureId: Id | null;
   retriever: Retriever;
+  /** Best retrieval score among the passages considered (same scale as search); null if none. */
+  topScore: number | null;
   model: string;
   promptVersion: string;
   cached: boolean;

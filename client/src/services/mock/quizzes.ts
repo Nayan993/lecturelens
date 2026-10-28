@@ -6,6 +6,7 @@ import type {
   PerTopicScore,
   Question,
   Quiz,
+  QuizSummary,
   StudentQuestion,
   User,
 } from '../../types';
@@ -176,6 +177,44 @@ export const mockQuizService: QuizService = {
     }
     question.updatedAt = nowIso();
     return clone(question);
+  },
+
+  async list({ lectureId, page = 1, limit = 20 } = {}) {
+    await delay();
+    const user = requireUser();
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) fail(422, 'VALIDATION_FAILED', 'Query is invalid.', { limit: 'Must be 1–100' });
+    const topicsById = new Map(approvedFor(user, db.topics).map((t) => [t.id, t]));
+    const mine = db.quizzes
+      .filter((q) => q.createdBy === user.id && (!lectureId || q.lectureId === lectureId))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const items = mine.slice((page - 1) * limit, page * limit).map((stored): QuizSummary => {
+      // Same approved filter GET /quizzes/:id applies, so counts match what the quiz will show.
+      const questions = stored.questionIds
+        .map((qid) => db.questions.find((q) => q.id === qid))
+        .filter((q): q is Question => q !== undefined && q.status === 'approved');
+      const topicIds = [...new Set(questions.map((q) => q.topicId))].filter((id) => topicsById.has(id));
+      const topics = topicIds
+        .map((id) => topicsById.get(id)!)
+        .sort((a, b) => a.index - b.index)
+        .map((t) => ({ id: t.id, label: t.label }));
+      const attempts = db.attempts.filter((a) => a.quizId === stored.id && a.studentId === user.id);
+      const best = attempts.reduce<Attempt | null>((b, a) => (!b || a.score.accuracy > b.score.accuracy ? a : b), null);
+      const last = attempts.reduce<Attempt | null>((l, a) => (!l || a.submittedAt > l.submittedAt ? a : l), null);
+      return {
+        id: stored.id,
+        lectureId: stored.lectureId,
+        lectureTitle: db.lectures.find((l) => l.id === stored.lectureId)?.title ?? 'Lecture',
+        title: stored.title,
+        topics,
+        questionCount: questions.length,
+        createdAt: stored.createdAt,
+        attemptCount: attempts.length,
+        bestScore: best ? clone(best.score) : null,
+        lastAttemptId: last?.id ?? null,
+        lastAttemptAt: last?.submittedAt ?? null,
+      };
+    });
+    return { items, page, limit, total: mine.length };
   },
 
   async create({ lectureId, topicIds = [], questionCount = 10 }) {

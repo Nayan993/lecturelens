@@ -148,7 +148,7 @@ describe('route table', () => {
     ['/app/ask', /^Ask$/],
     ['/app/quizzes', /^Quizzes$/],
     ['/app/quizzes/6650c3a0c3b2e41d8a700001', /^Quiz$/],
-    ['/app/revision', /^Revision$/],
+    ['/app/revision', /^Revision plan$/],
     ['/app/settings', /^Settings$/],
   ];
   const TEACHER_ONLY: Array<[string, RegExp]> = [

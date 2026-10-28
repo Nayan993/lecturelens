@@ -16,10 +16,12 @@ import type {
   LectureDetail,
   ListLecturesParams,
   ListQuestionsParams,
+  ListQuizzesParams,
   Paginated,
   ProcessingStatus,
   Question,
   Quiz,
+  QuizSummary,
   RegisterPayload,
   RejectPayload,
   RevisionPlan,
@@ -113,6 +115,8 @@ export interface QuizService {
   generateQuestions(lectureId: Id, payload?: GenerateQuestionsPayload): Promise<Question[]>;
   /** PATCH /questions/:id */
   updateQuestion(id: Id, payload: UpdateQuestionPayload): Promise<Question>;
+  /** GET /quizzes — the caller's quizzes with best scores. */
+  list(params?: ListQuizzesParams): Promise<Paginated<QuizSummary>>;
   /** POST /quizzes */
   create(payload: CreateQuizPayload): Promise<Quiz>;
   /** GET /quizzes/:id */

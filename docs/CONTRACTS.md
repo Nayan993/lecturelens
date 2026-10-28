@@ -453,6 +453,7 @@ Routes marked **(+)** were added beyond the minimum list to make the flows compl
 | GET | `/questions` | C | teacher | Paginated question bank for own lectures (review queue) |
 | PATCH | `/questions/:id` | C | owner | Edit and/or approve/reject a question → `{ question }` |
 | POST | `/quizzes` | C | any | Build a quiz from approved questions → `201 { quiz }` |
+| GET | `/quizzes` **(+)** | C | any | Paginated `QuizSummary` list of the caller's quizzes, with best score |
 | GET | `/quizzes/:id` | C | quiz creator / owner | Get quiz `{ quiz }` |
 | POST | `/quizzes/:id/attempts` | C | student | Submit answers, get scored attempt → `201 { attempt }` |
 | GET | `/attempts/:id` | C | attempt's student / owner | Get scored attempt `{ attempt }` |
@@ -549,7 +550,11 @@ corrections**; from `chunking` onward keeps corrected segments.
 - Provider unreachable is **not** an abstain: it is `503 PROVIDER_UNAVAILABLE`.
 
 When abstained: `answerable: false`, `abstained: true`, `abstainReason` set, `answer: null`,
-`citations: []`, `confidence: null`. When answered: `abstainReason: null` and ≥ 1 citation.
+`citations: []`, `confidence: null`.
+
+Every answer carries `topScore`: the highest retrieval `score` among the passages considered
+(same scale as `POST /search` for that retriever), or `null` when no passage was retrieved. It is
+shown as grounding evidence, and explains `NO_RELEVANT_PASSAGE` (the top score was under the threshold). When answered: `abstainReason: null` and ≥ 1 citation.
 Answer text references citations with `[n]` markers matching `citation.marker`.
 
 `deepLink` (passages, citations, revision items, attempt answers) is **built by the server**:
@@ -572,6 +577,12 @@ Answer text references citations with `[n]` markers matching `citation.marker`.
   questions. `GET /quizzes/:id` re-applies the approved filter, so a question un-approved after
   quiz creation disappears from the quiz.
 - `quiz` object: `{ id, lectureId, createdBy, title, topicIds, questions, createdAt }`.
+- `GET /quizzes` query `lectureId?`, `page`, `limit` → `Paginated<QuizSummary>` of quizzes the caller
+  created, newest first. `QuizSummary`:
+  `{ id, lectureId, lectureTitle, title, topics: [{ id, label }], questionCount, createdAt,
+  attemptCount, bestScore: { correct, total, accuracy } | null, lastAttemptId: id | null, lastAttemptAt: date | null }`.
+  `topics` are the approved topics the quiz's (approved) questions cover; `questionCount` re-applies the
+  approved filter, matching what `GET /quizzes/:id` returns.
 - `POST /quizzes/:id/attempts` body `{ startedAt, answers: [{ questionId, selectedOptionId | null }] }`
   — one answer per quiz question. Returns `201 { attempt }` (scored, with correct answers and
   explanations), then regenerates the student's revision plan.
@@ -795,6 +806,7 @@ L2 norm 1. It is never sent to clients.
   ],
   "confidence": 0.86,
   "retriever": "hybrid",
+  "topScore": 0.0325,
   "model": "llama-3.3-70b-versatile",
   "promptVersion": "answer-v1",
   "cached": false,
@@ -815,6 +827,7 @@ L2 norm 1. It is never sent to clients.
   "citations": [],
   "confidence": null,
   "retriever": "hybrid",
+  "topScore": 0.0091,
   "model": "llama-3.3-70b-versatile",
   "promptVersion": "answer-v1",
   "cached": false,

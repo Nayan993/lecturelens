@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { services } from '../../services';
 import { queryKeys } from '../../lib/queryKeys';
-import type { CreateQuizPayload, GenerateQuestionsPayload, Id, ListQuestionsParams, SubmitAttemptPayload, UpdateQuestionPayload } from '../../types';
+import type { CreateQuizPayload, GenerateQuestionsPayload, Id, ListQuestionsParams, ListQuizzesParams, SubmitAttemptPayload, UpdateQuestionPayload } from '../../types';
 
 /** GET /questions — the teacher's question bank / review queue. */
 export function useQuestions(params: ListQuestionsParams | undefined) {
@@ -36,7 +36,10 @@ export function useCreateQuiz() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateQuizPayload) => services.quizzes.create(payload),
-    onSuccess: (quiz) => queryClient.setQueryData(queryKeys.quizzes.detail(quiz.id), quiz),
+    onSuccess: (quiz) => {
+      queryClient.setQueryData(queryKeys.quizzes.detail(quiz.id), quiz);
+      return queryClient.invalidateQueries({ queryKey: queryKeys.quizzes.all });
+    },
   });
 }
 
@@ -56,7 +59,10 @@ export function useSubmitAttempt(quizId: Id) {
     mutationFn: (payload: SubmitAttemptPayload) => services.quizzes.submitAttempt(quizId, payload),
     onSuccess: (attempt) => {
       queryClient.setQueryData(queryKeys.attempts.detail(attempt.id), attempt);
-      return queryClient.invalidateQueries({ queryKey: queryKeys.revision.all });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.revision.all }),
+        queryClient.invalidateQueries({ queryKey: [...queryKeys.quizzes.all, 'list'] }),
+      ]);
     },
   });
 }
@@ -68,5 +74,13 @@ export function useAttempt(id: Id | undefined) {
     queryFn: () => services.quizzes.getAttempt(id!),
     enabled: Boolean(id),
     staleTime: Infinity,
+  });
+}
+
+/** GET /quizzes — the caller's quizzes with coverage and best score. */
+export function useQuizzes(params: ListQuizzesParams = {}) {
+  return useQuery({
+    queryKey: queryKeys.quizzes.list(params),
+    queryFn: () => services.quizzes.list(params),
   });
 }

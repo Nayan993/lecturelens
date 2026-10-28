@@ -1,5 +1,5 @@
 import { apiClient } from '../../lib/apiClient';
-import type { Attempt, Paginated, Question, Quiz, RevisionPlan } from '../../types';
+import type { Attempt, Paginated, Question, Quiz, QuizSummary, RevisionPlan } from '../../types';
 import type { QuizService, RevisionService } from '../types';
 
 export const httpQuizService: QuizService = {
@@ -11,6 +11,9 @@ export const httpQuizService: QuizService = {
   },
   async updateQuestion(id, payload) {
     return (await apiClient.patch<{ question: Question }>(`/questions/${id}`, payload)).data.question;
+  },
+  async list(params) {
+    return (await apiClient.get<Paginated<QuizSummary>>('/quizzes', { params })).data;
   },
   async create(payload) {
     return (await apiClient.post<{ quiz: Quiz }>('/quizzes', payload)).data.quiz;
