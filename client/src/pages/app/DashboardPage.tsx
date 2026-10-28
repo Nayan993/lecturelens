@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, GraduationCap, LayoutDashboard, LibraryBig, Play, Target } from 'lucide-react';
+import { ArrowRight, GraduationCap, LibraryBig, Play, Target } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isNotImplemented } from '../../lib/apiClient';
 import { formatDuration, formatTimestamp } from '../../lib/formatTime';
@@ -11,7 +11,7 @@ import { Badge, buttonClasses, Card, CardContent, CardHeader, CardTitle, EmptySt
 import { LectureCard, LectureCardSkeleton } from '../../features/lectures/components/LectureCard';
 import { useLecture, useLectures } from '../../features/lectures/hooks';
 import { useRevisionPlan } from '../../features/revision/hooks';
-import { StubPage } from '../StubPage';
+import { TeacherDashboard } from '../teacher/TeacherDashboard';
 
 /** "Dr. Ananya Rao" → "Ananya"; skips honorifics like "Dr." and "Prof.". */
 export function firstName(name: string): string {
@@ -222,11 +222,9 @@ function StudentDashboard() {
   );
 }
 
-/** /app/dashboard: the student dashboard; the teacher dashboard arrives in a later prompt. */
+/** /app/dashboard: per role. */
 export function DashboardPage() {
   const { user } = useAuth();
-  if (user?.role === 'teacher') {
-    return <StubPage title="Teacher dashboard" description={`Signed in as ${user.name}.`} comingIn="P1.6" icon={<LayoutDashboard />} />;
-  }
+  if (user?.role === 'teacher') return <TeacherDashboard />;
   return <StudentDashboard />;
 }

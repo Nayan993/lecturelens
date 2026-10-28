@@ -141,7 +141,7 @@ describe('AuthContext', () => {
 
 describe('route table', () => {
   const SHARED: Array<[string, RegExp]> = [
-    ['/app/dashboard', /dashboard|^Good (morning|afternoon|evening), /i],
+    ['/app/dashboard', /^Welcome back, |^Good (morning|afternoon|evening), /i],
     ['/app/lectures', /lectures/i],
     ['/app/lectures/6650c3a0c3b2e41d8a100001', /^Lecture 7 — Gradient Descent and Backpropagation$/],
     ['/app/search', /^Search$/],
@@ -277,6 +277,7 @@ describe('navigation', () => {
       { label: 'Lecture', to: '/app/lectures/6650c3a0c3b2e41d8a100001' },
     ]);
     expect(buildBreadcrumbs('/app/review', 'teacher')).toEqual([{ label: 'Review Queue', to: '/app/review' }]);
+    expect(buildBreadcrumbs('/app/lectures/abc/review', 'teacher').map((c) => c.label)).toEqual(['My Lectures', 'Lecture', 'Transcript review']);
     expect(buildBreadcrumbs('/login', undefined)).toEqual([]);
   });
 

@@ -249,9 +249,9 @@ describe('processing status view (teacher)', () => {
 });
 
 describe('library', () => {
-  it('teacher: filter chips, title search, sort and the de-emphasised non-ready cards', async () => {
+  it('teacher: table with filter chips, title search and sort', async () => {
     renderAs(TEACHER, '/app/lectures');
-    await screen.findByText('6 lectures available');
+    await screen.findByText('6 lectures uploaded');
     const cards = () => screen.getAllByRole('link').filter((a) => a.getAttribute('href')?.startsWith('/app/lectures/'));
     expect(cards()).toHaveLength(6);
 
@@ -260,7 +260,7 @@ describe('library', () => {
     const processing = cards().map((a) => a.textContent);
     expect(processing).toEqual(expect.arrayContaining(['Lecture 10 — Convolutional Neural Networks', 'Lecture 9 — Regularisation: Weight Decay and Dropout']));
     expect(screen.queryByText('Ready', { selector: '[data-status]' })).toBeNull();
-    expect(screen.getByText('Lecture 9 — Regularisation: Weight Decay and Dropout').closest('.opacity-75')).not.toBeNull();
+    expect(within(screen.getByText('Lecture 9 — Regularisation: Weight Decay and Dropout').closest('tr')!).getByText('Transcribing')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'longest' } });

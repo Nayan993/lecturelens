@@ -32,6 +32,7 @@ const SettingsPage = lazy(() => appPages().then((m) => ({ default: m.SettingsPag
 const UploadPage = lazy(() => teacherPages().then((m) => ({ default: m.UploadPage })));
 const ReviewPage = lazy(() => teacherPages().then((m) => ({ default: m.ReviewPage })));
 const StudentsPage = lazy(() => teacherPages().then((m) => ({ default: m.StudentsPage })));
+const TranscriptReviewPage = lazy(() => teacherPages().then((m) => ({ default: m.TranscriptReviewPage })));
 
 // Dev-only kitchen sink. import.meta.env.DEV is statically false in production builds,
 // so the route and its chunk are removed entirely.
@@ -56,7 +57,7 @@ function DeepLinkRedirect() {
  * The full route table.
  * Public: /  /login  /register  ·  Errors: /403, * (404)
  * App (RequireAuth + AppLayout): dashboard, lectures, lectures/:id, search, ask, quizzes, quizzes/:id,
- *   revision, settings  ·  teacher only (RequireRole): upload, review, students
+ *   revision, settings  ·  teacher only (RequireRole): upload, review, students, lectures/:id/review
  */
 export function AppRoutes() {
   return (
@@ -89,6 +90,7 @@ export function AppRoutes() {
           <Route path="upload" element={<UploadPage />} />
           <Route path="review" element={<ReviewPage />} />
           <Route path="students" element={<StudentsPage />} />
+          <Route path="lectures/:id/review" element={<TranscriptReviewPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

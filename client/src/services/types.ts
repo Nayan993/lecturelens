@@ -11,6 +11,7 @@ import type {
   GenerateQuestionsPayload,
   GroundedAnswer,
   Id,
+  CreateLectureOptions,
   Lecture,
   LectureCollection,
   LectureDetail,
@@ -58,8 +59,11 @@ export interface LectureService {
   get(id: Id): Promise<LectureDetail>;
   /** GET /lectures/:id/status */
   getStatus(id: Id): Promise<ProcessingStatus>;
-  /** POST /lectures (multipart: file, title, courseCode?, description?, lecturerConsent, purposeShown, processorNamed) */
-  create(form: FormData): Promise<Lecture>;
+  /**
+   * POST /lectures (multipart: file, title, courseCode?, description?, recordedOn?, notes?,
+   * lecturerConsent, purposeShown, processorNamed). Reports upload progress when asked.
+   */
+  create(form: FormData, options?: CreateLectureOptions): Promise<Lecture>;
   /** DELETE /lectures/:id */
   remove(id: Id): Promise<void>;
   /** POST /lectures/:id/reprocess */

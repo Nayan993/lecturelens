@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, LibraryBig, Search } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, LibraryBig, Search, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isNotImplemented } from '../../lib/apiClient';
 import { cn } from '../../lib/cn';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import type { Lecture } from '../../types';
-import { Button, EmptyState, ErrorState, Input, Select } from '../../components/ui';
+import { Button, buttonClasses, EmptyState, ErrorState, Input, Select, Skeleton } from '../../components/ui';
 import { LectureCard, LectureCardSkeleton } from '../../features/lectures/components/LectureCard';
 import { useLectures } from '../../features/lectures/hooks';
+import { TeacherLecturesTable } from '../../features/lectures/components/TeacherLecturesTable';
+import { useReviewQueue } from '../../features/review/hooks';
 
 export const PAGE_SIZE = 12;
 
@@ -41,6 +43,7 @@ const SORTERS: Record<Sort, (a: Lecture, b: Lecture) => number> = {
  */
 export function LecturesPage() {
   const { user } = useAuth();
+  const isTeacher = user?.role === 'teacher';
   const title = user?.role === 'teacher' ? 'My Lectures' : 'Lectures';
   useDocumentTitle(title);
   const [params, setParams] = useSearchParams();
@@ -73,11 +76,19 @@ export function LecturesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink-1">{title}</h1>
-        <p className="text-sm text-ink-2">
-          {data ? `${data.total} ${data.total === 1 ? 'lecture' : 'lectures'} available` : 'Loading your lectures…'}
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink-1">{title}</h1>
+          <p className="text-sm text-ink-2">
+            {data ? `${data.total} ${data.total === 1 ? 'lecture' : 'lectures'} ${isTeacher ? 'uploaded' : 'available'}` : 'Loading your lectures…'}
+          </p>
+        </div>
+        {isTeacher && (
+          <Link to="/app/upload" className={buttonClasses()}>
+            <Upload aria-hidden className="h-4 w-4" />
+            Upload lecture
+          </Link>
+        )}
       </header>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -121,7 +132,13 @@ export function LecturesPage() {
         </Select>
       </div>
 
-      {lecturesQ.isPending ? (
+      {lecturesQ.isPending && isTeacher ? (
+        <div aria-busy="true" aria-label="Loading lectures" className="flex flex-col gap-2">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton key={i} height={44} />
+          ))}
+        </div>
+      ) : lecturesQ.isPending ? (
         <ul aria-busy="true" aria-label="Loading lectures" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
             <li key={i}>
@@ -136,7 +153,11 @@ export function LecturesPage() {
           <ErrorState message={lecturesQ.error.message} onRetry={() => void lecturesQ.refetch()} />
         )
       ) : data!.total === 0 ? (
-        <EmptyState icon={<LibraryBig />} title="No lectures yet — ask your teacher to upload one" description="Lectures appear here as soon as they’re ready." />
+        isTeacher ? (
+          <EmptyState icon={<Upload />} title="No lectures yet" description="Upload your first recording to get a transcript, topics and summaries." />
+        ) : (
+          <EmptyState icon={<LibraryBig />} title="No lectures yet — ask your teacher to upload one" description="Lectures appear here as soon as they’re ready." />
+        )
       ) : shown.length === 0 ? (
         <EmptyState
           icon={<Search />}
@@ -144,6 +165,8 @@ export function LecturesPage() {
           description="Try a different title or status."
           action={{ label: 'Clear search and filters', onClick: () => update({ q: null, filter: null }) }}
         />
+      ) : isTeacher ? (
+        <TeacherLectureList lectures={shown} />
       ) : (
         <ul className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3', lecturesQ.isPlaceholderData && 'opacity-60')}>
           {shown.map((lecture) => (
@@ -174,4 +197,10 @@ export function LecturesPage() {
 /** Typing in the search box replaces the history entry instead of adding one per keystroke. */
 function isSearchTyping(patch: Record<string, string | null>): boolean {
   return Object.keys(patch).length === 1 && 'q' in patch;
+}
+
+/** Teacher variant: a table with per-lecture review counts (only teachers can query those). */
+function TeacherLectureList({ lectures }: { lectures: Lecture[] }) {
+  const queue = useReviewQueue();
+  return <TeacherLecturesTable lectures={lectures} pendingCount={queue.pendingCount} />;
 }

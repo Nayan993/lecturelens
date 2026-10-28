@@ -193,6 +193,8 @@ Indexes: `{ email: 1 }` unique.
 | `title` | string R | 1–200 chars |
 | `courseCode` | string \| null | e.g. `"CS 3410"` |
 | `description` | string \| null | ≤ 2000 chars |
+| `recordedOn` | string \| null | calendar date `YYYY-MM-DD` the lecture was given; `null` if not supplied |
+| `notes` | string \| null S | teacher's lecture notes from upload; kept for later use, not serialised in v1 |
 | `uploadedBy` | ObjectId R | → `users` (a teacher) |
 | `consent` | object R | embedded, see below; upload is rejected unless all three booleans are `true` |
 | `consent.lecturerConsent` | boolean R | lecturer agreed to recording being processed |
@@ -477,10 +479,12 @@ lists use `{ items, ... }` as in §1.4.
 
 | Field | Type | Rules |
 | --- | --- | --- |
-| `file` | file R | `video/mp4`, `video/webm`, `video/quicktime`, `audio/mpeg`, `audio/wav`, `audio/mp4`; ≤ `MAX_UPLOAD_MB` |
+| `file` | file R | `.mp4` `.mkv` `.mov` `.webm` `.mp3` `.wav` `.m4a` — MIME `video/mp4`, `video/x-matroska`, `video/quicktime`, `video/webm`, `audio/mpeg`, `audio/wav` (also `audio/x-wav`, `audio/wave`), `audio/mp4` (also `audio/x-m4a`); ≤ `MAX_UPLOAD_MB`. Browsers often send an empty or generic type (notably for `.mkv`), so the server decides by extension plus content sniffing, not the declared type alone. |
 | `title` | text R | 1–200 chars |
 | `courseCode` | text | optional |
-| `description` | text | optional |
+| `description` | text | optional, ≤ 2000 chars |
+| `recordedOn` | text | optional calendar date `YYYY-MM-DD` (a date, not a time — §1.2 does not apply); not in the future |
+| `notes` | text | optional lecture notes, ≤ 10000 chars; stored for later use (e.g. LLM context), not serialised in v1 |
 | `lecturerConsent` | text R | must be `"true"` |
 | `purposeShown` | text R | must be `"true"` |
 | `processorNamed` | text R | must be `"true"` |
@@ -604,6 +608,7 @@ All examples are taken from or consistent with `mocks/` (lecture `6650c3a0c3b2e4
   "title": "Lecture 7 — Gradient Descent and Backpropagation",
   "courseCode": "CS 3410",
   "description": "Gradient descent, learning rates, SGD and mini-batches, the chain rule, and backpropagation through a two-layer network.",
+  "recordedOn": "2026-10-20",
   "status": "ready",
   "statusDetail": "Ready.",
   "error": null,

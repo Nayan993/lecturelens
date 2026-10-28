@@ -57,7 +57,8 @@ export function useLectureStatus(id: Id | undefined) {
 export function useCreateLecture() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (form: FormData) => services.lectures.create(form),
+    mutationFn: ({ form, onUploadProgress }: { form: FormData; onUploadProgress?: (fraction: number) => void }) =>
+      services.lectures.create(form, { onUploadProgress }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.lectures.lists() }),
   });
 }

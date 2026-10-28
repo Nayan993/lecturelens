@@ -190,7 +190,7 @@ describe('Toast', () => {
         <ToastHarness />
       </ToastProvider>,
     );
-    const region = screen.getByRole('status', { name: 'Notifications' });
+    const region = screen.getByRole('status', { name: 'Status messages' });
     expect(region.getAttribute('aria-live')).toBe('polite');
     fireEvent.click(screen.getByRole('button', { name: 'Notify' }));
     expect(region.textContent).toContain('Saved');
@@ -208,7 +208,7 @@ describe('Toast', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Notify' }));
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss notification' }));
-    expect(screen.getByRole('status', { name: 'Notifications' }).textContent).toBe('');
+    expect(screen.getByRole('status', { name: 'Status messages' }).textContent).toBe('');
   });
 });
 

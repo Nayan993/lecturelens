@@ -39,6 +39,8 @@ export interface Lecture {
   title: string;
   courseCode: string | null;
   description: string | null;
+  /** Calendar date the lecture was given, "YYYY-MM-DD" (a date, not a time); null if not supplied. */
+  recordedOn: string | null;
   status: LectureStatus;
   statusDetail: string;
   error: LectureError | null;
@@ -62,6 +64,12 @@ export interface Lecture {
  */
 export interface LectureDetail extends Lecture {
   mediaUrl: string;
+}
+
+/** Client-side options for POST /lectures. */
+export interface CreateLectureOptions {
+  /** Upload progress as a fraction 0–1 (from the browser's upload events). */
+  onUploadProgress?: (fraction: number) => void;
 }
 
 export interface ListLecturesParams extends PageParams {

@@ -122,7 +122,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         role="status"
         aria-live="polite"
-        aria-label="Notifications"
+        aria-label="Status messages"
         className="pointer-events-none fixed bottom-0 right-0 z-[60] flex w-full max-w-sm flex-col gap-2 p-4"
       >
         {toasts.map((t) => (

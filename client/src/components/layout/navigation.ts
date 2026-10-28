@@ -89,7 +89,9 @@ export function buildBreadcrumbs(pathname: string, role: Role | undefined): Crum
     const segment = segments[i];
     const to = `/${segments.slice(0, i + 1).join('/')}`;
     const parent = segments[i - 1];
-    let label = SEGMENT_LABELS[segment] ?? DETAIL_LABELS[parent] ?? 'Not found';
+    // /app/lectures/:id/review is a lecture's transcript review, not the Review Queue.
+    const isTranscriptReview = segment === 'review' && segments[i - 2] === 'lectures';
+    let label = isTranscriptReview ? 'Transcript review' : (SEGMENT_LABELS[segment] ?? DETAIL_LABELS[parent] ?? 'Not found');
     if (segment === 'lectures' && role === 'teacher') label = 'My Lectures';
     crumbs.push({ label, to });
   }

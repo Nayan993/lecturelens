@@ -42,9 +42,9 @@ export function LectureCard({ lecture, className }: { lecture: Lecture; classNam
           <dd className="truncate">{lecture.uploadedByName}</dd>
         </div>
         <div className="flex items-center gap-1.5">
-          <dt className="sr-only">Added</dt>
+          <dt className="sr-only">{lecture.recordedOn ? 'Recorded' : 'Added'}</dt>
           <CalendarDays aria-hidden className="h-3.5 w-3.5 shrink-0 text-ink-3" />
-          <dd>{formatDate(lecture.createdAt)}</dd>
+          <dd>{formatDate(lecture.recordedOn ? `${lecture.recordedOn}T12:00:00Z` : lecture.createdAt)}</dd>
         </div>
         <div className="flex items-center gap-1.5">
           <dt className="sr-only">Duration</dt>

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { NotebookText } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { FilePenLine, NotebookText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isApiError, isNotImplemented } from '../../lib/apiClient';
 import { formatDuration, parseTimeParam } from '../../lib/formatTime';
 import { savePlayback } from '../../lib/playbackProgress';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import type { LectureDetail, TopicSection } from '../../types';
-import { EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui';
+import { buttonClasses, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui';
 import { LecturePlayer } from '../../components/player/LecturePlayer';
 import { PlayerProvider, usePlayer } from '../../components/player/PlayerContext';
 import { useLecture } from '../../features/lectures/hooks';
@@ -91,6 +91,12 @@ function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: nu
         <p className="hidden text-sm text-ink-2 sm:block">
           {[lecture.courseCode, lecture.uploadedByName, lecture.durationSec !== null && formatDuration(lecture.durationSec)].filter(Boolean).join(' · ')}
         </p>
+        {user?.role === 'teacher' && (
+          <Link to={`/app/lectures/${lecture.id}/review`} className={`${buttonClasses({ variant: 'secondary', size: 'sm' })} ml-auto`}>
+            <FilePenLine aria-hidden className="h-4 w-4" />
+            Review transcript
+          </Link>
+        )}
       </header>
 
       {/* minmax(0,1fr) on mobile: an implicit auto column would grow to the topic rail's unwrapped width. */}

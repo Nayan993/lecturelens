@@ -27,7 +27,8 @@ export interface StatusPillProps extends Omit<HTMLAttributes<HTMLSpanElement>, '
 }
 
 export const StatusPill = forwardRef<HTMLSpanElement, StatusPillProps>(({ status, ...props }, ref) => {
-  const { label, variant, icon } = STATUS_CONFIG[status];
+  // An unknown value (e.g. a newer server) degrades to a neutral pill instead of crashing the page.
+  const { label, variant, icon } = STATUS_CONFIG[status] ?? { label: String(status), variant: 'neutral' as const, icon: null };
   return (
     <Badge ref={ref} variant={variant} icon={icon} data-status={status} {...props}>
       {label}

@@ -13,9 +13,16 @@ export const httpLectureService: LectureService = {
   async getStatus(id) {
     return (await apiClient.get<ProcessingStatus>(`/lectures/${id}/status`)).data;
   },
-  async create(form) {
+  async create(form, options = {}) {
     // Let the browser set the multipart boundary; uploads can be large, so no timeout.
-    return (await apiClient.post<{ lecture: Lecture }>('/lectures', form, { timeout: 0 })).data.lecture;
+    const res = await apiClient.post<{ lecture: Lecture }>('/lectures', form, {
+      timeout: 0,
+      onUploadProgress: (e) => {
+        const fraction = e.total ? e.loaded / e.total : (e.progress ?? 0);
+        options.onUploadProgress?.(Math.min(1, fraction));
+      },
+    });
+    return res.data.lecture;
   },
   async remove(id) {
     await apiClient.delete(`/lectures/${id}`);

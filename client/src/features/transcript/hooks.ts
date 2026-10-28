@@ -12,13 +12,36 @@ export function useTranscript(lectureId: Id | undefined) {
   });
 }
 
-/** PATCH /lectures/:id/segments/:index — writes the corrected segment straight into the cached transcript. */
+/**
+ * PATCH /lectures/:id/segments/:index, optimistically: the edit shows immediately (with the same
+ * originalText-set-once rule the server applies), rolls back if the request fails, and is replaced by
+ * the server's segment when it succeeds.
+ */
 export function useUpdateSegment(lectureId: Id) {
   const queryClient = useQueryClient();
+  const key = queryKeys.transcript(lectureId);
   return useMutation({
     mutationFn: ({ index, text }: { index: number; text: string }) => services.transcript.updateSegment(lectureId, index, text),
+    onMutate: async ({ index, text }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Transcript>(key);
+      queryClient.setQueryData<Transcript>(key, (old) =>
+        old
+          ? {
+              ...old,
+              items: old.items.map((s) =>
+                s.index === index ? { ...s, text, corrected: true, originalText: s.corrected ? s.originalText : s.text } : s,
+              ),
+            }
+          : old,
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
     onSuccess: (segment) => {
-      queryClient.setQueryData<Transcript>(queryKeys.transcript(lectureId), (old) =>
+      queryClient.setQueryData<Transcript>(key, (old) =>
         old ? { ...old, items: old.items.map((s) => (s.index === segment.index ? segment : s)) } : old,
       );
     },

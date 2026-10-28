@@ -1,6 +1,7 @@
 import { STAGE_NAMES, type Id, type Lecture, type LectureStatus, type ProcessingStage, type ProcessingStatus, type StageName } from '../../types';
 import type { LectureService } from '../types';
 import type { User } from '../../types';
+import { MAX_UPLOAD_MB, mediaKind } from '../../lib/media';
 import { approvedFor, clone, db, delay, fail, newId, nowIso, ownedLecture, requireUser, visibleLecture } from './db';
 
 /**
@@ -19,7 +20,6 @@ const MOCK_MEDIA_URL = import.meta.env.VITE_MOCK_MEDIA_URL;
 /** Lectures created or reprocessed in mock mode advance one pipeline stage every 4 s. */
 const STAGE_MS = 4000;
 const MOCK_DURATION_SEC = 3012.736;
-const ACCEPTED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'audio/mpeg', 'audio/wav', 'audio/mp4'];
 
 const STAGE_DETAIL: Record<StageName, string> = {
   extracting: 'Extracting audio with FFmpeg.',
@@ -46,6 +46,7 @@ function advance(lecture: Lecture): void {
   if (!run || lecture.status === 'ready' || lecture.status === 'failed') return;
   const startIndex = STAGE_NAMES.indexOf(run.fromStage);
   const stepsDone = Math.floor((Date.now() - run.startedAtMs) / STAGE_MS);
+  if (stepsDone < 0) return; // a fresh upload waits one step in "uploaded" before extraction starts
   const index = startIndex + stepsDone;
   const next: LectureStatus = index >= STAGE_NAMES.length ? 'ready' : STAGE_NAMES[index];
   if (next === lecture.status) return;
@@ -127,8 +128,13 @@ export const mockLectureService: LectureService = {
     return status;
   },
 
-  async create(form) {
-    await delay();
+  async create(form, options = {}) {
+    // Simulated upload progress so the progress bar is demonstrable in mock mode.
+    for (const fraction of [0.15, 0.4, 0.65, 0.9, 1]) {
+      await delay();
+      options.onUploadProgress?.(fraction);
+      if (import.meta.env.MODE !== 'test') await new Promise((r) => setTimeout(r, 150));
+    }
     const user = requireUser('teacher');
     const file = form.get('file');
     const title = formField(form, 'title');
@@ -140,7 +146,13 @@ export const mockLectureService: LectureService = {
     if (formField(form, 'processorNamed') !== 'true') details['consent.processorNamed'] = 'The processors must be named';
     if (Object.keys(details).length) fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', details);
     const blob = file as Blob;
-    if (!ACCEPTED_TYPES.includes(blob.type)) fail(415, 'UNSUPPORTED_MEDIA_TYPE', 'This file type is not supported.', { mimeType: blob.type });
+    const filename = file instanceof File ? file.name : '';
+    if (!mediaKind({ name: filename, type: blob.type })) fail(415, 'UNSUPPORTED_MEDIA_TYPE', 'This file type is not supported.', { mimeType: blob.type });
+    if (blob.size > MAX_UPLOAD_MB * 1024 * 1024) fail(413, 'PAYLOAD_TOO_LARGE', `Files must be ${MAX_UPLOAD_MB} MB or smaller.`, { maxMb: MAX_UPLOAD_MB });
+    const recordedOn = formField(form, 'recordedOn');
+    if (recordedOn && (!/^\d{4}-\d{2}-\d{2}$/.test(recordedOn) || recordedOn > new Date().toISOString().slice(0, 10))) {
+      fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { recordedOn: 'Use a date that is not in the future' });
+    }
 
     const at = nowIso();
     const id = newId();
@@ -149,6 +161,7 @@ export const mockLectureService: LectureService = {
       title,
       courseCode: formField(form, 'courseCode') || null,
       description: formField(form, 'description') || null,
+      recordedOn: recordedOn || null,
       status: 'uploaded',
       statusDetail: 'Upload received; waiting to start audio extraction.',
       error: null,

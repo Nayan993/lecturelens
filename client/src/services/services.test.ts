@@ -197,3 +197,16 @@ describe('mock adapters follow the contract', () => {
     expect((await mockServices.lectures.getStatus(created.id)).stages.every((s) => s.state === 'pending')).toBe(true);
   });
 });
+
+describe('mock lecture pipeline', () => {
+  it('a fresh upload reports "uploaded" (not undefined) before processing starts', async () => {
+    localStorage.setItem(TOKEN_KEY, (await mockServices.auth.login(TEACHER, DEMO_PASSWORD)).token);
+    const form = new FormData();
+    form.set('file', new File(['x'], 'fresh.mp4', { type: 'video/mp4' }));
+    form.set('title', 'Fresh upload');
+    for (const k of ['lecturerConsent', 'purposeShown', 'processorNamed']) form.set(k, 'true');
+    const created = await mockServices.lectures.create(form);
+    expect((await mockServices.lectures.get(created.id)).status).toBe('uploaded');
+    expect((await mockServices.lectures.getStatus(created.id)).status).toBe('uploaded');
+  });
+});

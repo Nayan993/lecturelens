@@ -97,7 +97,7 @@ describe('login', () => {
 
     const formError = await screen.findByText('Email or password is incorrect.', { selector: '#login-form-error p' });
     expect(formError.textContent).toBe('Error: Email or password is incorrect.');
-    const region = screen.getByRole('status', { name: 'Notifications' });
+    const region = screen.getByRole('status', { name: 'Status messages' });
     expect(region.getAttribute('aria-live')).toBe('polite');
     expect(within(region).getByText('Sign-in failed')).toBeTruthy();
     expect(location()).toBe('/login');
@@ -111,7 +111,7 @@ describe('login', () => {
     expect((screen.getByLabelText(/^Email/) as HTMLInputElement).value).toBe('teacher@lecturelens.dev');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Teacher dashboard' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Welcome back, Ananya' })).toBeTruthy();
     expect(location()).toBe('/app/dashboard');
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Dashboard', 'My Lectures', 'Upload', 'Review Queue', 'Students']);
@@ -219,7 +219,7 @@ describe('register', () => {
     fill(/^Confirm password/, 'Compilers1952!');
     fireEvent.click(screen.getByText('Teacher'));
     fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Teacher dashboard' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Welcome back, Grace' })).toBeTruthy();
     expect(location()).toBe('/app/dashboard');
     expect(screen.getByRole('link', { name: 'Upload' })).toBeTruthy();
   });
