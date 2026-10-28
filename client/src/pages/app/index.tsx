@@ -1,36 +1,9 @@
-import {
-  BookOpen,
-  GraduationCap,
-  LayoutDashboard,
-  ListChecks,
-  MessageCircleQuestion,
-  PlayCircle,
-  Search,
-  Settings,
-} from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { GraduationCap, ListChecks, MessageCircleQuestion, Search, Settings } from 'lucide-react';
 import { StubPage } from '../StubPage';
 
-export function DashboardPage() {
-  const { user } = useAuth();
-  return (
-    <StubPage
-      title={user?.role === 'teacher' ? 'Teacher dashboard' : 'Dashboard'}
-      description={user ? `Signed in as ${user.name}.` : undefined}
-      comingIn="P1.6"
-      icon={<LayoutDashboard />}
-    />
-  );
-}
-
-export function LecturesPage() {
-  const { user } = useAuth();
-  return <StubPage title={user?.role === 'teacher' ? 'My Lectures' : 'Lectures'} comingIn="P1.6" icon={<BookOpen />} />;
-}
-
-export function LecturePage() {
-  return <StubPage title="Lecture" comingIn="P1.6" icon={<PlayCircle />} />;
-}
+export { DashboardPage } from './DashboardPage';
+export { LecturesPage } from './LecturesPage';
+export { LecturePage } from './LecturePage';
 
 export function SearchPage() {
   return <StubPage title="Search" comingIn="P1.7" icon={<Search />} />;

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { createRef, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, TOKEN_KEY, useAuth } from './context/AuthContext';
@@ -26,13 +27,18 @@ const makeUser = (role: Role): User => ({
   updatedAt: '2026-10-01T09:00:00.000Z',
 });
 
+// The demo users' ids in the mock adapter's token format, so the fake AuthService and the
+// default (mock) data services agree on who is signed in.
+const TEACHER_TOKEN = 'mock-token.6650c3a0c3b2e41d8a000001';
+const STUDENT_TOKEN = 'mock-token.6650c3a0c3b2e41d8a000002';
+
 /** Test double: token "<role>-token" is valid; anything else is a 401. */
 const fakeService = (): AuthService => ({
-  login: vi.fn(async (email: string) => ({ token: 'teacher-token', user: { ...makeUser('teacher'), email } })),
-  register: vi.fn(async (p) => ({ token: `${p.role}-token`, user: { ...makeUser(p.role), name: p.name } })),
+  login: vi.fn(async (email: string) => ({ token: TEACHER_TOKEN, user: { ...makeUser('teacher'), email } })),
+  register: vi.fn(async (p) => ({ token: p.role === 'teacher' ? TEACHER_TOKEN : STUDENT_TOKEN, user: { ...makeUser(p.role), name: p.name } })),
   me: vi.fn(async (token: string) => {
-    if (token === 'teacher-token') return makeUser('teacher');
-    if (token === 'student-token') return makeUser('student');
+    if (token === TEACHER_TOKEN) return makeUser('teacher');
+    if (token === STUDENT_TOKEN) return makeUser('student');
     throw new ApiRequestError({ status: 401, code: 'UNAUTHENTICATED', message: 'Invalid token' });
   }),
   updateProfile: vi.fn(async (p) => ({ ...makeUser('teacher'), name: p.name ?? 'Dr. Ananya Rao' })),
@@ -46,6 +52,7 @@ function LocationProbe() {
 function renderApp(path: string, token: string | null, service = fakeService()) {
   if (token) localStorage.setItem(TOKEN_KEY, token);
   render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider service={service}>
         <ToastProvider>
@@ -53,7 +60,8 @@ function renderApp(path: string, token: string | null, service = fakeService()) 
           <LocationProbe />
         </ToastProvider>
       </AuthProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryClientProvider>,
   );
   return service;
 }
@@ -84,7 +92,7 @@ describe('AuthContext', () => {
     );
 
   it('rehydrates a stored token on mount', async () => {
-    localStorage.setItem(TOKEN_KEY, 'student-token');
+    localStorage.setItem(TOKEN_KEY, STUDENT_TOKEN);
     renderProbe(fakeService());
     expect(screen.getByTestId('status').textContent).toBe('loading');
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('authenticated'));
@@ -99,28 +107,28 @@ describe('AuthContext', () => {
   });
 
   it('keeps the token when the server is unreachable', async () => {
-    localStorage.setItem(TOKEN_KEY, 'teacher-token');
+    localStorage.setItem(TOKEN_KEY, TEACHER_TOKEN);
     const service = fakeService();
     service.me = vi.fn(async () => {
       throw new ApiRequestError({ status: 0, code: 'NETWORK_ERROR', message: 'down' });
     });
     renderProbe(service);
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('anonymous'));
-    expect(localStorage.getItem(TOKEN_KEY)).toBe('teacher-token');
+    expect(localStorage.getItem(TOKEN_KEY)).toBe(TEACHER_TOKEN);
   });
 
   it('login persists the token under ll.token; logout clears it', async () => {
     renderProbe(fakeService());
     fireEvent.click(screen.getByText('login'));
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('authenticated'));
-    expect(localStorage.getItem('ll.token')).toBe('teacher-token');
+    expect(localStorage.getItem('ll.token')).toBe(TEACHER_TOKEN);
     fireEvent.click(screen.getByText('logout'));
     expect(screen.getByTestId('status').textContent).toBe('anonymous');
     expect(localStorage.getItem('ll.token')).toBeNull();
   });
 
   it('signs out when the API client dispatches ll:unauthorised', async () => {
-    localStorage.setItem(TOKEN_KEY, 'teacher-token');
+    localStorage.setItem(TOKEN_KEY, TEACHER_TOKEN);
     renderProbe(fakeService());
     await waitFor(() => expect(screen.getByTestId('status').textContent).toBe('authenticated'));
     act(() => {
@@ -133,9 +141,9 @@ describe('AuthContext', () => {
 
 describe('route table', () => {
   const SHARED: Array<[string, RegExp]> = [
-    ['/app/dashboard', /dashboard/i],
+    ['/app/dashboard', /dashboard|^Good (morning|afternoon|evening), /i],
     ['/app/lectures', /lectures/i],
-    ['/app/lectures/6650c3a0c3b2e41d8a100001', /^Lecture$/],
+    ['/app/lectures/6650c3a0c3b2e41d8a100001', /^Lecture 7 — Gradient Descent and Backpropagation$/],
     ['/app/search', /^Search$/],
     ['/app/ask', /^Ask$/],
     ['/app/quizzes', /^Quizzes$/],
@@ -159,25 +167,25 @@ describe('route table', () => {
   });
 
   it.each([...SHARED, ...TEACHER_ONLY])('teacher can open %s', async (path, heading) => {
-    renderApp(path, 'teacher-token');
+    renderApp(path, TEACHER_TOKEN);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeTruthy();
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy();
   });
 
   it.each(SHARED)('student can open %s', async (path, heading) => {
-    renderApp(path, 'student-token');
+    renderApp(path, STUDENT_TOKEN);
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeTruthy();
   });
 
   it.each(TEACHER_ONLY)('student gets the 403 page at %s (same URL)', async (path) => {
-    renderApp(path, 'student-token');
+    renderApp(path, STUDENT_TOKEN);
     expect(await screen.findByText('You don’t have access to this page')).toBeTruthy();
     expect(screen.getByTestId('location').textContent).toBe(path);
   });
 
   it('/app redirects to /app/dashboard', async () => {
-    renderApp('/app', 'student-token');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeTruthy();
+    renderApp('/app', STUDENT_TOKEN);
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Rohan$/ })).toBeTruthy();
     expect(screen.getByTestId('location').textContent).toBe('/app/dashboard');
   });
 
@@ -194,7 +202,7 @@ describe('route table', () => {
   it.each([['/403', 'You don’t have access to this page'], ['/nope', 'We couldn’t find that page'], ['/app/nope', 'We couldn’t find that page']])(
     '%s renders its error page',
     async (path, text) => {
-      renderApp(path, 'teacher-token');
+      renderApp(path, TEACHER_TOKEN);
       expect(await screen.findByText(text)).toBeTruthy();
     },
   );
@@ -202,7 +210,7 @@ describe('route table', () => {
 
 describe('navigation', () => {
   it('shows role-specific sidebar items; hidden links are not the access control', async () => {
-    renderApp('/app/dashboard', 'student-token');
+    renderApp('/app/dashboard', STUDENT_TOKEN);
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     const labels = Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Dashboard', 'Lectures', 'Search', 'Ask', 'Quizzes', 'Revision']);
@@ -210,7 +218,7 @@ describe('navigation', () => {
   });
 
   it('teacher sidebar has the teaching items and marks the active route', async () => {
-    renderApp('/app/review', 'teacher-token');
+    renderApp('/app/review', TEACHER_TOKEN);
     const nav = await screen.findByRole('navigation', { name: 'Main' });
     const labels = Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Dashboard', 'My Lectures', 'Upload', 'Review Queue', 'Students']);
@@ -221,7 +229,7 @@ describe('navigation', () => {
   });
 
   it('user menu shows initials, role and logs out', async () => {
-    renderApp('/app/dashboard', 'teacher-token');
+    renderApp('/app/dashboard', TEACHER_TOKEN);
     const trigger = await screen.findByRole('button', { name: /Dr\. Ananya Rao/ });
     expect(trigger.textContent).toContain('AR');
     expect(trigger.textContent).toContain('teacher');
@@ -232,7 +240,7 @@ describe('navigation', () => {
   });
 
   it('mobile drawer opens from the header, closes on Escape and returns focus', async () => {
-    renderApp('/app/dashboard', 'student-token');
+    renderApp('/app/dashboard', STUDENT_TOKEN);
     const button = await screen.findByRole('button', { name: 'Open navigation' });
     button.focus();
     fireEvent.click(button);
@@ -245,7 +253,7 @@ describe('navigation', () => {
   });
 
   it('drawer closes on backdrop click and after navigating', async () => {
-    renderApp('/app/dashboard', 'student-token');
+    renderApp('/app/dashboard', STUDENT_TOKEN);
     fireEvent.click(await screen.findByRole('button', { name: 'Open navigation' }));
     fireEvent.click(screen.getByTestId('drawer-backdrop'));
     expect(screen.queryByRole('dialog', { name: 'Navigation' })).toBeNull();
@@ -257,7 +265,7 @@ describe('navigation', () => {
   });
 
   it('Ctrl-K focuses the global search', async () => {
-    renderApp('/app/dashboard', 'student-token');
+    renderApp('/app/dashboard', STUDENT_TOKEN);
     const search = await screen.findByRole('searchbox', { name: 'Search lectures' });
     fireEvent.keyDown(document, { key: 'k', ctrlKey: true });
     expect(document.activeElement).toBe(search);

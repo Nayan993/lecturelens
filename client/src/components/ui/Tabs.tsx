@@ -17,6 +17,8 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
   /** Initial value when uncontrolled; defaults to the first enabled tab. */
   defaultValue?: string;
   onValueChange?: (value: string) => void;
+  /** Extra classes for every tab panel, e.g. to make panels fill and scroll. */
+  panelClassName?: string;
 }
 
 /**
@@ -24,7 +26,7 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
  * ArrowLeft/ArrowRight (wrapping), Home and End move focus and select (disabled tabs are skipped).
  */
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
-  ({ items, label, value, defaultValue, onValueChange, className, ...props }, ref) => {
+  ({ items, label, value, defaultValue, onValueChange, panelClassName, className, ...props }, ref) => {
     const baseId = useId();
     const firstEnabled = items.find((item) => !item.disabled)?.value ?? '';
     const [internal, setInternal] = useState(defaultValue ?? firstEnabled);
@@ -91,7 +93,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
             aria-labelledby={`${baseId}-tab-${i}`}
             hidden={item.value !== selected}
             tabIndex={0}
-            className="pt-4"
+            className={cn('pt-4', panelClassName)}
           >
             {item.content}
           </div>

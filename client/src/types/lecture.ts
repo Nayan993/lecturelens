@@ -45,7 +45,11 @@ export interface Lecture {
   /** Float seconds; null until extraction has probed the file. */
   durationSec: number | null;
   transcriptApproved: boolean;
+  /** Computed: topic sections visible to the caller (students: approved only); null before segmenting. */
+  topicCount: number | null;
   uploadedBy: Id;
+  /** Computed: the uploader's display name. */
+  uploadedByName: string;
   consent: Consent;
   media: MediaInfo;
   createdAt: IsoDateTime;

@@ -1,6 +1,20 @@
 import { STAGE_NAMES, type Id, type Lecture, type LectureStatus, type ProcessingStage, type ProcessingStatus, type StageName } from '../../types';
 import type { LectureService } from '../types';
-import { clone, db, delay, fail, newId, nowIso, ownedLecture, requireUser, visibleLecture } from './db';
+import type { User } from '../../types';
+import { approvedFor, clone, db, delay, fail, newId, nowIso, ownedLecture, requireUser, visibleLecture } from './db';
+
+/**
+ * Serialise for the caller: topicCount counts the sections this user may see (§5.3). Lectures with
+ * topic fixtures are counted live; others keep their fixture value (mock data has no topics for them).
+ */
+function serialise(lecture: Lecture, user: User): Lecture {
+  const topics = db.topics.filter((t) => t.lectureId === lecture.id);
+  const topicCount = topics.length ? approvedFor(user, topics).length : lecture.topicCount;
+  return { ...clone(lecture), topicCount };
+}
+
+/** Optional local video for fixture lectures in mock mode (they have no real media). */
+const MOCK_MEDIA_URL = import.meta.env.VITE_MOCK_MEDIA_URL;
 
 /** Lectures created or reprocessed in mock mode advance one pipeline stage every 4 s. */
 const STAGE_MS = 4000;
@@ -83,7 +97,7 @@ export const mockLectureService: LectureService = {
       .filter((l) => !params.status || l.status === params.status)
       .filter((l) => !q || l.title.toLowerCase().includes(q))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return { items: clone(visible.slice((page - 1) * limit, page * limit)), page, limit, total: visible.length };
+    return { items: visible.slice((page - 1) * limit, page * limit).map((l) => serialise(l, user)), page, limit, total: visible.length };
   },
 
   async get(id) {
@@ -93,8 +107,8 @@ export const mockLectureService: LectureService = {
     advance(lecture);
     const exp = Math.floor(Date.now() / 1000) + 6 * 3600;
     // Fixture lectures have no media in mock mode; session uploads play from their object URL.
-    const mediaUrl = db.runtime.get(id)?.mediaUrl ?? `/api/v1/lectures/${id}/media?exp=${exp}&sig=mock`;
-    return { ...clone(lecture), mediaUrl };
+    const mediaUrl = db.runtime.get(id)?.mediaUrl ?? MOCK_MEDIA_URL ?? `/api/v1/lectures/${id}/media?exp=${exp}&sig=mock`;
+    return { ...serialise(lecture, user), mediaUrl };
   },
 
   async getStatus(id) {
@@ -140,7 +154,9 @@ export const mockLectureService: LectureService = {
       error: null,
       durationSec: null,
       transcriptApproved: false,
+      topicCount: null,
       uploadedBy: user.id,
+      uploadedByName: user.name,
       consent: { lecturerConsent: true, purposeShown: true, processorNamed: true, grantedBy: user.id, grantedAt: at },
       media: { originalFilename: file instanceof File ? file.name : 'upload', mimeType: blob.type, sizeBytes: blob.size },
       createdAt: at,

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../context/AuthContext';
@@ -15,6 +16,7 @@ function LocationProbe() {
 /** Real AuthProvider + the default `services` (mock adapters) — the same path the demo uses. */
 function renderAt(path: string) {
   render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
         <ToastProvider>
@@ -22,7 +24,8 @@ function renderAt(path: string) {
           <LocationProbe />
         </ToastProvider>
       </AuthProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -118,7 +121,7 @@ describe('login', () => {
     renderAt('/login');
     fireEvent.click(await screen.findByRole('button', { name: /Use demo student/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Rohan$/ })).toBeTruthy();
     const nav = screen.getByRole('navigation', { name: 'Main' });
     expect(Array.from(nav.querySelectorAll('a')).map((a) => a.textContent)).toEqual(['Dashboard', 'Lectures', 'Search', 'Ask', 'Quizzes', 'Revision']);
   });
@@ -137,7 +140,7 @@ describe('login', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Use demo student/ }));
     fireEvent.click(screen.getByLabelText(/Remember me/));
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    await screen.findByRole('heading', { level: 1, name: 'Dashboard' });
+    await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening), Rohan$/ });
     expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(sessionStorage.getItem(TOKEN_KEY)).toMatch(/^mock-token\./);
   });

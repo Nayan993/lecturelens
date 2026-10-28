@@ -35,6 +35,8 @@ export interface LecturePlayerProps {
   /** Called with the current time, throttled to ~4×/s, plus immediately after seeks and pauses. */
   onTimeUpdate?: (seconds: number) => void;
   className?: string;
+  /** Classes for the <video> element, e.g. a reduced max height on small screens. */
+  videoClassName?: string;
 }
 
 export const PLAYBACK_RATES = [0.75, 1, 1.25, 1.5, 1.75, 2] as const;
@@ -60,7 +62,7 @@ const SHORTCUTS: Array<[string, string]> = [
  * with the nearest <PlayerProvider> so descendants can usePlayer().seekTo(…).
  */
 export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
-  ({ src, mimeType, title, poster, markers = [], startAt, onTimeUpdate, className }, ref) => {
+  ({ src, mimeType, title, poster, markers = [], startAt, onTimeUpdate, className, videoClassName }, ref) => {
     const audio = isAudioSource(src, mimeType);
     const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
@@ -75,6 +77,7 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
     const [volume, setVolume] = useState(1);
     const [muted, setMuted] = useState(false);
     const [rate, setRate] = useState(1);
+    const [mediaError, setMediaError] = useState(false);
 
     const onTimeUpdateRef = useRef(onTimeUpdate);
     onTimeUpdateRef.current = onTimeUpdate;
@@ -162,6 +165,8 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
       };
       const onRate = () => setRate(media.playbackRate);
       const onDuration = () => setDuration(Number.isFinite(media.duration) ? media.duration : 0);
+      const onError = () => setMediaError(true);
+      setMediaError(false);
 
       media.addEventListener('loadedmetadata', onLoaded);
       media.addEventListener('durationchange', onDuration);
@@ -172,6 +177,7 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
       media.addEventListener('ended', onPause);
       media.addEventListener('volumechange', onVolume);
       media.addEventListener('ratechange', onRate);
+      media.addEventListener('error', onError);
       if (media.readyState >= 1) onLoaded();
       return () => {
         media.removeEventListener('loadedmetadata', onLoaded);
@@ -183,6 +189,7 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
         media.removeEventListener('ended', onPause);
         media.removeEventListener('volumechange', onVolume);
         media.removeEventListener('ratechange', onRate);
+        media.removeEventListener('error', onError);
       };
     }, [src, report]);
 
@@ -276,15 +283,22 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
             <audio ref={mediaRef} src={src} preload="metadata" />
           </div>
         ) : (
-          <video
-            ref={mediaRef}
-            src={src}
-            poster={poster}
-            preload="metadata"
-            playsInline
-            onClick={togglePlay}
-            className="block aspect-video w-full cursor-pointer bg-black"
-          />
+          <div className="relative">
+            <video
+              ref={mediaRef}
+              src={src}
+              poster={poster}
+              preload="metadata"
+              playsInline
+              onClick={togglePlay}
+              className={cn('block aspect-video w-full cursor-pointer bg-black object-contain', videoClassName)}
+            />
+            {mediaError && (
+              <p role="status" className="absolute inset-0 flex items-center justify-center bg-black/80 px-6 text-center text-sm text-white">
+                This recording can’t be played right now. The transcript and summaries below still work.
+              </p>
+            )}
+          </div>
         )}
 
         <div className="flex flex-col gap-1.5 px-3 pb-2 pt-2.5">

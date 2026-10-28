@@ -10,6 +10,11 @@
     @apply bg-bg font-sans text-ink-1 antialiased;
   }
 
+  /* The hidden attribute must win over display utilities like `flex` (tab panels, tooltips). */
+  [hidden] {
+    display: none !important;
+  }
+
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;

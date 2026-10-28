@@ -488,6 +488,12 @@ Any consent field not `"true"` → `422` with e.g. `{ "consent.lecturerConsent":
 `consent.grantedBy` = caller, `consent.grantedAt` = server time. Returns `202 { lecture }` with
 `status: "uploaded"`; the pipeline starts in-process immediately.
 
+Every serialised lecture also carries two **computed, read-only** fields (not stored on the document):
+
+- `uploadedByName` — `users.name` of `uploadedBy`, so lecture lists need no extra user lookups.
+- `topicCount` — number of topic sections visible to the caller (students: `approved` only, §4.12);
+  `null` until the `segmenting` stage has run.
+
 `GET /lectures` query: `page`, `limit`, `status` (optional, one value), `q` (optional title search).
 Sorted by `createdAt` desc.
 
@@ -592,7 +598,9 @@ All examples are taken from or consistent with `mocks/` (lecture `6650c3a0c3b2e4
   "error": null,
   "durationSec": 1199.398,
   "transcriptApproved": true,
+  "topicCount": 5,
   "uploadedBy": "6650c3a0c3b2e41d8a000001",
+  "uploadedByName": "Dr. Ananya Rao",
   "consent": {
     "lecturerConsent": true,
     "purposeShown": true,

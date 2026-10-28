@@ -1,5 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
+import { parseTimeParam } from './lib/formatTime';
+import { lectureHref } from './lib/lectureLinks';
 import { AppLayout } from './components/layout/AppLayout';
 import { PageSkeleton } from './components/layout/PageSkeleton';
 import { PublicLayout } from './components/layout/PublicLayout';
@@ -38,6 +40,16 @@ const Kitchen = import.meta.env.DEV ? lazy(() => import('./pages/_Kitchen')) : n
 /** /app → role home. Both roles land on /app/dashboard, which renders per role. */
 function RoleHome() {
   return <Navigate to="/app/dashboard" replace />;
+}
+
+/**
+ * Server-built deepLinks (CONTRACTS.md §5.6) use /lectures/:id/play?t=<sec>. Send them to the
+ * reading view, which seeks to `t`. RequireAuth on /app handles signed-out visitors.
+ */
+function DeepLinkRedirect() {
+  const { id = '' } = useParams<{ id: string }>();
+  const [params] = useSearchParams();
+  return <Navigate to={lectureHref(id, parseTimeParam(params.get('t')))} replace />;
 }
 
 /**
@@ -81,6 +93,7 @@ export function AppRoutes() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
+      <Route path="lectures/:id/play" element={<DeepLinkRedirect />} />
       <Route path="403" element={<ForbiddenPage standalone />} />
       <Route path="404" element={<NotFoundPage standalone />} />
       {Kitchen && (

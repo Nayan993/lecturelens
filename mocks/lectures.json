@@ -10,7 +10,9 @@
       "error": null,
       "durationSec": null,
       "transcriptApproved": false,
+      "topicCount": null,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
@@ -36,7 +38,9 @@
       "error": null,
       "durationSec": 2954.88,
       "transcriptApproved": false,
+      "topicCount": null,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
@@ -67,7 +71,9 @@
       },
       "durationSec": 1830.4,
       "transcriptApproved": false,
+      "topicCount": null,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
@@ -93,7 +99,9 @@
       "error": null,
       "durationSec": 2871.104,
       "transcriptApproved": false,
+      "topicCount": 7,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
@@ -119,7 +127,9 @@
       "error": null,
       "durationSec": 1199.398,
       "transcriptApproved": true,
+      "topicCount": 5,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
@@ -145,7 +155,9 @@
       "error": null,
       "durationSec": 3012.736,
       "transcriptApproved": true,
+      "topicCount": 6,
       "uploadedBy": "6650c3a0c3b2e41d8a000001",
+      "uploadedByName": "Dr. Ananya Rao",
       "consent": {
         "lecturerConsent": true,
         "purposeShown": true,
