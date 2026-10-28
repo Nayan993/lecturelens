@@ -48,10 +48,11 @@ lecturesRouter.param('id', (_req, _res, next, id: string) => {
  */
 lecturesRouter.get(
   '/:id/media',
-  validate({ query: mediaQuery }),
   asyncHandler(async (req, res) => {
-    const { exp, sig } = mediaQuery.parse(req.query);
-    checkMediaSignature(req.params.id!, exp, sig);
+    // A missing or malformed signature is an invalid link (401), not a validation error.
+    const query = mediaQuery.safeParse(req.query);
+    if (!query.success) throw unauthenticated('This media link is invalid.');
+    checkMediaSignature(req.params.id!, query.data.exp, query.data.sig);
     const lecture = await Lecture.findById(req.params.id).select('mediaPath media');
     if (!lecture) throw notFound('Lecture');
     await streamMedia(res, storedPath(lecture.mediaPath), lecture.media.mimeType, req.get('range'));

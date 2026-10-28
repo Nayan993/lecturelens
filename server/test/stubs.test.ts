@@ -1,10 +1,10 @@
 import { Types } from 'mongoose';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { app } from '../app.js';
-import { User } from '../models/index.js';
-import { signToken } from '../modules/auth/tokens.js';
-import { startTestDb, stopTestDb } from '../test/db.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { app } from '../src/app.js';
+import { User } from '../src/models/index.js';
+import { signToken } from '../src/modules/auth/tokens.js';
+import { resetDb } from './setup.js';
 
 /** Every A/B/C route is mounted with real guards + validation and answers 501 (CONTRACTS.md §7). */
 
@@ -14,13 +14,12 @@ const teacher = `Bearer ${signToken(String(teacherId), 'teacher')}`;
 const student = `Bearer ${signToken(String(studentId), 'student')}`;
 
 beforeAll(async () => {
-  await startTestDb();
+  await resetDb();
   await User.create([
     { _id: teacherId, email: 't@example.edu', name: 'Dr. Ananya Rao', role: 'teacher', passwordHash: 'x' },
     { _id: studentId, email: 's@example.edu', name: 'Rohan Mehta', role: 'student', passwordHash: 'x' },
   ]);
 });
-afterAll(stopTestDb);
 
 const L = '6650c3a0c3b2e41d8a100001';
 const ID = '6650c3a0c3b2e41d8a400000';

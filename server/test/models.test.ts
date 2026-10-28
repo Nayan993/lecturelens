@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Types } from 'mongoose';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { DEMO_USERS, buildSeed, type SeedCollection } from '../db/seedData.js';
+import { DEMO_USERS, buildSeed, type SeedCollection } from '../src/db/seedData.js';
 import {
   Attempt,
   Chunk,
@@ -16,9 +16,9 @@ import {
   TopicSection,
   TranscriptSegment,
   User,
-} from './index.js';
+} from '../src/models/index.js';
 
-const mocksDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../mocks');
+const mocksDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../mocks');
 const fixture = (file: string) => JSON.parse(readFileSync(path.join(mocksDir, file), 'utf8'));
 const json = (value: unknown) => JSON.parse(JSON.stringify(value));
 const omit = (obj: Record<string, unknown>, keys: string[]) =>

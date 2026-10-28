@@ -3,13 +3,22 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 /**
  * Tiny structured logger: one JSON object per line on stdout (info/debug) or
  * stderr (warn/error). Any field whose key matches SENSITIVE_KEY is redacted at
- * every depth. Debug lines print only when NODE_ENV=development.
+ * every depth. Level: LOG_LEVEL (debug|info|warn|error|silent) if set; otherwise debug in
+ * development, silent under tests (NODE_ENV=test), info elsewhere.
  *
  * Reads process.env.NODE_ENV directly (not config/env) so it can be used while the
  * environment itself is being validated.
  */
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
+const LEVELS = ['debug', 'info', 'warn', 'error', 'silent'] as const;
+
+function threshold(): number {
+  const configured = LEVELS.indexOf(process.env.LOG_LEVEL as (typeof LEVELS)[number]);
+  if (configured >= 0) return configured;
+  if (process.env.NODE_ENV === 'development') return 0;
+  return process.env.NODE_ENV === 'test' ? LEVELS.indexOf('silent') : LEVELS.indexOf('info');
+}
 export type LogFields = Record<string, unknown>;
 
 const SENSITIVE_KEY = /password|token|secret|key|authorization/i;
@@ -41,7 +50,7 @@ export function redact(fields: LogFields): LogFields {
 }
 
 function write(level: Level, message: string, fields: LogFields = {}): void {
-  if (level === 'debug' && process.env.NODE_ENV !== 'development') return;
+  if (LEVELS.indexOf(level) < threshold()) return;
   const requestId = requestContext.getStore()?.requestId;
   const line = JSON.stringify({
     timestamp: new Date().toISOString(),

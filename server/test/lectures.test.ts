@@ -1,44 +1,30 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import express from 'express';
 import { Types } from 'mongoose';
 import request from 'supertest';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { app } from '../../app.js';
-import { storageRoot } from '../../config/env.js';
-import { errorHandler } from '../../middleware/error.js';
-import { requestId } from '../../middleware/requestId.js';
-import { mediaUpload } from '../../middleware/upload.js';
-import { Chunk, Lecture, Question, TopicSection, TranscriptSegment, User, initialStages } from '../../models/index.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { app } from '../src/app.js';
+import { storageRoot } from '../src/config/env.js';
+import { errorHandler } from '../src/middleware/error.js';
+import { requestId } from '../src/middleware/requestId.js';
+import { mediaUpload } from '../src/middleware/upload.js';
+import { Chunk, Lecture, TranscriptSegment, User, initialStages } from '../src/models/index.js';
 import {
   NOT_IMPLEMENTED_DETAIL,
-  notImplementedPipeline,
   setPipeline,
   type ProcessingPipeline,
-} from '../../services/processing/pipeline.js';
-import { startTestDb, stopTestDb } from '../../test/db.js';
-import { signToken } from '../auth/tokens.js';
+} from '../src/services/processing/pipeline.js';
+import { resetDb } from './setup.js';
+import { signToken } from '../src/modules/auth/tokens.js';
 
-beforeAll(startTestDb);
-afterAll(async () => {
-  await stopTestDb();
-  await rm(storageRoot, { recursive: true, force: true });
-});
 
 const ids = { teacher: new Types.ObjectId(), otherTeacher: new Types.ObjectId(), student: new Types.ObjectId() };
 const token = (who: keyof typeof ids) => `Bearer ${signToken(String(ids[who]), who === 'student' ? 'student' : 'teacher')}`;
 
 beforeEach(async () => {
-  await Promise.all([
-    Lecture.deleteMany({}),
-    User.deleteMany({}),
-    TranscriptSegment.deleteMany({}),
-    Chunk.deleteMany({}),
-    TopicSection.deleteMany({}),
-    Question.deleteMany({}),
-  ]);
-  await rm(storageRoot, { recursive: true, force: true });
+  await resetDb();
   await User.create([
     { _id: ids.teacher, email: 't@example.edu', name: 'Dr. Ananya Rao', role: 'teacher', passwordHash: 'x' },
     { _id: ids.otherTeacher, email: 'o@example.edu', name: 'Dr. Other', role: 'teacher', passwordHash: 'x' },
@@ -46,7 +32,7 @@ beforeEach(async () => {
   ]);
 });
 
-afterEach(() => setPipeline(notImplementedPipeline));
+afterEach(() => vi.restoreAllMocks());
 
 /** Something every sniffing check accepts as MP3: an ID3 header. */
 const MP3 = Buffer.concat([Buffer.from('ID3\u0004\u0000\u0000'), Buffer.alloc(2048, 1)]);

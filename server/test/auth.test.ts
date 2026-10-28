@@ -1,25 +1,18 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { app } from '../../app.js';
-import { env } from '../../config/env.js';
-import { requireAuth } from '../../middleware/auth.js';
-import { errorHandler } from '../../middleware/error.js';
-import { requestId } from '../../middleware/requestId.js';
-import { resetRateLimits } from '../../middleware/rateLimit.js';
-import { requireOwnerOrRole, requireRole } from '../../middleware/rbac.js';
-import { User } from '../../models/index.js';
-import { startTestDb, stopTestDb } from '../../test/db.js';
-import { INVALID_CREDENTIALS } from './auth.service.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { app } from '../src/app.js';
+import { env } from '../src/config/env.js';
+import { requireAuth } from '../src/middleware/auth.js';
+import { errorHandler } from '../src/middleware/error.js';
+import { requestId } from '../src/middleware/requestId.js';
+import { requireOwnerOrRole, requireRole } from '../src/middleware/rbac.js';
+import { User } from '../src/models/index.js';
+import { resetDb } from './setup.js';
+import { INVALID_CREDENTIALS } from '../src/modules/auth/auth.service.js';
 
-beforeAll(startTestDb);
-afterAll(stopTestDb);
-
-beforeEach(async () => {
-  await User.deleteMany({});
-  resetRateLimits();
-});
+beforeEach(resetDb);
 
 const api = () => request(app);
 
