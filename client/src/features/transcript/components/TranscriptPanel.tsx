@@ -60,7 +60,7 @@ const SegmentRow = memo(function SegmentRow({ segment, active, query, currentMat
       onClick={() => onSeek(segment.startSec)}
       className={cn(
         'prose-lecture block w-full max-w-none cursor-pointer rounded-sm text-left',
-        segment.lowConfidence && 'underline decoration-ink-3 decoration-dotted decoration-1 underline-offset-[5px]',
+        segment.lowConfidence && 'underline decoration-ink-3 decoration-dotted decoration-1 underline-offset-4',
       )}
     >
       {highlight(segment.text, query, currentMatch)}
@@ -72,21 +72,21 @@ const SegmentRow = memo(function SegmentRow({ segment, active, query, currentMat
       data-index={segment.index}
       aria-current={active ? 'true' : undefined}
       className={cn(
-        'grid grid-cols-[3.75rem_minmax(0,1fr)] gap-x-3 rounded-r-control border-l-2 py-2 pl-3 pr-2 transition-colors',
-        active ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-ink-1/[0.03]',
+        'grid grid-cols-segment gap-x-3 rounded-r-control border-l-2 py-2 pl-3 pr-2 transition-colors',
+        active ? 'border-accent bg-accent-soft' : 'border-transparent hover:bg-ink-1/5',
       )}
     >
       <button
         type="button"
         onClick={() => onSeek(segment.startSec)}
         aria-label={`Play from ${time}${notes.length ? ` (${notes.join('; ')})` : ''}`}
-        className="h-fit rounded-sm pt-[3px] text-left font-mono text-xs font-semibold tabular-nums text-accent hover:underline"
+        className="h-fit rounded-sm pt-1 text-left font-mono text-xs font-semibold tabular-nums text-accent-strong hover:underline max-sm:min-h-11 max-sm:items-start"
       >
         {time}
       </button>
       <div className="min-w-0">
         {showSpeaker && segment.speaker && (
-          <p className="mb-0.5 font-sans text-[11px] font-semibold uppercase tracking-wider text-ink-3">Speaker {segment.speaker}</p>
+          <p className="mb-0.5 font-sans text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Speaker {segment.speaker}</p>
         )}
         {segment.lowConfidence ? <Tooltip content="Low confidence — may contain errors">{textButton}</Tooltip> : textButton}
         {segment.corrected && (
@@ -174,7 +174,7 @@ export function TranscriptPanel({ lectureId, followRequest }: { lectureId: Id; f
     return (
       <div className="flex flex-col gap-4 py-2" aria-busy="true" aria-label="Loading transcript">
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="grid grid-cols-[3.75rem_1fr] gap-3 pl-3">
+          <div key={i} className="grid grid-cols-segment gap-3 pl-3">
             <Skeleton width={36} height={12} />
             <div className="flex flex-col gap-2">
               <Skeleton width="95%" height={14} />

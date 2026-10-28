@@ -12,6 +12,7 @@ import { ROLES, type Role } from '../../types';
 import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, Input, Progress, useToast } from '../../components/ui';
 import { FieldError } from '../../components/ui/Field';
 import { FormError } from './LoginPage';
+import { H1 } from '../../components/layout/Page';
 
 const identitySchema = z.object({
   name: z.string().trim().min(1, 'Enter your name').max(100, 'Use at most 100 characters'),
@@ -148,7 +149,8 @@ export function RegisterPage() {
     }
     setPending(true);
     try {
-      await register({ name: values.name.trim(), email: values.email.trim(), password: values.password, role: values.role });
+      const user = await register({ name: values.name.trim(), email: values.email.trim(), password: values.password, role: values.role });
+      toast({ variant: 'success', title: 'Account created', description: `Welcome to LectureLens, ${user.name}.` });
       navigate('/app', { replace: true });
     } catch (err) {
       const message = isApiError(err) ? err.message : 'Something went wrong. Please try again.';
@@ -164,7 +166,7 @@ export function RegisterPage() {
     <div className="mx-auto flex w-full max-w-lg flex-col py-4 sm:py-8">
       <Card>
         <CardHeader>
-          <h1 className="text-xl font-semibold leading-snug text-ink-1">Create an account</h1>
+          <h1 className={H1}>Create an account</h1>
           <CardDescription>It takes a minute. You can change your name later in Settings.</CardDescription>
         </CardHeader>
         <form noValidate onSubmit={onSubmit} aria-describedby={formError ? 'register-form-error' : undefined}>

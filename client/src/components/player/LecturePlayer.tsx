@@ -279,21 +279,21 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
         {audio ? (
           <div className="flex h-36 items-center justify-center gap-3 bg-brand-soft text-brand">
             <Headphones aria-hidden className="h-8 w-8" />
-            <span className="max-w-[70%] truncate text-sm font-medium">{title}</span>
-            <audio ref={mediaRef} src={src} preload="metadata" />
+            <span className="max-w-xs truncate text-sm font-medium">{title}</span>
+            <audio ref={mediaRef} src={src || undefined} preload="metadata" />
           </div>
         ) : (
           <div className="relative">
             <video
               ref={mediaRef}
-              src={src}
+              src={src || undefined}
               poster={poster}
               preload="metadata"
               playsInline
               onClick={togglePlay}
               className={cn('block aspect-video w-full cursor-pointer bg-black object-contain', videoClassName)}
             />
-            {mediaError && (
+            {(mediaError || !src) && (
               <p role="status" className="absolute inset-0 flex items-center justify-center bg-black/80 px-6 text-center text-sm text-white">
                 This recording can’t be played right now. The transcript and summaries below still work.
               </p>
@@ -316,7 +316,7 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
             onPointerUp={onScrubUp}
             onPointerCancel={onScrubUp}
             onKeyDown={onScrubKeyDown}
-            className="group relative flex h-4 cursor-pointer touch-none items-center rounded-full focus-visible:outline-offset-1"
+            className="group relative flex h-4 cursor-pointer touch-none items-center rounded-full focus-visible:outline-offset-1 max-sm:h-11"
           >
             <div className="relative h-1.5 w-full rounded-full bg-ink-1/15">
               <div className="absolute inset-y-0 left-0 rounded-full bg-brand" style={{ width: `${pct}%` }} />
@@ -326,7 +326,7 @@ export const LecturePlayer = forwardRef<PlayerHandle, LecturePlayerProps>(
                     key={`${marker.startSec}-${marker.label}`}
                     title={`${formatTimestamp(marker.startSec)} · ${marker.label}`}
                     data-testid="player-marker"
-                    className="absolute -top-[3px] h-3 w-0.5 -translate-x-1/2 rounded-full bg-accent"
+                    className="absolute top-1/2 h-3 -translate-y-1/2 w-0.5 -translate-x-1/2 rounded-full bg-accent"
                     style={{ left: `${clamp((marker.startSec / duration) * 100, 0, 100)}%` }}
                   />
                 ))}

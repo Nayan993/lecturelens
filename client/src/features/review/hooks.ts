@@ -62,12 +62,16 @@ export function useReviewQueue() {
   const topicOf = new Map(topics.map((t) => [t.id, t]));
   const summaries: PendingSummary[] = summaryQs
     .flatMap((q) => q.data?.items ?? [])
-    .filter((s) => s.status === 'pending_review' && byId.has(s.lectureId))
-    .map((summary) => ({ kind: 'summary', summary, lecture: byId.get(summary.lectureId)!, topic: topicOf.get(summary.topicId) }));
+    .flatMap((summary) => {
+      const lecture = byId.get(summary.lectureId);
+      return summary.status === 'pending_review' && lecture ? [{ kind: 'summary' as const, summary, lecture, topic: topicOf.get(summary.topicId) }] : [];
+    });
   const questions: PendingQuestion[] = questionQs
     .flatMap((q) => q.data?.items ?? [])
-    .filter((q) => q.status === 'pending_review' && byId.has(q.lectureId))
-    .map((question) => ({ kind: 'question', question, lecture: byId.get(question.lectureId)!, topic: topicOf.get(question.topicId) }));
+    .flatMap((question) => {
+      const lecture = byId.get(question.lectureId);
+      return question.status === 'pending_review' && lecture ? [{ kind: 'question' as const, question, lecture, topic: topicOf.get(question.topicId) }] : [];
+    });
 
   const pendingCount = new Map<Id, number>();
   for (const item of [...summaries, ...questions]) pendingCount.set(item.lecture.id, (pendingCount.get(item.lecture.id) ?? 0) + 1);

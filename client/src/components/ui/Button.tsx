@@ -20,13 +20,18 @@ export const buttonVariantClasses: Record<ButtonVariant, string> = {
   link: 'rounded-sm text-brand underline-offset-4 hover:underline disabled:hover:no-underline',
 };
 
+// Compact on desktop; at least 44px tall on small (touch) screens.
 export const buttonSizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-sm',
-  md: 'h-9 px-4 text-sm',
+  sm: 'h-8 px-3 text-sm max-sm:min-h-11',
+  md: 'h-9 px-4 text-sm max-sm:min-h-11',
   lg: 'h-11 px-5 text-base',
 };
 
-const LINK_SIZE_CLASSES: Record<ButtonSize, string> = { sm: 'text-sm', md: 'text-sm', lg: 'text-base' };
+const LINK_SIZE_CLASSES: Record<ButtonSize, string> = {
+  sm: 'text-sm max-sm:min-h-11',
+  md: 'text-sm max-sm:min-h-11',
+  lg: 'text-base max-sm:min-h-11',
+};
 
 /** Button styling for non-button elements, e.g. a router <Link> that should look like a Button. */
 export function buttonClasses({ variant = 'primary', size = 'md' }: { variant?: ButtonVariant; size?: ButtonSize } = {}) {

@@ -58,7 +58,7 @@ function SummaryCard({ topic, summary, showStatus }: { topic: TopicSection; summ
         )}
         {summary.evidence.length > 0 && (
           <div className="flex flex-col gap-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Evidence</p>
+            <p className="text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Evidence</p>
             <ul className="flex flex-wrap gap-2">
               {summary.evidence.map((ev) => (
                 <li key={`${ev.chunkId}-${ev.startSec}`} className="min-w-0 max-w-full">
@@ -66,10 +66,10 @@ function SummaryCard({ topic, summary, showStatus }: { topic: TopicSection; summ
                     type="button"
                     onClick={() => player.seekTo(ev.startSec)}
                     aria-label={`Play evidence at ${formatTimestamp(ev.startSec)}: “${ev.quote}”`}
-                    className="flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-left text-xs text-ink-2 transition-colors hover:border-accent hover:bg-accent-soft"
+                    className="flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-left text-xs text-ink-2 transition-colors hover:border-accent hover:bg-accent-soft max-sm:min-h-11"
                   >
-                    <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent" />
-                    <span className="shrink-0 font-mono font-semibold tabular-nums text-accent">{formatTimestamp(ev.startSec)}</span>
+                    <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent-strong" />
+                    <span className="shrink-0 font-mono font-semibold tabular-nums text-accent-strong">{formatTimestamp(ev.startSec)}</span>
                     <span className="truncate">“{ev.quote}”</span>
                   </button>
                 </li>
@@ -118,7 +118,10 @@ export function SummaryPanel({ lectureId, durationSec }: { lectureId: Id; durati
   const byTopic = new Map(visible.map((s) => [s.topicId, s]));
   const awaiting = topics.filter((t) => !byTopic.has(t.id)).length;
   const hidden = isStudent && (awaiting > 0 || hasHiddenSections(topics, durationSec));
-  const cards = topics.filter((t) => byTopic.has(t.id));
+  const cards = topics.flatMap((topic) => {
+    const summary = byTopic.get(topic.id);
+    return summary ? [{ topic, summary }] : [];
+  });
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -134,7 +137,7 @@ export function SummaryPanel({ lectureId, durationSec }: { lectureId: Id; durati
       {cards.length === 0 ? (
         <EmptyState title="No summaries yet" description="Summaries appear here once your teacher has reviewed them." />
       ) : (
-        cards.map((topic) => <SummaryCard key={topic.id} topic={topic} summary={byTopic.get(topic.id)!} showStatus={!isStudent} />)
+        cards.map(({ topic, summary }) => <SummaryCard key={topic.id} topic={topic} summary={summary} showStatus={!isStudent} />)
       )}
     </div>
   );

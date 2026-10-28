@@ -12,8 +12,9 @@ import { useTopics } from '../../features/topics/hooks';
 import { useApproveTranscript, useTranscript } from '../../features/transcript/hooks';
 import { EditableTranscriptPanel } from '../../features/transcript/components/EditableTranscriptPanel';
 import type { LectureDetail } from '../../types';
+import { H1 } from '../../components/layout/Page';
 
-const VIEWPORT_HEIGHT = 'h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-7.5rem)]';
+const VIEWPORT_HEIGHT = 'h-workspace lg:h-workspace-lg';
 
 function ApproveBar({ lecture }: { lecture: LectureDetail }) {
   const transcript = useTranscript(lecture.id);
@@ -61,20 +62,20 @@ function ReviewLayout({ lecture }: { lecture: LectureDetail }) {
   return (
     <div className={`flex flex-col gap-3 ${VIEWPORT_HEIGHT}`}>
       <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1">
-        <Link to={`/app/lectures/${lecture.id}`} className="inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink-1">
+        <Link to={`/app/lectures/${lecture.id}`} className="tap-target inline-flex items-center gap-1 text-sm text-ink-2 hover:text-ink-1">
           <ArrowLeft aria-hidden className="h-4 w-4" />
           Reading view
         </Link>
-        <h1 className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink-1 lg:text-xl">Review transcript · {lecture.title}</h1>
+        <h1 className={`${H1} min-w-0 truncate`}>Review transcript · {lecture.title}</h1>
       </header>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-1 lg:gap-5">
+      <div className="grid min-h-0 flex-1 grid-cols-single grid-rows-stack gap-3 lg:grid-cols-workspace-tight lg:grid-rows-1 xl:grid-cols-workspace lg:gap-5">
         <section aria-label="Recording" className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
           <LecturePlayer
             src={lecture.mediaUrl}
             mimeType={lecture.media.mimeType}
             title={lecture.title}
             markers={topics.filter((t) => t.startSec > 0).map((t) => ({ startSec: t.startSec, label: t.label }))}
-            videoClassName="max-h-[24dvh] lg:max-h-none"
+            videoClassName="max-h-player-compact lg:max-h-none"
           />
           <TopicRail topics={topics} currentTime={player.currentTime} onSelect={(t) => player.seekTo(t.startSec)} />
           <p className="hidden text-sm text-ink-2 lg:block">

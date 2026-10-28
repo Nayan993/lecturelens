@@ -24,10 +24,10 @@ export function LectureCard({ lecture, className }: { lecture: Lecture; classNam
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] font-semibold leading-snug text-ink-1">
+        <h3 className="text-md font-semibold leading-snug text-ink-1">
           <Link
             to={lectureHref(lecture.id)}
-            className="outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-brand"
+            className="outline-none after:absolute after:inset-0 after:content-empty group-hover:text-brand"
             aria-describedby={ready ? undefined : `${lecture.id}-status-note`}
           >
             {lecture.title}

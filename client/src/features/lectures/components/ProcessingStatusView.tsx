@@ -6,6 +6,7 @@ import { formatTimestamp } from '../../../lib/formatTime';
 import type { Lecture, ProcessingStage, ProcessingStatus, StageName } from '../../../types';
 import { Card, CardContent, ErrorState, Progress, Skeleton, Spinner, StatusPill, useToast } from '../../../components/ui';
 import { useLectureStatus, useReprocessLecture } from '../hooks';
+import { PAGE_NARROW } from '../../../components/layout/Page';
 
 const STAGE_LABEL: Record<StageName, string> = {
   extracting: 'Extract audio',
@@ -26,11 +27,19 @@ export function progressPct(stages: ProcessingStage[]): number {
   return Math.round((units / stages.length) * 100);
 }
 
+/** One sentence for the live region: changes only when the stage or status detail changes. */
+export function liveStatusText(status: ProcessingStatus): string {
+  if (status.status === 'ready') return 'Processing complete — the lecture is ready.';
+  if (status.status === 'failed') return 'Processing failed — see the details below.';
+  const running = status.stages.find((s) => s.state === 'running');
+  return running ? `Now: ${STAGE_LABEL[running.name]} — ${status.statusDetail}` : status.statusDetail;
+}
+
 /** Processing time so far: sum of stage `ms` (integer ms of wall-clock work, not a media offset). */
 const elapsedSec = (stages: ProcessingStage[]) => stages.reduce((n, s) => n + (s.ms ?? 0), 0) / 1000;
 
 function StageIcon({ state }: { state: ProcessingStage['state'] }) {
-  if (state === 'done') return <CheckCircle2 aria-hidden className="h-5 w-5 text-success" />;
+  if (state === 'done') return <CheckCircle2 aria-hidden className="h-5 w-5 text-success-strong" />;
   if (state === 'running') return <Spinner size="sm" className="m-0.5 text-brand" />;
   if (state === 'failed') return <XCircle aria-hidden className="h-5 w-5 text-danger" />;
   if (state === 'skipped') return <CircleSlash aria-hidden className="h-5 w-5 text-ink-3" />;
@@ -55,7 +64,7 @@ function Stepper({ status }: { status: ProcessingStatus }) {
             {!last && (
               <span
                 aria-hidden
-                className={cn('absolute left-[9px] top-6 h-[calc(100%-1.25rem)] w-0.5', stage.state === 'done' ? 'bg-success/50' : 'bg-border')}
+                className={cn('absolute bottom-0 left-2.5 top-6 w-0.5 -translate-x-1/2', stage.state === 'done' ? 'bg-success/50' : 'bg-border')}
               />
             )}
             <span className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center bg-surface">
@@ -99,8 +108,8 @@ export function ProcessingStatusView({ lecture }: { lecture: Lecture }) {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-      <header className="flex flex-col gap-2">
+    <div className={PAGE_NARROW}>
+      <header className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink-1">{lecture.title}</h1>
           <StatusPill status={status?.status ?? lecture.status} />
@@ -133,6 +142,9 @@ export function ProcessingStatusView({ lecture }: { lecture: Lecture }) {
                   tone={status.status === 'failed' ? 'danger' : status.status === 'ready' ? 'success' : 'brand'}
                 />
                 <p className="text-xs text-ink-2">Processing time so far: {formatTimestamp(elapsedSec(status.stages))}</p>
+                <p aria-live="polite" className="text-sm text-ink-1">
+                  {liveStatusText(status)}
+                </p>
               </div>
               <Stepper status={status} />
               {status.status === 'failed' && (

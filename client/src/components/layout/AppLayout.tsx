@@ -30,9 +30,9 @@ export function AppLayout() {
     <div className="min-h-screen bg-bg">
       <a
         href="#main"
-        className="sr-only z-50 rounded-control bg-surface px-3 py-2 text-sm font-medium text-brand shadow-md focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        className="sr-only z-50 rounded-control bg-surface px-3 py-2 text-sm font-medium text-brand shadow-md focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:inline-flex focus:min-h-11 focus:items-center"
       >
-        Skip to content
+        Skip to main content
       </a>
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 border-r border-border bg-surface lg:block">

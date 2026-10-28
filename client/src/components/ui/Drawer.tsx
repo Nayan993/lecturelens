@@ -37,7 +37,7 @@ export const Drawer = forwardRef<HTMLDivElement, DrawerProps>(
           aria-label={label}
           tabIndex={-1}
           className={cn(
-            'absolute inset-y-0 flex w-72 max-w-[85vw] flex-col bg-surface shadow-md',
+            'absolute inset-y-0 flex w-72 max-w-drawer flex-col bg-surface shadow-md',
             side === 'left' ? 'left-0 border-r border-border' : 'right-0 border-l border-border',
             className,
           )}

@@ -55,7 +55,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 
     return (
       <div ref={ref} className={cn('flex flex-col', className)} {...props}>
-        <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-1 border-b border-border">
+        <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex gap-1 overflow-x-auto shadow-divider-b">
           {items.map((item, i) => {
             const isSelected = item.value === selected;
             return (
@@ -73,7 +73,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
                 disabled={item.disabled}
                 onClick={() => select(item.value)}
                 className={cn(
-                  '-mb-px rounded-t-control border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+                  'shrink-0 rounded-t-control border-b-2 px-2.5 py-2 text-sm font-medium transition-colors max-sm:min-h-11',
                   'disabled:cursor-not-allowed disabled:opacity-50',
                   isSelected
                     ? 'border-brand text-brand'

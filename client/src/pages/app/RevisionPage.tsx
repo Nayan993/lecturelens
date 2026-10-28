@@ -10,6 +10,7 @@ import { Badge, Button, buttonClasses, Card, EmptyState, ErrorState, Skeleton } 
 import { useLectureTitles } from '../../features/lectures/hooks';
 import { useRevisionPlan } from '../../features/revision/hooks';
 import { useStartPracticeQuiz } from '../../features/quizzes/components/QuizPanel';
+import { PAGE_NARROW } from '../../components/layout/Page';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -37,7 +38,7 @@ function RevisionCard({ item, lectureTitle, lectureAccuracy }: { item: RevisionI
             </h2>
             <p className="text-sm text-ink-2">
               {lectureTitle ?? 'Lecture'} ·{' '}
-              <span className="font-mono tabular-nums text-accent">
+              <span className="font-mono tabular-nums text-accent-strong">
                 {formatTimestamp(item.startSec)}–{formatTimestamp(item.endSec)}
               </span>
             </p>
@@ -95,7 +96,7 @@ export function RevisionPage() {
   const titles = useLectureTitles(plan?.items.map((i) => i.lectureId) ?? []);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className={PAGE_NARROW}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Revision plan</h1>
         {plan && (

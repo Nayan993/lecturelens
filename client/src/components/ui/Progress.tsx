@@ -48,7 +48,7 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(
             />
           ) : (
             <div
-              className={cn('h-full rounded-full transition-[width] duration-300', TONE_CLASSES[tone])}
+              className={cn('h-full rounded-full transition-all duration-300', TONE_CLASSES[tone])}
               style={{ width: `${pct}%` }}
             />
           )}

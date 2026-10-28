@@ -6,9 +6,9 @@ export type BadgeVariant = 'neutral' | 'brand' | 'accent' | 'success' | 'warning
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   neutral: 'border-border bg-bg text-ink-2',
   brand: 'border-brand/20 bg-brand-soft text-brand',
-  accent: 'border-accent/25 bg-accent-soft text-accent',
-  success: 'border-success/25 bg-success/10 text-success',
-  warning: 'border-warning/30 bg-warning/10 text-warning',
+  accent: 'border-accent/25 bg-accent-soft text-accent-strong',
+  success: 'border-success/25 bg-success/10 text-success-strong',
+  warning: 'border-warning/30 bg-warning/10 text-warning-strong',
   danger: 'border-danger/25 bg-danger/10 text-danger',
 };
 

@@ -7,7 +7,8 @@
   /* text */
   --ink-1: #141a21;
   --ink-2: #5a6672;
-  --ink-3: #8b96a2;
+  /* darkened from #8b96a2 (2.78:1 on bg) to pass WCAG AA: 4.98 on surface, 4.61 on bg */
+  --ink-3: #65717e;
 
   /* surfaces */
   --surface: #ffffff;
@@ -20,10 +21,14 @@
   --brand-soft: #e8eef2;
   --accent: #b9762a;
   --accent-soft: #fbf2e7;
+  /* Text-safe shades (same hue, darker): accent/warning/success fills stay as above. */
+  --accent-strong: #986122; /* 5.16 on surface, 4.66 on accent-soft */
 
   /* status */
   --success: #2e7d4f;
   --warning: #b5892f;
+  --warning-strong: #8a6924; /* 4.60 on warning/10, 5.09 on surface */
+  --success-strong: #2d794d; /* 4.66 on success/10, 5.31 on surface */
   --danger: #b5392f;
   --info: #2d6da3;
 
@@ -44,7 +49,8 @@
 .dark {
   --ink-1: #e8eaed;
   --ink-2: #a7b0ba;
-  --ink-3: #7c8792;
+  /* lightened from #7c8792 (4.48:1 on surface): 4.66 on surface, 5.11 on bg */
+  --ink-3: #7f8a94;
 
   --surface: #1c2024;
   --bg: #14171a;
@@ -55,9 +61,12 @@
   --brand-soft: #1b2e3b;
   --accent: #d9a05e;
   --accent-soft: #2e2418;
+  --accent-strong: #d9a05e; /* the base colours already pass on dark */
 
   --success: #5fb784;
   --warning: #d4ad5a;
+  --warning-strong: #d4ad5a;
+  --success-strong: #5fb784;
   --danger: #e0756b;
   --info: #6aa3d6;
 

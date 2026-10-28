@@ -3,6 +3,7 @@ import { createRef, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import { ROUTER_FUTURE } from './routerFuture';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, TOKEN_KEY, useAuth } from './context/AuthContext';
 import { ApiRequestError, UNAUTHORISED_EVENT } from './lib/apiClient';
@@ -53,7 +54,7 @@ function renderApp(path: string, token: string | null, service = fakeService()) 
   if (token) localStorage.setItem(TOKEN_KEY, token);
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[path]} future={ROUTER_FUTURE}>
       <AuthProvider service={service}>
         <ToastProvider>
           <AppRoutes />

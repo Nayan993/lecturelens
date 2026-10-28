@@ -7,7 +7,7 @@ import { NAVIGATION, type NavItem } from './navigation';
 
 const linkClasses = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'flex items-center gap-2.5 rounded-r-control border-l-2 py-2 pl-3 pr-2 text-sm font-medium transition-colors [&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0',
+    'flex items-center gap-2.5 rounded-r-control border-l-2 py-2 pl-3 pr-2 text-sm font-medium transition-colors max-sm:min-h-11 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0',
     isActive
       ? 'border-brand bg-brand-soft text-brand'
       : 'border-transparent text-ink-2 hover:bg-ink-1/5 hover:text-ink-1',
@@ -26,7 +26,7 @@ function SidebarLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter((p) => /\p{L}/u.test(p) && !p.endsWith('.'));
   const picked = parts.length > 1 ? [parts[0], parts[parts.length - 1]] : parts;
-  return picked.map((p) => p[0]!.toUpperCase()).join('') || '?';
+  return picked.map((p) => p.charAt(0).toUpperCase()).join('') || '?';
 }
 
 /** Role-aware navigation. Used in the fixed desktop sidebar and inside the mobile drawer. */
@@ -38,7 +38,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-14 shrink-0 items-center px-5">
-        <NavLink to="/app/dashboard" onClick={onNavigate} className="text-lg font-semibold tracking-tight text-brand">
+        <NavLink to="/app/dashboard" onClick={onNavigate} className="tap-target text-lg font-semibold tracking-tight text-brand">
           LectureLens
         </NavLink>
       </div>
@@ -46,7 +46,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-2">
         {groups.map((group) => (
           <div key={group.label} className="mb-5">
-            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">{group.label}</p>
+            <p className="mb-1.5 px-3 text-eyebrow font-semibold uppercase tracking-wider text-ink-3">{group.label}</p>
             <ul className="flex flex-col gap-0.5">
               {group.items.map((item) => (
                 <li key={item.to}>

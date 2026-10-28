@@ -38,7 +38,7 @@ export const Thead = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTabl
       <thead
         ref={ref}
         // Inset shadow instead of a border: collapsed borders do not travel with a sticky header.
-        className={cn('bg-surface shadow-[inset_0_-1px_0_var(--border)]', stickyHeader && 'sticky top-0 z-10', className)}
+        className={cn('bg-surface shadow-divider-b', stickyHeader && 'sticky top-0 z-10', className)}
         {...props}
       />
     );

@@ -5,6 +5,7 @@ import { getThemePreference, setThemePreference, type ThemePreference } from '..
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Radio, RadioGroup, useToast } from '../../components/ui';
 import { useUpdateProfile } from '../../features/account/hooks';
+import { PAGE_NARROW, PageHeader } from '../../components/layout/Page';
 
 const THEMES: Array<{ value: ThemePreference; label: string; description: string }> = [
   { value: 'light', label: 'Light', description: 'Warm paper background.' },
@@ -47,8 +48,8 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Settings</h1>
+    <div className={PAGE_NARROW}>
+      <PageHeader title="Settings" description="Your profile, appearance and account." />
 
       <Card>
         <CardHeader>

@@ -29,7 +29,7 @@ export function PassageCard({ passage, terms, topicLabel, maxScore }: PassageCar
           <p className="text-sm font-semibold text-ink-1">{passage.lectureTitle}</p>
           <p className="text-xs text-ink-2">
             {topicLabel && <span>{topicLabel} · </span>}
-            <span className="font-mono font-semibold tabular-nums text-accent">
+            <span className="font-mono font-semibold tabular-nums text-accent-strong">
               {formatTimestamp(passage.startSec)}–{formatTimestamp(passage.endSec)}
             </span>
           </p>

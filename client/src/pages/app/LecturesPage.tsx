@@ -11,6 +11,7 @@ import { LectureCard, LectureCardSkeleton } from '../../features/lectures/compon
 import { useLectures } from '../../features/lectures/hooks';
 import { TeacherLecturesTable } from '../../features/lectures/components/TeacherLecturesTable';
 import { useReviewQueue } from '../../features/review/hooks';
+import { PAGE_WIDE } from '../../components/layout/Page';
 
 export const PAGE_SIZE = 12;
 
@@ -75,7 +76,7 @@ export function LecturesPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={PAGE_WIDE}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-ink-1">{title}</h1>
@@ -114,7 +115,7 @@ export function LecturesPage() {
                 aria-pressed={filter === f.value}
                 onClick={() => update({ filter: f.value })}
                 className={cn(
-                  'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors',
+                  'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors max-sm:min-h-11',
                   filter === f.value ? 'border-brand bg-brand-soft text-brand' : 'border-border bg-surface text-ink-2 hover:border-ink-3 hover:text-ink-1',
                 )}
               >
@@ -152,7 +153,7 @@ export function LecturesPage() {
         ) : (
           <ErrorState message={lecturesQ.error.message} onRetry={() => void lecturesQ.refetch()} />
         )
-      ) : data!.total === 0 ? (
+      ) : !data || data.total === 0 ? (
         isTeacher ? (
           <EmptyState icon={<Upload />} title="No lectures yet" description="Upload your first recording to get a transcript, topics and summaries." />
         ) : (
@@ -202,5 +203,5 @@ function isSearchTyping(patch: Record<string, string | null>): boolean {
 /** Teacher variant: a table with per-lecture review counts (only teachers can query those). */
 function TeacherLectureList({ lectures }: { lectures: Lecture[] }) {
   const queue = useReviewQueue();
-  return <TeacherLecturesTable lectures={lectures} pendingCount={queue.pendingCount} />;
+  return <TeacherLecturesTable lectures={lectures} pendingCount={queue.isPending || queue.error ? null : queue.pendingCount} />;
 }

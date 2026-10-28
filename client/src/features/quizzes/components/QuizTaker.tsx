@@ -47,7 +47,7 @@ function QuestionScreen({
               >
                 {LETTER[option.id]}
               </span>
-              <span className="pt-0.5 text-[15px] text-ink-1">{option.text}</span>
+              <span className="pt-0.5 text-md text-ink-1">{option.text}</span>
               {checked && <span className="sr-only"> (selected)</span>}
             </label>
           );
@@ -59,7 +59,8 @@ function QuestionScreen({
 
 /** One question per screen, Previous / Next, then a review screen that flags unanswered questions. */
 export function QuizTaker({ quiz, onSubmitted }: { quiz: Quiz; onSubmitted: (attempt: Attempt) => void }) {
-  const questions = quiz.questions as StudentQuestion[];
+  // Both shapes carry everything a student needs (id, topicId, difficulty, stem, options).
+  const questions: StudentQuestion[] = quiz.questions;
   const [startedAt] = useState(() => new Date().toISOString());
   const [index, setIndex] = useState(0);
   const [reviewing, setReviewing] = useState(false);
@@ -85,7 +86,10 @@ export function QuizTaker({ quiz, onSubmitted }: { quiz: Quiz; onSubmitted: (att
     submit.mutate(
       { startedAt, answers: questions.map((q) => ({ questionId: q.id, selectedOptionId: answers[q.id] ?? null })) },
       {
-        onSuccess: onSubmitted,
+        onSuccess: (attempt) => {
+          toast({ variant: 'success', title: 'Answers submitted', description: `You scored ${attempt.score.correct} of ${attempt.score.total}.` });
+          onSubmitted(attempt);
+        },
         onError: (err) => toast({ variant: 'error', title: 'Couldn’t submit your answers', description: err.message }),
       },
     );
@@ -99,12 +103,12 @@ export function QuizTaker({ quiz, onSubmitted }: { quiz: Quiz; onSubmitted: (att
         </h2>
         {unanswered.length > 0 ? (
           <p className="flex items-start gap-2 rounded-control border border-warning/40 bg-warning/10 px-3 py-2.5 text-sm text-ink-1">
-            <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-warning-strong" />
             {unanswered.length} {unanswered.length === 1 ? 'question is' : 'questions are'} unanswered and will count as wrong.
           </p>
         ) : (
           <p className="flex items-center gap-2 text-sm text-ink-2">
-            <CheckCircle2 aria-hidden className="h-4 w-4 text-success" />
+            <CheckCircle2 aria-hidden className="h-4 w-4 text-success-strong" />
             All {total} questions answered.
           </p>
         )}

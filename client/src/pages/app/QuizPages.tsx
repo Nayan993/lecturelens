@@ -4,7 +4,7 @@ import { ArrowLeft, ListChecks, Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isApiError, isNotImplemented } from '../../lib/apiClient';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
-import type { Question, Quiz } from '../../types';
+import type { Question, Quiz, StudentQuestion } from '../../types';
 import { Button, Card, CardContent, EmptyState, ErrorState, Select, Skeleton } from '../../components/ui';
 import { useLectures } from '../../features/lectures/hooks';
 import { useAttempt, useQuiz, useQuizzes } from '../../features/quizzes/hooks';
@@ -12,6 +12,7 @@ import { AttemptResults } from '../../features/quizzes/components/AttemptResults
 import { useStartPracticeQuiz } from '../../features/quizzes/components/QuizPanel';
 import { QuizSummaryCard } from '../../features/quizzes/components/QuizSummaryCard';
 import { QuizTaker } from '../../features/quizzes/components/QuizTaker';
+import { PAGE_NARROW, PAGE_WIDE } from '../../components/layout/Page';
 
 /** /app/quizzes — your quizzes with coverage and best score, and a way to start a new one. */
 export function QuizzesPage() {
@@ -24,7 +25,7 @@ export function QuizzesPage() {
   const { start, pending } = useStartPracticeQuiz();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={PAGE_WIDE}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Quizzes</h1>
         <p className="text-sm text-ink-2">Short practice quizzes built only from questions your teacher has approved.</p>
@@ -77,13 +78,18 @@ export function QuizzesPage() {
   );
 }
 
+/** The owning teacher receives full questions (with the answer key); students receive StudentQuestion. */
+const isFullQuestion = (q: Question | StudentQuestion): q is Question => 'correctOptionId' in q;
+
 /** Teachers can open a quiz on their lecture but only students submit attempts (§5.7). */
 function TeacherPreview({ quiz }: { quiz: Quiz }) {
+  const all: Array<Question | StudentQuestion> = quiz.questions; // widen the union of arrays, then narrow per item
+  const fullQuestions = all.filter(isFullQuestion);
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-ink-2">Preview — only students can submit attempts.</p>
       <ol className="flex flex-col gap-2">
-        {(quiz.questions as Question[]).map((q, i) => (
+        {fullQuestions.map((q, i) => (
           <li key={q.id}>
             <Card className="p-4 shadow-none">
               <p className="font-medium text-ink-1">
@@ -112,9 +118,9 @@ export function QuizPage() {
   const error = quizQ.error ?? attemptQ.error;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+    <div className={PAGE_NARROW}>
       <div className="flex flex-col gap-1">
-        <Link to="/app/quizzes" className="inline-flex w-fit items-center gap-1 text-sm text-ink-2 hover:text-ink-1">
+        <Link to="/app/quizzes" className="tap-target inline-flex w-fit items-center gap-1 text-sm text-ink-2 hover:text-ink-1">
           <ArrowLeft aria-hidden className="h-4 w-4" />
           All quizzes
         </Link>

@@ -15,7 +15,7 @@ export interface FieldProps {
 export const controlClasses =
   'w-full rounded-control border border-border bg-surface text-sm text-ink-1 shadow-sm transition-colors ' +
   'placeholder:text-ink-3 hover:border-ink-3 focus-visible:border-brand ' +
-  'aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:bg-bg disabled:text-ink-3 disabled:hover:border-border';
+  'aria-[invalid=true]:border-danger disabled:cursor-not-allowed disabled:bg-bg disabled:text-ink-3 disabled:hover:border-border max-sm:min-h-11';
 
 /** Stable ids and ARIA wiring for a labelled control with optional hint and error. */
 export function useFieldIds(

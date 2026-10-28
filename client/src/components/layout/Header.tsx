@@ -33,7 +33,7 @@ function Breadcrumbs() {
                   {crumb.label}
                 </span>
               ) : (
-                <Link to={crumb.to} className="truncate text-ink-2 hover:text-ink-1 hover:underline">
+                <Link to={crumb.to} className="tap-target truncate text-ink-2 hover:text-ink-1 hover:underline">
                   {crumb.label}
                 </Link>
               )}

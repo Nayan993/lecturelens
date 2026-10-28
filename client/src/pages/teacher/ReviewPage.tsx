@@ -5,6 +5,7 @@ import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { Badge, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui';
 import { useReviewQueue } from '../../features/review/hooks';
 import { QuestionReviewCard, SummaryReviewCard } from '../../features/review/components/ReviewCards';
+import { PAGE_NARROW } from '../../components/layout/Page';
 
 function QueueSkeleton() {
   return (
@@ -63,7 +64,7 @@ export function ReviewPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+    <div className={PAGE_NARROW}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Review Queue</h1>
         <p className="text-sm text-ink-2">Generated summaries and quiz questions wait here until you decide.</p>

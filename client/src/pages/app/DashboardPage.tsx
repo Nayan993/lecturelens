@@ -12,6 +12,7 @@ import { LectureCard, LectureCardSkeleton } from '../../features/lectures/compon
 import { useLecture, useLectures } from '../../features/lectures/hooks';
 import { useRevisionPlan } from '../../features/revision/hooks';
 import { TeacherDashboard } from '../teacher/TeacherDashboard';
+import { PAGE_WIDE } from '../../components/layout/Page';
 
 /** "Dr. Ananya Rao" → "Ananya"; skips honorifics like "Dr." and "Prof.". */
 export function firstName(name: string): string {
@@ -76,11 +77,11 @@ function WeakTopicsCard() {
     <Card className="flex flex-col">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
-          <Target aria-hidden className="h-4 w-4 text-accent" />
+          <Target aria-hidden className="h-4 w-4 text-accent-strong" />
           Your weak topics
         </CardTitle>
         {items.length > 0 && (
-          <Link to="/app/revision" className="text-sm font-medium text-brand underline-offset-4 hover:underline">
+          <Link to="/app/revision" className="tap-target text-sm font-medium text-brand underline-offset-4 hover:underline">
             Full plan
           </Link>
         )}
@@ -144,7 +145,7 @@ function StudentDashboard() {
   const total = lecturesQ.data?.total;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className={PAGE_WIDE}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">
           {greeting()}, {user ? firstName(user.name) : 'there'}
@@ -170,7 +171,7 @@ function StudentDashboard() {
         <EmptyState icon={<LibraryBig />} title="No lectures yet — ask your teacher to upload one" description="Once a lecture is ready it appears here." />
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-workspace">
             <section aria-labelledby="continue-title" className="flex flex-col gap-3">
               <h2 id="continue-title" className="text-sm font-semibold text-ink-2">
                 Continue
@@ -198,7 +199,7 @@ function StudentDashboard() {
               <h2 id="recent-title" className="text-sm font-semibold text-ink-2">
                 Recent lectures
               </h2>
-              <Link to="/app/lectures" className="text-sm font-medium text-brand underline-offset-4 hover:underline">
+              <Link to="/app/lectures" className="tap-target text-sm font-medium text-brand underline-offset-4 hover:underline">
                 All lectures
               </Link>
             </div>

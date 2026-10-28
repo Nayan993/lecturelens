@@ -18,6 +18,7 @@ import { TopicRail } from '../../features/topics/components/TopicRail';
 import { useTopics } from '../../features/topics/hooks';
 import { AskPanel } from '../../features/qa/components/AskPanel';
 import { QuizPanel } from '../../features/quizzes/components/QuizPanel';
+import { H1 } from '../../components/layout/Page';
 
 /** Save "where I stopped" at most every 5 s of playback movement, and on leaving the page. */
 const SAVE_EVERY_SEC = 5;
@@ -26,13 +27,13 @@ const SAVE_EVERY_SEC = 5;
  * Fills the viewport below the header: 6.5rem = 3.5rem header + 3rem (py-6) main padding on mobile;
  * 7.5rem = header + 4rem (lg:py-8) on desktop.
  */
-const VIEWPORT_HEIGHT = 'h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-7.5rem)]';
+const VIEWPORT_HEIGHT = 'h-workspace lg:h-workspace-lg';
 
 function ReadingSkeleton() {
   return (
     <div className={`flex flex-col gap-3 ${VIEWPORT_HEIGHT}`} aria-busy="true" aria-label="Loading lecture">
       <Skeleton width="45%" height={26} />
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-workspace">
         <div className="flex flex-col gap-3">
           <Skeleton className="aspect-video rounded-card" height="auto" />
           <div className="flex gap-2">
@@ -87,7 +88,7 @@ function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: nu
   return (
     <div className={`flex flex-col gap-3 ${VIEWPORT_HEIGHT}`}>
       <header className="flex shrink-0 flex-wrap items-baseline gap-x-3 gap-y-0.5">
-        <h1 className="min-w-0 truncate text-lg font-semibold tracking-tight text-ink-1 lg:text-xl">{lecture.title}</h1>
+        <h1 className={`${H1} min-w-0 truncate`}>{lecture.title}</h1>
         <p className="hidden text-sm text-ink-2 sm:block">
           {[lecture.courseCode, lecture.uploadedByName, lecture.durationSec !== null && formatDuration(lecture.durationSec)].filter(Boolean).join(' · ')}
         </p>
@@ -100,7 +101,7 @@ function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: nu
       </header>
 
       {/* minmax(0,1fr) on mobile: an implicit auto column would grow to the topic rail's unwrapped width. */}
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)] gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-1 lg:gap-5">
+      <div className="grid min-h-0 flex-1 grid-cols-single grid-rows-stack gap-3 lg:grid-cols-workspace-tight lg:grid-rows-1 xl:grid-cols-workspace lg:gap-5">
         <section aria-label="Recording" className="flex min-h-0 flex-col gap-3 lg:overflow-y-auto">
           <LecturePlayer
             src={lecture.mediaUrl}
@@ -109,7 +110,7 @@ function ReadingView({ lecture, startAt }: { lecture: LectureDetail; startAt: nu
             markers={markers}
             startAt={startAt}
             onTimeUpdate={onTimeUpdate}
-            videoClassName="max-h-[24dvh] lg:max-h-none"
+            videoClassName="max-h-player-compact lg:max-h-none"
           />
           <TopicRail topics={topics} currentTime={player.currentTime} onSelect={selectTopic} />
         </section>

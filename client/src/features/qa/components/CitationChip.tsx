@@ -32,22 +32,22 @@ export function CitationChip({ citation, lectureTitle, onScreenLectureId, classN
   const open = useOpenCitation(onScreenLectureId);
   const time = formatTimestamp(citation.startSec);
   return (
-    <Tooltip content={<span className="block max-w-64 whitespace-normal font-serif text-[13px] leading-snug">“{citation.quote}”</span>} className="w-max max-w-72">
+    <Tooltip content={<span className="block max-w-64 whitespace-normal font-serif text-sm leading-snug">“{citation.quote}”</span>} className="w-max max-w-72">
       <button
         type="button"
         onClick={() => open(citation)}
         aria-label={`Source ${citation.marker}: ${lectureTitle ? `${lectureTitle}, ` : ''}${time}. Quote: “${citation.quote}”`}
         className={cn(
-          'inline-flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface py-1 pl-1 pr-2.5 text-xs text-ink-1 transition-colors hover:border-accent hover:bg-accent-soft',
+          'inline-flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface py-1 pl-1 pr-2.5 text-xs text-ink-1 transition-colors hover:border-accent hover:bg-accent-soft max-sm:min-h-11',
           className,
         )}
       >
-        <span aria-hidden className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-soft px-1 font-semibold tabular-nums text-accent">
+        <span aria-hidden className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-soft px-1 font-semibold tabular-nums text-accent-strong">
           {citation.marker}
         </span>
         {lectureTitle && <span className="truncate text-ink-2">{lectureTitle}</span>}
-        <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent" />
-        <span className="font-mono font-semibold tabular-nums text-accent">{time}</span>
+        <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent-strong" />
+        <span className="font-mono font-semibold tabular-nums text-accent-strong">{time}</span>
       </button>
     </Tooltip>
   );

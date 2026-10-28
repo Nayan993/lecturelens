@@ -11,6 +11,7 @@ import { useLectures } from '../../features/lectures/hooks';
 import { useSearch } from '../../features/search/hooks';
 import { useTopicsForLectures } from '../../features/topics/hooks';
 import { PassageCard, PassageCardSkeleton } from '../../features/search/components/PassageCard';
+import { PAGE_WIDE } from '../../components/layout/Page';
 
 const EXAMPLES = ['learning rate too large', 'epoch vs iteration', 'chain rule upstream gradient', 'vanishing gradients sigmoid'];
 const TOP_K = 10;
@@ -35,7 +36,7 @@ function SegmentedControl<T extends string>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'rounded-[calc(var(--radius-control)-2px)] px-3 py-1.5 text-sm font-medium transition-colors',
+            'rounded px-3 py-1.5 text-sm font-medium transition-colors max-sm:min-h-11',
             value === o.value ? 'bg-brand-soft text-brand' : 'text-ink-2 hover:text-ink-1',
           )}
         >
@@ -85,7 +86,7 @@ export function SearchPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={PAGE_WIDE}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Search</h1>
         <p className="text-sm text-ink-2">Find the exact moments a topic was explained, across the transcripts of your lectures.</p>

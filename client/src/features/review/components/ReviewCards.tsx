@@ -12,7 +12,7 @@ function Context({ lecture, topicLabel, start, createdAt }: { lecture: string; t
     <p className="text-xs text-ink-2">
       {lecture}
       {topicLabel && ` · ${topicLabel}`}
-      {start !== undefined && <span className="font-mono tabular-nums text-accent"> · {formatTimestamp(start)}</span>}
+      {start !== undefined && <span className="font-mono tabular-nums text-accent-strong"> · {formatTimestamp(start)}</span>}
       <span className="text-ink-3"> · generated {formatAge(createdAt)}</span>
     </p>
   );
@@ -50,7 +50,7 @@ export function SummaryReviewCard({ item, highlighted }: { item: PendingSummary;
           </ul>
         )}
         <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Evidence</p>
+          <p className="text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Evidence</p>
           <ul className="flex flex-wrap gap-2">
             {summary.evidence.map((ev) => (
               <li key={`${ev.chunkId}-${ev.startSec}`} className="min-w-0 max-w-full">
@@ -133,7 +133,7 @@ export function QuestionReviewCard({ item, highlighted }: { item: PendingQuestio
                 <span className="font-semibold uppercase text-ink-3">{o.id}</span>
                 <span className="flex-1">{o.text}</span>
                 {correct && (
-                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-success">
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-success-strong">
                     <CheckCircle2 aria-hidden className="h-4 w-4" />
                     Correct answer
                   </span>
@@ -142,7 +142,7 @@ export function QuestionReviewCard({ item, highlighted }: { item: PendingQuestio
             );
           })}
         </ol>
-        <p className="prose-lecture max-w-none text-[15.5px]">
+        <p className="prose-lecture max-w-none text-reading-sm">
           <span className="font-sans text-xs font-semibold uppercase tracking-wider text-ink-3">Explanation · </span>
           {question.explanation}
         </p>

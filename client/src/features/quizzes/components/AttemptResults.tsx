@@ -12,7 +12,7 @@ const LETTER: Record<OptionId, string> = { a: 'A', b: 'B', c: 'C', d: 'D' };
 export function ScoreRing({ accuracy, size = 96 }: { accuracy: number; size?: number }) {
   const r = 42;
   const c = 2 * Math.PI * r;
-  const tone = accuracy >= 0.75 ? 'text-success' : accuracy >= 0.5 ? 'text-warning' : 'text-danger';
+  const tone = accuracy >= 0.75 ? 'text-success-strong' : accuracy >= 0.5 ? 'text-warning-strong' : 'text-danger';
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden className="shrink-0 -rotate-90">
       <circle cx="50" cy="50" r={r} fill="none" stroke="currentColor" strokeWidth="9" className="text-ink-1/10" />
@@ -121,7 +121,7 @@ export function AttemptResults({ attempt, quiz }: { attempt: Attempt; quiz?: Qui
                   <CardHeader>
                     <div className="flex items-start gap-2">
                       {a.correct ? (
-                        <CheckCircle2 aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                        <CheckCircle2 aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-success-strong" />
                       ) : (
                         <XCircle aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
                       )}
@@ -132,9 +132,9 @@ export function AttemptResults({ attempt, quiz }: { attempt: Attempt; quiz?: Qui
                     </div>
                   </CardHeader>
                   <CardContent className="flex flex-col gap-3">
-                    <dl className="grid gap-1.5 text-sm sm:grid-cols-[8rem_1fr]">
+                    <dl className="grid gap-1.5 text-sm sm:grid-cols-label-value">
                       <dt className="text-ink-2">Your answer</dt>
-                      <dd className={cn('font-medium', a.correct ? 'text-success' : 'text-ink-1')}>
+                      <dd className={cn('font-medium', a.correct ? 'text-success-strong' : 'text-ink-1')}>
                         {a.selectedOptionId ? `${LETTER[a.selectedOptionId]}. ${yours ?? ''}` : 'Not answered'}
                         {a.correct ? ' — correct' : ' — incorrect'}
                       </dd>
@@ -147,14 +147,14 @@ export function AttemptResults({ attempt, quiz }: { attempt: Attempt; quiz?: Qui
                         </>
                       )}
                     </dl>
-                    <p className="prose-lecture max-w-none text-[15.5px]">{a.explanation}</p>
+                    <p className="prose-lecture max-w-none text-reading-sm">{a.explanation}</p>
                     <Link
                       to={deepLinkToHref(a.deepLink)}
-                      className="inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-xs text-ink-1 transition-colors hover:border-accent hover:bg-accent-soft"
+                      className="inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-xs text-ink-1 transition-colors hover:border-accent hover:bg-accent-soft max-sm:min-h-11"
                     >
-                      <Play aria-hidden className="h-3 w-3 fill-accent text-accent" />
+                      <Play aria-hidden className="h-3 w-3 fill-accent text-accent-strong" />
                       Watch the explanation
-                      {t !== null && <span className="font-mono font-semibold tabular-nums text-accent">at {formatTimestamp(t)}</span>}
+                      {t !== null && <span className="font-mono font-semibold tabular-nums text-accent-strong">at {formatTimestamp(t)}</span>}
                     </Link>
                   </CardContent>
                 </Card>

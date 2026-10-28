@@ -8,6 +8,7 @@ import { apiFieldErrors, firstErrorField, zodFieldErrors, type FieldErrors } fro
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { DEMO_ACCOUNTS, showDemoAccounts } from '../../services';
 import { getReturnPath } from '../../components/layout/RequireAuth';
+import { H1 } from '../../components/layout/Page';
 import {
   Badge,
   Button,
@@ -88,7 +89,8 @@ export function LoginPage() {
     }
     setPending(true);
     try {
-      await login(values.email.trim(), values.password, { remember });
+      const user = await login(values.email.trim(), values.password, { remember });
+      toast({ variant: 'success', title: `Signed in as ${user.name}` });
       navigate(returnTo, { replace: true });
     } catch (err) {
       const message = isApiError(err) ? err.message : 'Something went wrong. Please try again.';
@@ -110,7 +112,7 @@ export function LoginPage() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 sm:py-8">
       <Card>
         <CardHeader>
-          <h1 className="text-xl font-semibold leading-snug text-ink-1">Sign in</h1>
+          <h1 className={H1}>Sign in</h1>
           <CardDescription>
             {cameFromProtectedPage ? 'Sign in to continue to the page you asked for.' : 'Welcome back to LectureLens.'}
           </CardDescription>

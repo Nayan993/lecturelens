@@ -100,6 +100,7 @@ export function ReprocessDialog({ lecture, open, onOpenChange }: { lecture: Lect
                 {
                   onSuccess: () => {
                     onOpenChange(false);
+                    toast({ variant: 'success', title: 'Processing restarted', description: lecture.title });
                     navigate(lectureHref(lecture.id));
                   },
                   onError: (err) => toast({ variant: 'error', title: 'Couldn’t reprocess', description: err.message }),
@@ -151,7 +152,8 @@ function RowActions({ lecture, onDelete, onReprocess }: { lecture: Lecture; onDe
 }
 
 /** The teacher's lecture list: one row per lecture with status, topics, pending reviews and actions. */
-export function TeacherLecturesTable({ lectures, pendingCount }: { lectures: Lecture[]; pendingCount: Map<string, number> }) {
+/** `pendingCount` null = review counts unknown (loading or failed): shown as "—", never as 0. */
+export function TeacherLecturesTable({ lectures, pendingCount }: { lectures: Lecture[]; pendingCount: Map<string, number> | null }) {
   const [deleting, setDeleting] = useState<Lecture | null>(null);
   const [reprocessing, setReprocessing] = useState<Lecture | null>(null);
   return (
@@ -172,14 +174,14 @@ export function TeacherLecturesTable({ lectures, pendingCount }: { lectures: Lec
         </Thead>
         <Tbody>
           {lectures.map((l) => {
-            const pending = pendingCount.get(l.id) ?? 0;
+            const pending = pendingCount ? (pendingCount.get(l.id) ?? 0) : null;
             return (
               <Tr key={l.id}>
-                <Td className="max-w-[22rem]">
+                <Td className="max-w-sm">
                   <Link to={lectureHref(l.id)} className="font-medium text-ink-1 hover:text-brand hover:underline">
                     {l.title}
                   </Link>
-                  {l.status === 'ready' && !l.transcriptApproved && <p className="text-xs text-warning">Transcript not approved yet</p>}
+                  {l.status === 'ready' && !l.transcriptApproved && <p className="text-xs text-warning-strong">Transcript not approved yet</p>}
                 </Td>
                 <Td>
                   <StatusPill status={l.status} />
@@ -188,8 +190,10 @@ export function TeacherLecturesTable({ lectures, pendingCount }: { lectures: Lec
                 <Td className="whitespace-nowrap text-ink-2">{formatDate(l.createdAt)}</Td>
                 <Td className="text-right tabular-nums text-ink-2">{l.topicCount ?? '—'}</Td>
                 <Td className="text-right">
-                  {pending > 0 ? (
-                    <Link to="/app/review" aria-label={`${pending} items to review for ${l.title}`}>
+                  {pending === null ? (
+                    <span className="text-ink-3" aria-label="Review count unavailable">—</span>
+                  ) : pending > 0 ? (
+                    <Link to="/app/review" aria-label={`${pending} items to review for ${l.title}`} className="tap-target justify-end">
                       <Badge variant="accent">{pending}</Badge>
                     </Link>
                   ) : (

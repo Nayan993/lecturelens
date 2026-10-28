@@ -45,7 +45,7 @@ function AnswerText({ text, citations, onOpen }: { text: string; citations: Cita
           type="button"
           onClick={() => onOpen(citation)}
           aria-label={`Source ${citation.marker}`}
-          className="mx-0.5 rounded-sm px-0.5 align-super font-sans text-[11px] font-semibold text-accent hover:bg-accent-soft"
+          className="mx-0.5 rounded-sm px-0.5 align-super font-sans text-eyebrow font-semibold text-accent-strong hover:bg-accent-soft"
         >
           [{citation.marker}]
         </button>
@@ -76,7 +76,7 @@ export function AbstainedPanel({ reason, scoped, onWiden, answer }: AbstainedPan
           <Info className="h-4 w-4" />
         </span>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <p className="font-serif text-[16.5px] leading-relaxed text-ink-1">
+          <p className="font-serif text-reading leading-relaxed text-ink-1">
             I couldn’t find this in {scoped ? 'this lecture' : 'the lectures'}.
           </p>
           <p className="text-sm text-ink-2">
@@ -133,7 +133,7 @@ export function AnswerCard({ answer, lectureTitles, onScreenLectureId, scoped, o
     <article className="flex flex-col gap-3 rounded-card border border-border bg-surface px-4 py-4">
       <AnswerText text={answer.answer} citations={answer.citations} onOpen={open} />
       <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Sources</p>
+        <p className="text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Sources</p>
         <ul className="flex flex-wrap gap-2">
           {answer.citations.map((c) => (
             <li key={`${c.marker}-${c.chunkId}`} className="min-w-0 max-w-full">

@@ -66,6 +66,8 @@ export function AppRoutes() {
         <Route index element={<LandingPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="403" element={<ForbiddenPage />} />
+        <Route path="404" element={<NotFoundPage />} />
       </Route>
 
       <Route
@@ -96,8 +98,6 @@ export function AppRoutes() {
       </Route>
 
       <Route path="lectures/:id/play" element={<DeepLinkRedirect />} />
-      <Route path="403" element={<ForbiddenPage standalone />} />
-      <Route path="404" element={<NotFoundPage standalone />} />
       {Kitchen && (
         <Route
           path="_kitchen"
@@ -108,7 +108,9 @@ export function AppRoutes() {
           }
         />
       )}
-      <Route path="*" element={<NotFoundPage standalone />} />
+      <Route element={<PublicLayout />}>
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
     </Routes>
   );
 }

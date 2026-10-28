@@ -10,6 +10,7 @@ import { useCreateLecture } from '../../features/lectures/hooks';
 import { SelectedFileCard } from '../../features/upload/components/SelectedFileCard';
 import { UploadDropzone } from '../../features/upload/components/UploadDropzone';
 import { FormError } from '../public/LoginPage';
+import { PAGE_NARROW } from '../../components/layout/Page';
 
 /** Named on the form as the consent requires (CONTRACTS.md §4.2 consent.processorNamed). */
 export const PROCESSORS = {
@@ -103,7 +104,7 @@ export function UploadPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div className={PAGE_NARROW}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Upload lecture</h1>
         <p className="text-sm text-ink-2">After upload, LectureLens transcribes the recording, finds topics and drafts summaries for your review.</p>

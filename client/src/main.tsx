@@ -18,6 +18,8 @@ import { queryClient } from './lib/queryClient';
 import { ToastProvider } from './components/ui';
 import { AuthProvider } from './context/AuthContext';
 import { initTheme } from './lib/theme';
+import { ErrorBoundary } from './components/layout/ErrorBoundary';
+import { ROUTER_FUTURE } from './routerFuture';
 
 // Before the first render, so a saved dark theme doesn't flash light.
 initTheme();
@@ -27,9 +29,11 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <ErrorBoundary>
+            <BrowserRouter future={ROUTER_FUTURE}>
+              <App />
+            </BrowserRouter>
+          </ErrorBoundary>
         </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>

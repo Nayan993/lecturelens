@@ -66,7 +66,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(
           aria-describedby={description ? descriptionId : undefined}
           tabIndex={-1}
           className={cn(
-            'flex max-h-[calc(100vh-2rem)] w-full flex-col rounded-card border border-border bg-surface text-ink-1 shadow-md',
+            'flex max-h-dialog w-full flex-col rounded-card border border-border bg-surface text-ink-1 shadow-md',
             SIZE_CLASSES[size],
             className,
           )}

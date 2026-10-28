@@ -16,7 +16,10 @@ export function useStartPracticeQuiz() {
     create.mutate(
       { lectureId, topicIds, questionCount: 10 },
       {
-        onSuccess: (quiz) => navigate(`/app/quizzes/${quiz.id}`),
+        onSuccess: (quiz) => {
+          toast({ variant: 'success', title: 'Quiz ready', description: `${quiz.questions.length} ${quiz.questions.length === 1 ? 'question' : 'questions'} from approved content.` });
+          navigate(`/app/quizzes/${quiz.id}`);
+        },
         onError: (err) =>
           toast({
             variant: isNotImplemented(err) ? 'info' : 'error',

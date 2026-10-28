@@ -16,7 +16,7 @@ export const Skeleton = forwardRef<HTMLDivElement, SkeletonProps>(
       aria-hidden
       style={{ width, height, ...style }}
       className={cn(
-        'relative overflow-hidden rounded-control bg-ink-1/[0.07]',
+        'relative overflow-hidden rounded-control bg-ink-1/10',
         'before:absolute before:inset-0 before:-translate-x-full before:animate-shimmer',
         'before:bg-gradient-to-r before:from-transparent before:via-surface/60 before:to-transparent',
         className,

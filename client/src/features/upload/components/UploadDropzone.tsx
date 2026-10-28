@@ -110,6 +110,7 @@ export function UploadDropzone({ onFile, disabled = false }: { onFile: (file: Fi
         className="sr-only"
         tabIndex={-1}
         aria-hidden
+        aria-label="Lecture file"
         data-testid="lecture-file-input"
         onChange={(e) => {
           accept(e.target.files?.[0]);

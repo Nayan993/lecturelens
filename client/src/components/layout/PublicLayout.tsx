@@ -9,9 +9,15 @@ export function PublicLayout() {
   const { status } = useAuth();
   return (
     <div className="flex min-h-screen flex-col bg-bg">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-control bg-surface px-3 py-2 text-sm font-medium text-brand shadow-md focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:inline-flex focus:min-h-11 focus:items-center"
+      >
+        Skip to main content
+      </a>
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-brand">
+          <Link to="/" className="tap-target text-lg font-semibold tracking-tight text-brand">
             LectureLens
           </Link>
           <nav aria-label="Account" className="flex items-center gap-2">
@@ -32,7 +38,7 @@ export function PublicLayout() {
           </nav>
         </div>
       </header>
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 outline-none sm:px-6">
         <Suspense fallback={<PageSkeleton />}>
           <Outlet />
         </Suspense>

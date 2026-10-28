@@ -53,9 +53,9 @@ function ProductPreview() {
           </div>
           <StatusPill status="ready" />
         </div>
-        <div className="grid md:grid-cols-[1.35fr_1fr]">
+        <div className="grid md:grid-cols-preview">
           <div className="flex flex-col gap-1 p-4 md:border-r md:border-border">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-ink-3">Transcript</p>
+            <p className="mb-1 text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Transcript</p>
             {PREVIEW_SEGMENTS.map((s) => (
               <div
                 key={s.startSec}
@@ -65,23 +65,23 @@ function ProductPreview() {
                     : 'flex gap-3 border-l-2 border-transparent px-3 py-2'
                 }
               >
-                <span className="w-10 shrink-0 pt-0.5 font-sans text-xs font-semibold tabular-nums text-accent">{formatTimestamp(s.startSec)}</span>
-                <p className="font-serif text-[15px] leading-relaxed text-ink-1">{s.text}</p>
+                <span className="w-10 shrink-0 pt-0.5 font-sans text-xs font-semibold tabular-nums text-accent-strong">{formatTimestamp(s.startSec)}</span>
+                <p className="font-serif text-md leading-relaxed text-ink-1">{s.text}</p>
               </div>
             ))}
           </div>
           <div className="flex flex-col gap-3 border-t border-border bg-bg/60 p-4 md:border-t-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Ask</p>
+            <p className="text-eyebrow font-semibold uppercase tracking-wider text-ink-3">Ask</p>
             <p className="self-end rounded-card rounded-br-sm bg-brand-soft px-3 py-2 text-sm text-ink-1">
               Why does a learning rate that’s too large make the loss blow up?
             </p>
-            <p className="font-serif text-[15px] leading-relaxed text-ink-1">
+            <p className="font-serif text-md leading-relaxed text-ink-1">
               Each step multiplies the weight by (1 − 2η). At η = 1.1 that factor is −1.2, so every step overshoots by
               more than the last and the loss diverges <span className="font-sans text-xs font-semibold text-brand">[1]</span>.
             </p>
             <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-xs font-medium text-ink-1">
-              <Play className="h-3 w-3 fill-accent text-accent" />
-              <span className="tabular-nums text-accent">{formatTimestamp(357.43)}</span>
+              <Play className="h-3 w-3 fill-accent text-accent-strong" />
+              <span className="tabular-nums text-accent-strong">{formatTimestamp(357.43)}</span>
               <span className="text-ink-2">Lecture 7 · “the loss blows up to infinity”</span>
             </span>
           </div>
@@ -100,7 +100,7 @@ export function LandingPage() {
     <div className="flex flex-col gap-20 pb-6 sm:gap-24">
       <section aria-labelledby="hero-title" className="max-w-3xl pt-8 sm:pt-14">
         <p className="mb-4 text-sm font-semibold tracking-tight text-brand">LectureLens</p>
-        <h1 id="hero-title" className="text-3xl font-semibold leading-tight tracking-tight text-ink-1 sm:text-[2.75rem]">
+        <h1 id="hero-title" className="text-3xl font-semibold leading-tight tracking-tight text-ink-1 sm:text-5xl">
           Turn recorded lectures into something you can search, question and revise
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-2 sm:text-lg">
@@ -138,7 +138,7 @@ export function LandingPage() {
               <Card className="h-full shadow-none">
                 <CardContent className="flex flex-col gap-3 py-5">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold tabular-nums text-accent">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-sm font-semibold tabular-nums text-accent-strong">{String(i + 1).padStart(2, '0')}</span>
                     <span aria-hidden className="text-brand [&>svg]:h-5 [&>svg]:w-5">
                       {step.icon}
                     </span>
@@ -162,7 +162,7 @@ export function LandingPage() {
               <CardContent className="flex flex-col gap-3 py-5">
                 <span
                   aria-hidden
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-brand-soft text-brand [&>svg]:h-[18px] [&>svg]:w-[18px]"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-control bg-brand-soft text-brand [&>svg]:h-5 [&>svg]:w-5"
                 >
                   {c.icon}
                 </span>

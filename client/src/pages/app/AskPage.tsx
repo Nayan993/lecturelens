@@ -5,7 +5,7 @@ import { AskPanel } from '../../features/qa/components/AskPanel';
 export function AskPage() {
   useDocumentTitle('Ask');
   return (
-    <div className="mx-auto flex h-[calc(100dvh-6.5rem)] w-full max-w-3xl flex-col gap-3 lg:h-[calc(100dvh-7.5rem)]">
+    <div className="mx-auto flex h-workspace w-full max-w-3xl flex-col gap-3 lg:h-workspace-lg">
       <header className="flex shrink-0 flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Ask</h1>
         <p className="text-sm text-ink-2">Answers come only from your lectures, with a link to the moment each point was made.</p>

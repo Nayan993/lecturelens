@@ -1,16 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { ShieldX } from 'lucide-react';
-import { cn } from '../../lib/cn';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { EmptyState } from '../../components/ui';
+import { PAGE_NARROW, PageHeader } from '../../components/layout/Page';
 
-/** 403. Rendered by RequireRole at the requested URL, and standalone at /403. */
-export function ForbiddenPage({ standalone = false }: { standalone?: boolean }) {
+/** 403. Rendered by RequireRole at the requested URL (inside the app shell), and at /403 (public layout). */
+export function ForbiddenPage() {
   useDocumentTitle('No access');
   const navigate = useNavigate();
   return (
-    <div className={cn('flex flex-col gap-4', standalone && 'mx-auto min-h-screen max-w-xl justify-center px-6')}>
-      <h1 className="text-sm font-semibold text-ink-2">Error 403 — no access</h1>
+    <div className={PAGE_NARROW}>
+      <PageHeader title="No access" description="Error 403" />
       <EmptyState
         icon={<ShieldX />}
         title="You don’t have access to this page"

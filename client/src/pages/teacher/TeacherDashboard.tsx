@@ -12,6 +12,7 @@ import { useLectureStatus, useLectures } from '../../features/lectures/hooks';
 import { progressPct } from '../../features/lectures/components/ProcessingStatusView';
 import { useReviewQueue, type PendingQuestion, type PendingSummary } from '../../features/review/hooks';
 import { firstName } from '../app/DashboardPage';
+import { PAGE_WIDE } from '../../components/layout/Page';
 
 function StatCard({ icon, value, label, note }: { icon: ReactNode; value: ReactNode; label: string; note?: string }) {
   return (
@@ -33,13 +34,14 @@ function ProcessingRow({ lecture }: { lecture: Lecture }) {
   return (
     <li className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
       <div className="flex items-center justify-between gap-3">
-        <Link to={lectureHref(lecture.id)} className="min-w-0 truncate text-sm font-medium text-ink-1 hover:text-brand hover:underline">
+        <Link to={lectureHref(lecture.id)} className="tap-target min-w-0 truncate text-sm font-medium text-ink-1 hover:text-brand hover:underline">
           {lecture.title}
         </Link>
         <StatusPill status={status.data?.status ?? lecture.status} className="shrink-0" />
       </div>
       <Progress label={`${lecture.title}: ${pct}% processed`} value={pct} className="[&>div]:h-1" tone={status.data?.status === 'failed' ? 'danger' : 'brand'} />
       {status.data && <p className="text-xs text-ink-3">{status.data.statusDetail}</p>}
+      {status.isError && <p className="text-xs text-ink-3">Live status unavailable right now.</p>}
     </li>
   );
 }
@@ -59,9 +61,10 @@ export function TeacherDashboard() {
   const processing = lectures.filter((l) => l.status !== 'ready' && l.status !== 'failed');
   const items: QueueItem[] = [...queue.summaries, ...queue.questions].sort((a, b) => createdAt(a).localeCompare(createdAt(b)));
   const loadingNumber = <Skeleton width={40} height={30} />;
+  const lectureStat = (n: number) => (lecturesQ.isPending ? loadingNumber : lecturesQ.isError ? '—' : n);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className={PAGE_WIDE}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Welcome back, {user ? firstName(user.name) : 'there'}</h1>
@@ -73,14 +76,21 @@ export function TeacherDashboard() {
         </Link>
       </header>
 
+      {lecturesQ.isError &&
+        (isNotImplemented(lecturesQ.error) ? (
+          <ErrorState variant="notImplemented" message="Your lectures aren’t available yet." />
+        ) : (
+          <ErrorState message={lecturesQ.error.message} onRetry={() => void lecturesQ.refetch()} />
+        ))}
+
       <section aria-label="Overview" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={<BookOpenCheck />} value={lecturesQ.isPending ? loadingNumber : published} label="Lectures published" />
-        <StatCard icon={<Loader />} value={lecturesQ.isPending ? loadingNumber : processing.length} label="Currently processing" />
+        <StatCard icon={<BookOpenCheck />} value={lectureStat(published)} label="Lectures published" />
+        <StatCard icon={<Loader />} value={lectureStat(processing.length)} label="Currently processing" />
         <StatCard icon={<ClipboardCheck />} value={queue.isPending ? loadingNumber : queue.total} label="Items awaiting review" />
         <StatCard icon={<Users />} value="—" label="Student attempts this week" note="Needs class analytics, not in the API yet." />
       </section>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-workspace">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -88,7 +98,7 @@ export function TeacherDashboard() {
               {queue.total > 0 && <Badge variant="accent">{queue.total}</Badge>}
             </CardTitle>
             {queue.total > 0 && (
-              <Link to="/app/review" className="text-sm font-medium text-brand underline-offset-4 hover:underline">
+              <Link to="/app/review" className="tap-target text-sm font-medium text-brand underline-offset-4 hover:underline">
                 Open review queue
               </Link>
             )}
@@ -110,7 +120,7 @@ export function TeacherDashboard() {
               <ul className="flex flex-col divide-y divide-border">
                 {items.slice(0, 8).map((item) => (
                   <li key={itemId(item)} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                    <Badge variant={item.kind === 'summary' ? 'brand' : 'accent'} className="w-[4.75rem] justify-center">
+                    <Badge variant={item.kind === 'summary' ? 'brand' : 'accent'} className="w-20 justify-center">
                       {item.kind === 'summary' ? 'Summary' : 'Question'}
                     </Badge>
                     <div className="flex min-w-0 flex-1 flex-col">
@@ -150,7 +160,6 @@ export function TeacherDashboard() {
                 ))}
               </ul>
             )}
-            {lecturesQ.isError && !isNotImplemented(lecturesQ.error) && <ErrorState message={lecturesQ.error.message} className="border-0 py-4" />}
           </CardContent>
         </Card>
       </div>

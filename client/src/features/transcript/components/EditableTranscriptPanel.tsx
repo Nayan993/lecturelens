@@ -50,7 +50,7 @@ const EditableRow = memo(function EditableRow({ segment, active, editing, jumped
       data-index={segment.index}
       aria-current={active ? 'true' : undefined}
       className={cn(
-        'grid grid-cols-[3.75rem_minmax(0,1fr)] gap-x-3 rounded-r-control border-l-2 py-2 pl-3 pr-2 transition-colors',
+        'grid grid-cols-segment gap-x-3 rounded-r-control border-l-2 py-2 pl-3 pr-2 transition-colors',
         active ? 'border-accent bg-accent-soft' : segment.lowConfidence && !segment.corrected ? 'border-warning/60 bg-warning/5' : 'border-transparent',
         jumped && 'ring-2 ring-warning/60',
       )}
@@ -59,7 +59,7 @@ const EditableRow = memo(function EditableRow({ segment, active, editing, jumped
         type="button"
         onClick={() => onSeek(segment.startSec)}
         aria-label={`Play from ${time}`}
-        className="h-fit rounded-sm pt-[3px] text-left font-mono text-xs font-semibold tabular-nums text-accent hover:underline"
+        className="h-fit rounded-sm pt-1 text-left font-mono text-xs font-semibold tabular-nums text-accent-strong hover:underline max-sm:min-h-11"
       >
         {time}
       </button>
@@ -75,7 +75,7 @@ const EditableRow = memo(function EditableRow({ segment, active, editing, jumped
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={onKeyDown}
               onFocus={(e) => e.currentTarget.setSelectionRange(e.currentTarget.value.length, e.currentTarget.value.length)}
-              className="font-serif text-[16px] leading-relaxed"
+              className="font-serif text-reading leading-relaxed"
               error={draft.trim() ? undefined : 'A segment can’t be empty.'}
               hint={`${SAVE_SHORTCUT} to save · Esc to cancel`}
             />
@@ -95,8 +95,8 @@ const EditableRow = memo(function EditableRow({ segment, active, editing, jumped
             onClick={() => onEdit(segment.index)}
             aria-label={`Edit segment at ${time}: ${segment.text}`}
             className={cn(
-              'group prose-lecture block w-full max-w-none rounded-sm text-left hover:bg-ink-1/[0.03]',
-              segment.lowConfidence && !segment.corrected && 'underline decoration-warning decoration-dotted decoration-2 underline-offset-[5px]',
+              'group prose-lecture block w-full max-w-none rounded-sm text-left hover:bg-ink-1/5',
+              segment.lowConfidence && !segment.corrected && 'underline decoration-warning decoration-dotted decoration-2 underline-offset-4',
             )}
           >
             {segment.text}
@@ -120,7 +120,7 @@ const EditableRow = memo(function EditableRow({ segment, active, editing, jumped
                 // Right-aligned: centred, it would overflow the panel's right edge and be clipped.
                 className="left-auto right-0 w-80 translate-x-0"
               >
-                <button type="button" className="rounded-full" aria-label="Edited — show the original transcription">
+                <button type="button" className="inline-flex items-center rounded-full max-sm:min-h-11" aria-label="Edited — show the original transcription">
                   <Badge variant="brand" icon={<Pencil />}>
                     edited
                   </Badge>
@@ -147,7 +147,6 @@ export function EditableTranscriptPanel({ lectureId }: { lectureId: Id }) {
   const rows = useRef(new Map<number, HTMLLIElement>());
   const [editing, setEditing] = useState<number | null>(null);
   const [jumped, setJumped] = useState<number | null>(null);
-  const [announcement, setAnnouncement] = useState('');
 
   const segments = transcript.data?.items ?? [];
   const activeIndex = activeSegmentIndex(segments, player.currentTime);
@@ -183,7 +182,7 @@ export function EditableTranscriptPanel({ lectureId }: { lectureId: Id }) {
       update.mutate(
         { index, text: trimmed },
         {
-          onSuccess: () => setAnnouncement(`Saved the segment at ${formatTimestamp(current.startSec)}.`),
+          onSuccess: () => toast({ variant: 'success', title: 'Segment saved', description: `The correction at ${formatTimestamp(current.startSec)} is saved.` }),
           onError: (err) => toast({ variant: 'error', title: 'Couldn’t save — your edit was undone', description: err.message }),
         },
       );
@@ -228,13 +227,17 @@ export function EditableTranscriptPanel({ lectureId }: { lectureId: Id }) {
           <span className="font-medium text-ink-1">{remaining.length}</span> of {lowConfidence.length} low-confidence{' '}
           {lowConfidence.length === 1 ? 'segment' : 'segments'} still to check
         </p>
-        <Button size="sm" variant="secondary" leftIcon={<ChevronsDown />} onClick={jumpToNextLowConfidence} disabled={lowConfidence.length === 0}>
+        <Button
+          size="sm"
+          variant="secondary"
+          leftIcon={<ChevronsDown />}
+          onClick={jumpToNextLowConfidence}
+          disabled={lowConfidence.length === 0}
+          className="h-auto min-h-8 whitespace-normal py-1.5 text-left"
+        >
           Jump to next low-confidence segment
         </Button>
       </div>
-      <p className="sr-only" aria-live="polite">
-        {announcement}
-      </p>
       <div ref={containerRef} role="region" aria-label="Editable transcript" tabIndex={-1} className="relative min-h-0 flex-1 overflow-y-auto pr-1">
         <ol className="flex flex-col gap-0.5 pb-6">
           {segments.map((s) => (

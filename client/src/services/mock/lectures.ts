@@ -106,9 +106,10 @@ export const mockLectureService: LectureService = {
     const user = requireUser();
     const lecture = visibleLecture(user, id);
     advance(lecture);
-    const exp = Math.floor(Date.now() / 1000) + 6 * 3600;
-    // Fixture lectures have no media in mock mode; session uploads play from their object URL.
-    const mediaUrl = db.runtime.get(id)?.mediaUrl ?? MOCK_MEDIA_URL ?? `/api/v1/lectures/${id}/media?exp=${exp}&sig=mock`;
+    // Fixture lectures have no media in mock mode (unless VITE_MOCK_MEDIA_URL is set); session uploads play
+    // from their object URL. An empty src makes the player show its "can't be played" message without a
+    // network request.
+    const mediaUrl = db.runtime.get(id)?.mediaUrl ?? MOCK_MEDIA_URL ?? '';
     return { ...serialise(lecture, user), mediaUrl };
   },
 

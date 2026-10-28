@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import { ROUTER_FUTURE } from '../../routerFuture';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../context/AuthContext';
 import { TOKEN_KEY } from '../../lib/tokenStorage';
@@ -17,7 +18,7 @@ function LocationProbe() {
 function renderAt(path: string) {
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <MemoryRouter initialEntries={[path]}>
+    <MemoryRouter initialEntries={[path]} future={ROUTER_FUTURE}>
       <AuthProvider>
         <ToastProvider>
           <AppRoutes />

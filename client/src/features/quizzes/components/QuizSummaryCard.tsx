@@ -13,7 +13,7 @@ export function QuizSummaryCard({ quiz, showLecture = true }: { quiz: QuizSummar
     <Card className="flex h-full flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 className="text-[15px] font-semibold leading-snug text-ink-1">{quiz.title}</h3>
+          <h3 className="text-md font-semibold leading-snug text-ink-1">{quiz.title}</h3>
           {showLecture && <p className="truncate text-xs text-ink-2">{quiz.lectureTitle}</p>}
         </div>
         {quiz.bestScore ? (
@@ -34,7 +34,7 @@ export function QuizSummaryCard({ quiz, showLecture = true }: { quiz: QuizSummar
         <ul aria-label="Topics covered" className="flex flex-wrap gap-1.5">
           {shownTopics.map((t) => (
             <li key={t.id}>
-              <Badge variant="brand" className="max-w-[14rem] truncate">
+              <Badge variant="brand" className="max-w-56 truncate">
                 {t.label}
               </Badge>
             </li>

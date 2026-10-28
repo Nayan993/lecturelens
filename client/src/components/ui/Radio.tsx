@@ -25,7 +25,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(
           className={cn('mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-brand disabled:cursor-not-allowed', className)}
         />
         <div className="flex flex-col gap-0.5">
-          <label htmlFor={inputId} className="cursor-pointer text-sm font-medium leading-5 text-ink-1">
+          <label htmlFor={inputId} className="cursor-pointer text-sm font-medium leading-5 text-ink-1 max-sm:-my-3 max-sm:py-3">
             {label}
           </label>
           {description && (

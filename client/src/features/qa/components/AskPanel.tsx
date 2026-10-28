@@ -95,7 +95,7 @@ export function AskPanel({ lectureId, onScreenLectureId, className }: AskPanelPr
           <ol aria-label="Conversation" aria-live="polite" className="flex flex-col gap-5">
             {turns.map((turn) => (
               <li key={turn.id} className="flex flex-col gap-2.5">
-                <p className="max-w-[85%] self-end rounded-card rounded-br-sm bg-brand-soft px-3.5 py-2 text-sm text-ink-1">
+                <p className="max-w-bubble self-end rounded-card rounded-br-sm bg-brand-soft px-3.5 py-2 text-sm text-ink-1">
                   <span className="sr-only">You asked: </span>
                   {turn.question}
                 </p>

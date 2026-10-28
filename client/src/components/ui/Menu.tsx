@@ -150,7 +150,7 @@ export const Menu = forwardRef<HTMLDivElement, MenuProps>(
                 item.onSelect?.();
               }}
               className={cn(
-                'flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-left text-sm',
+                'flex w-full items-center gap-2 rounded-control px-2.5 py-1.5 text-left text-sm max-sm:min-h-11',
                 'focus-visible:outline-offset-0 [&>svg]:h-4 [&>svg]:w-4',
                 item.disabled
                   ? 'cursor-default text-ink-3'

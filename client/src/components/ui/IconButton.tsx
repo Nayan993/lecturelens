@@ -4,8 +4,8 @@ import { buttonBase, buttonVariantClasses, type ButtonSize, type ButtonVariant }
 import { Spinner } from './Spinner';
 
 const SQUARE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'h-8 w-8 [&>svg]:h-4 [&>svg]:w-4',
-  md: 'h-9 w-9 [&>svg]:h-[18px] [&>svg]:w-[18px]',
+  sm: 'h-8 w-8 max-sm:min-h-11 max-sm:min-w-11 [&>svg]:h-4 [&>svg]:w-4',
+  md: 'h-9 w-9 max-sm:min-h-11 max-sm:min-w-11 [&>svg]:h-5 [&>svg]:w-5',
   lg: 'h-11 w-11 [&>svg]:h-5 [&>svg]:w-5',
 };
 

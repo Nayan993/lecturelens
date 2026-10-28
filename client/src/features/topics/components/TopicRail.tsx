@@ -51,11 +51,11 @@ export function TopicRail({
                 aria-current={active ? 'true' : undefined}
                 onClick={() => onSelect(topic)}
                 className={cn(
-                  'flex max-w-[16rem] items-center gap-2 rounded-full border px-3 py-1.5 text-left text-xs transition-colors',
+                  'flex max-w-64 items-center gap-2 rounded-full border px-3 py-1.5 text-left text-xs transition-colors max-sm:min-h-11',
                   active ? 'border-accent bg-accent-soft text-ink-1' : 'border-border bg-surface text-ink-2 hover:border-ink-3 hover:text-ink-1',
                 )}
               >
-                <span className={cn('font-mono font-semibold tabular-nums', active ? 'text-accent' : 'text-ink-3')}>
+                <span className={cn('font-mono font-semibold tabular-nums', active ? 'text-accent-strong' : 'text-ink-3')}>
                   {formatTimestamp(topic.startSec)}
                 </span>
                 <span className="truncate font-medium">{topic.label}</span>

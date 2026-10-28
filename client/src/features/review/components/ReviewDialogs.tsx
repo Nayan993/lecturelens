@@ -24,10 +24,10 @@ export function EvidenceLink({ lectureId, evidence }: { lectureId: Id; evidence:
     <Link
       to={lectureHref(lectureId, evidence.startSec)}
       aria-label={`Open the lecture at ${time}: “${evidence.quote}”`}
-      className="flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-xs text-ink-2 transition-colors hover:border-accent hover:bg-accent-soft"
+      className="flex max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-surface px-2.5 py-1 text-xs text-ink-2 transition-colors hover:border-accent hover:bg-accent-soft max-sm:min-h-11"
     >
-      <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent" />
-      <span className="shrink-0 font-mono font-semibold tabular-nums text-accent">{time}</span>
+      <Play aria-hidden className="h-3 w-3 shrink-0 fill-accent text-accent-strong" />
+      <span className="shrink-0 font-mono font-semibold tabular-nums text-accent-strong">{time}</span>
       <span className="truncate">“{evidence.quote}”</span>
     </Link>
   );
@@ -147,7 +147,7 @@ export function EditSummaryDialog({
         </>
       }
     >
-      <Textarea label="Summary" rows={8} value={text} onChange={(e) => setText(e.target.value)} error={error} className="font-serif text-[15.5px]" />
+      <Textarea label="Summary" rows={8} value={text} onChange={(e) => setText(e.target.value)} error={error} className="font-serif text-reading-sm" />
     </Dialog>
   );
 }

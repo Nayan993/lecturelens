@@ -17,7 +17,7 @@ import { IconButton } from './IconButton';
 export type ToastVariant = 'success' | 'error' | 'info';
 
 const VARIANT: Record<ToastVariant, { icon: ReactNode; classes: string }> = {
-  success: { icon: <CheckCircle2 className="h-5 w-5 text-success" />, classes: 'border-l-success' },
+  success: { icon: <CheckCircle2 className="h-5 w-5 text-success-strong" />, classes: 'border-l-success' },
   error: { icon: <CircleAlert className="h-5 w-5 text-danger" />, classes: 'border-l-danger' },
   info: { icon: <Info className="h-5 w-5 text-info" />, classes: 'border-l-info' },
 };
@@ -123,7 +123,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         role="status"
         aria-live="polite"
         aria-label="Status messages"
-        className="pointer-events-none fixed bottom-0 right-0 z-[60] flex w-full max-w-sm flex-col gap-2 p-4"
+        className="pointer-events-none fixed bottom-0 right-0 z-toast flex w-full max-w-sm flex-col gap-2 p-4"
       >
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onDismiss={dismiss} />
