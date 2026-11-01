@@ -1,3 +1,4 @@
+import { ragTopK } from './settings.js';
 
 export const RAG_PROMPT_VERSION = 'answer-v3';
 
@@ -20,21 +21,8 @@ export interface AnswerPrompt {
   passages: NumberedPassage[];
 }
 
-const DEFAULT_RAG_TOP_K = 8;
-
-export function getRagTopK(): number {
-  const configured = Number(process.env.RAG_TOP_K);
-
-  if (
-    !Number.isInteger(configured) ||
-    configured < 1 ||
-    configured > 20
-  ) {
-    return DEFAULT_RAG_TOP_K;
-  }
-
-  return configured;
-}
+/** Passages retrieved for the prompt (RAG_TOP_K, default 8). */
+export const getRagTopK = ragTopK;
 
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);

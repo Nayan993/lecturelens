@@ -1,6 +1,7 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  trimQuote,
   validateModelAnswer,
   type ValidatedCitation,
 } from '../src/services/rag/validate.js';
@@ -219,7 +220,7 @@ describe('validateModelAnswer', () => {
     expect(result.abstainReason).toBe('LOW_CONFIDENCE');
   });
 
-  it('rejects quotations longer than 300 characters', () => {
+  it('rejects a long quotation that is not in the passage', () => {
     const raw = modelAnswer({
       citedQuotes: [
         {
@@ -274,5 +275,21 @@ describe('validateModelAnswer', () => {
 
     expect(result.answerable).toBe(false);
     expect(result.abstainReason).toBe('LOW_CONFIDENCE');
+  });
+
+  it('keeps a verbatim quotation longer than 300 characters, trimmed at a word boundary and still verbatim', () => {
+    // Seen on a real Hindi–English lecture: the model quoted a correct passage at 420+ characters.
+    const longText = `${'Class Diagram वो जो है Structural Diagram के अंदर आते हैं. '.repeat(8)}End.`;
+    const long: NumberedPassage[] = [{ ...passages[0]!, text: longText }];
+    const quote = longText.slice(0, 420);
+    const result = validateModelAnswer(modelAnswer({ answer: 'A class diagram is structural [1].', citedPassages: [1], citedQuotes: [{ passageNumber: 1, quote }] }), long);
+    expect(result.answerable).toBe(true);
+    if (!result.answerable) return;
+    const [c] = result.citations;
+    expect(c!.quote.length).toBeLessThanOrEqual(300);
+    expect(longText).toContain(c!.quote);
+    expect(quote.startsWith(c!.quote)).toBe(true);
+    expect(c!.quote.endsWith(' ')).toBe(false);
+    expect(trimQuote('short quote')).toBe('short quote');
   });
 });

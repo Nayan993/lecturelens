@@ -43,17 +43,17 @@ Generated from `server/src/routes/index.ts` and the module routers under `server
 | PATCH | [`/summaries/:id`](#patch-summaries-id) | B | owner (teacher) | Stub (501) — PB.2 |
 | POST | [`/summaries/:id/approve`](#post-summaries-id-approve) | B | owner (teacher) | Implemented (PB.2) |
 | POST | [`/summaries/:id/reject`](#post-summaries-id-reject) | B | owner (teacher) | Stub (501) — PB.2 |
-| POST | [`/search`](#post-search) | C | any signed-in user | Stub (501) — PC.1 |
-| POST | [`/ask`](#post-ask) | C | any signed-in user | Stub (501) — PC.2 |
-| POST | [`/lectures/:id/questions/generate`](#post-lectures-id-questions-generate) | C | owner (teacher) | Stub (501) — PC.3 |
-| GET | [`/questions`](#get-questions) | C | teacher (own lectures) | Stub (501) — PC.3 |
-| PATCH | [`/questions/:id`](#patch-questions-id) | C | owner (teacher) | Stub (501) — PC.3 |
-| POST | [`/quizzes`](#post-quizzes) | C | any signed-in user | Stub (501) — PC.3 |
-| GET | [`/quizzes`](#get-quizzes) | C | any signed-in user (own quizzes) | Stub (501) — PC.3 |
-| GET | [`/quizzes/:id`](#get-quizzes-id) | C | quiz creator, or the lecture's owner | Stub (501) — PC.3 |
-| POST | [`/quizzes/:id/attempts`](#post-quizzes-id-attempts) | C | any signed-in user | Stub (501) — PC.3 |
-| GET | [`/attempts/:id`](#get-attempts-id) | C | the attempt's own user only | Stub (501) — PC.3 |
-| GET | [`/revision-plan`](#get-revision-plan) | C | any signed-in user (own plan) | Stub (501) — PC.3 |
+| POST | [`/search`](#post-search) | C | any signed-in user | Implemented (PC.1) |
+| POST | [`/ask`](#post-ask) | C | any signed-in user | Implemented (PC.2) |
+| POST | [`/lectures/:id/questions/generate`](#post-lectures-id-questions-generate) | C | owner (teacher) | Implemented (PC.3) |
+| GET | [`/questions`](#get-questions) | C | teacher (own lectures) | Implemented (PC.3) |
+| PATCH | [`/questions/:id`](#patch-questions-id) | C | owner (teacher) | Implemented (PC.3) |
+| POST | [`/quizzes`](#post-quizzes) | C | any signed-in user | Implemented (PC.3) |
+| GET | [`/quizzes`](#get-quizzes) | C | any signed-in user (own quizzes) | Implemented (PC.3) |
+| GET | [`/quizzes/:id`](#get-quizzes-id) | C | quiz creator, or the lecture's owner | Implemented (PC.3) |
+| POST | [`/quizzes/:id/attempts`](#post-quizzes-id-attempts) | C | any signed-in user | Implemented (PC.3) |
+| GET | [`/attempts/:id`](#get-attempts-id) | C | the attempt's own user only | Implemented (PC.3) |
+| GET | [`/revision-plan`](#get-revision-plan) | C | any signed-in user (own plan) | Implemented (PC.3) |
 
 ## D — Infrastructure, auth, users, lectures
 
@@ -1002,7 +1002,7 @@ No body. Derived documents and `STORAGE_DIR/<id>/` are removed.
 <a id="post-search"></a>
 ### POST `/search`
 
-**Owner** C · **Auth** any signed-in user · **Status** Stub (501) — PC.1
+**Owner** C · **Auth** any signed-in user · **Status** Implemented (PC.1)
 
 **Request:** JSON `{ query, lectureId?, retriever? = "hybrid", topK? = 5 (1–20) }`.
 
@@ -1032,12 +1032,12 @@ No body. Derived documents and `STORAGE_DIR/<id>/` are removed.
 
 Passage from CONTRACTS.md §6.7 (no fixture exists for search); `tookMs` illustrative.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND (a `lectureId` the caller cannot see); 422 VALIDATION_FAILED.
 
 <a id="post-ask"></a>
 ### POST `/ask`
 
-**Owner** C · **Auth** any signed-in user · **Status** Stub (501) — PC.2
+**Owner** C · **Auth** any signed-in user · **Status** Implemented (PC.2)
 
 **Request:** JSON `{ question (3–500), lectureId?, retriever? = "hybrid" }`.
 
@@ -1095,12 +1095,12 @@ Passage from CONTRACTS.md §6.7 (no fixture exists for search); `tookMs` illustr
 
 Answered example shortened to its first citation.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED; 503 PROVIDER_UNAVAILABLE `{ provider }`.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND (a `lectureId` the caller cannot see); 422 VALIDATION_FAILED; 503 PROVIDER_UNAVAILABLE `{ provider, retryAfterSec? }` (+ `Retry-After` header when rate-limited).
 
 <a id="post-lectures-id-questions-generate"></a>
 ### POST `/lectures/:id/questions/generate`
 
-**Owner** C · **Auth** owner (teacher) · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** owner (teacher) · **Status** Implemented (PC.3)
 
 **Request:** JSON `{ count? 1–20 = 5, topicIds?, difficulty? }`.
 
@@ -1158,12 +1158,12 @@ Answered example shortened to its first citation.
 }
 ```
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (lecture not ready); 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED; 503 PROVIDER_UNAVAILABLE.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (lecture not ready); 422 VALIDATION_FAILED (incl. no approved topic sections); 503 PROVIDER_UNAVAILABLE `{ provider, retryAfterSec? }` (+ `Retry-After` header when rate-limited).
 
 <a id="get-questions"></a>
 ### GET `/questions`
 
-**Owner** C · **Auth** teacher (own lectures) · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** teacher (own lectures) · **Status** Implemented (PC.3)
 
 **Request:** Query `lectureId` (required), `status?`, `topicId?`, `page`, `limit`.
 
@@ -1226,12 +1226,12 @@ Answered example shortened to its first citation.
 
 `items` shortened to one of eight.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN; 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN; 404 NOT_FOUND (not your lecture); 422 VALIDATION_FAILED.
 
 <a id="patch-questions-id"></a>
 ### PATCH `/questions/:id`
 
-**Owner** C · **Auth** owner (teacher) · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** owner (teacher) · **Status** Implemented (PC.3)
 
 **Request:** JSON, any of `{ stem, options, correctOptionId, explanation, difficulty, status, rejectionReason, reviewNote }`; `status: "rejected"` needs `rejectionReason`.
 
@@ -1287,12 +1287,12 @@ Answered example shortened to its first citation.
 }
 ```
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN (student); 404 NOT_FOUND; 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 403 FORBIDDEN (student); 404 NOT_FOUND; 422 VALIDATION_FAILED.
 
 <a id="post-quizzes"></a>
 ### POST `/quizzes`
 
-**Owner** C · **Auth** any signed-in user · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** any signed-in user · **Status** Implemented (PC.3)
 
 **Request:** JSON `{ lectureId, topicIds?, questionCount? 1–20 = 10 }`.
 
@@ -1339,12 +1339,12 @@ Answered example shortened to its first citation.
 
 Student view: no `correctOptionId`, `explanation`, `evidence` or `status`; built from the approved questions in `mocks/questions.json`, shortened to one.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 422 VALIDATION_FAILED (incl. "No approved questions available for this lecture"); 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 422 VALIDATION_FAILED (incl. "No approved questions available for this lecture").
 
 <a id="get-quizzes"></a>
 ### GET `/quizzes`
 
-**Owner** C · **Auth** any signed-in user (own quizzes) · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** any signed-in user (own quizzes) · **Status** Implemented (PC.3)
 
 **Request:** Query `lectureId?`, `page`, `limit`.
 
@@ -1352,12 +1352,12 @@ Student view: no `correctOptionId`, `explanation`, `evidence` or `status`; built
 
 Paginated `QuizSummary` — shape in CONTRACTS.md §5.7 (no fixture exists).
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 422 VALIDATION_FAILED.
 
 <a id="get-quizzes-id"></a>
 ### GET `/quizzes/:id`
 
-**Owner** C · **Auth** quiz creator, or the lecture's owner · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** quiz creator, or the lecture's owner · **Status** Implemented (PC.3)
 
 **Request:** No body.
 
@@ -1402,12 +1402,12 @@ Paginated `QuizSummary` — shape in CONTRACTS.md §5.7 (no fixture exists).
 }
 ```
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND.
 
 <a id="post-quizzes-id-attempts"></a>
 ### POST `/quizzes/:id/attempts`
 
-**Owner** C · **Auth** any signed-in user · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** any signed-in user · **Status** Implemented (PC.3)
 
 **Request:** JSON `{ startedAt (ISO), answers: [{ questionId, selectedOptionId | null }] }` — one per quiz question.
 
@@ -1475,12 +1475,12 @@ Paginated `QuizSummary` — shape in CONTRACTS.md §5.7 (no fixture exists).
 
 From CONTRACTS.md §6.11, `answers` shortened to one of five.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 422 VALIDATION_FAILED.
 
 <a id="get-attempts-id"></a>
 ### GET `/attempts/:id`
 
-**Owner** C · **Auth** the attempt's own user only · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** the attempt's own user only · **Status** Implemented (PC.3)
 
 **Request:** No body.
 
@@ -1546,12 +1546,12 @@ From CONTRACTS.md §6.11, `answers` shortened to one of five.
 }
 ```
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND.
 
 <a id="get-revision-plan"></a>
 ### GET `/revision-plan`
 
-**Owner** C · **Auth** any signed-in user (own plan) · **Status** Stub (501) — PC.3
+**Owner** C · **Auth** any signed-in user (own plan) · **Status** Implemented (PC.3)
 
 **Request:** Query `lectureId?`.
 
@@ -1591,7 +1591,7 @@ From CONTRACTS.md §6.11, `answers` shortened to one of five.
 
 `{ plan: null }` before any attempt; example shortened to one of three items.
 
-**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 422 VALIDATION_FAILED; 501 NOT_IMPLEMENTED.
+**Errors:** 401 UNAUTHENTICATED (no/invalid/expired token; `details.reason: "expired"` when expired); 404 NOT_FOUND (a `lectureId` the caller cannot see); 422 VALIDATION_FAILED.
 
 ## How to try it
 
@@ -1627,9 +1627,9 @@ curl -s -X POST localhost:5000/api/v1/lectures -H "Authorization: Bearer $TOKEN"
 See a stub and a permission check in action (the second uses the demo student):
 
 ```sh
-curl -s -X POST localhost:5000/api/v1/ask -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' -d '{"question":"Why does the loss blow up?"}'
-# → 501 NOT_IMPLEMENTED, details { "owner": "C", "prompt": "PC.2" }
+curl -s -X POST localhost:5000/api/v1/topics/6650c3a0c3b2e41d8a400000/reject -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"rejectionReason":"AMBIGUOUS"}'
+# → 501 NOT_IMPLEMENTED, details { "owner": "B", "prompt": "PB.1" }
 
 STUDENT=$(curl -s -X POST localhost:5000/api/v1/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"student@lecturelens.dev","password":"lecturelens"}' \

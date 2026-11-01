@@ -1,8 +1,11 @@
-
 import { pipeline, type FeatureExtractionPipeline } from '@xenova/transformers';
+import { Types } from 'mongoose';
 import { Chunk, EMBEDDING_DIMENSIONS } from '../../models/Chunk.js';
+import { invalidateVectorCache } from '../retrieval/vectorCache.js';
 
-const MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
+/** Pretrained sentence-embedding model, run in process on CPU (we do not train or fine-tune it). */
+export const EMBEDDING_MODEL_NAME = 'Xenova/all-MiniLM-L6-v2';
+const MODEL_NAME = EMBEDDING_MODEL_NAME;
 const BATCH_SIZE = 32;
 
 let pipelinePromise: Promise<FeatureExtractionPipeline> | null = null;
@@ -62,37 +65,36 @@ export async function embed(texts: string[]): Promise<number[][]> {
 }
 
 /**
- * Embed and save chunks that do not have embeddings yet.
- * Returns the number of chunks embedded during this call.
+ * The `indexing` stage: embeds every chunk of the lecture that has no valid embedding (missing,
+ * empty, or not EMBEDDING_DIMENSIONS long) and saves the vectors. Chunks that are already indexed
+ * are left alone, so a rerun only embeds what is missing. Returns the number of chunks embedded.
+ * The lecture's cached vectors are dropped afterwards, so search sees the new index at once.
  */
 export async function embedLecture(lectureId: string): Promise<number> {
   const chunks = await Chunk.find({
-    lectureId,
-    $or: [
-      { embedding: { $exists: false } },
-      { embedding: { $size: 0 } },
-    ],
+    lectureId: new Types.ObjectId(lectureId),
+    embedding: { $not: { $size: EMBEDDING_DIMENSIONS } },
   })
-    .select('+embedding')
+    .select('_id text')
     .sort({ index: 1 })
+    .lean()
     .exec();
 
-  let embeddedCount = 0;
-
-  for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
-    const batch = chunks.slice(i, i + BATCH_SIZE);
-    const vectors = await embed(batch.map((chunk) => chunk.text));
-
-    await Promise.all(
-      batch.map(async (chunk, index) => {
-        chunk.embedding = vectors[index];
-        chunk.embeddingModel = MODEL_NAME;
-        await chunk.save();
-      }),
-    );
-
-    embeddedCount += batch.length;
+  try {
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const vectors = await embed(batch.map((chunk) => chunk.text));
+      await Chunk.bulkWrite(
+        batch.map((chunk, j) => ({
+          updateOne: {
+            filter: { _id: chunk._id },
+            update: { $set: { embedding: vectors[j]!, embeddingModel: MODEL_NAME } },
+          },
+        })),
+      );
+    }
+  } finally {
+    invalidateVectorCache(lectureId);
   }
-
-  return embeddedCount;
+  return chunks.length;
 }

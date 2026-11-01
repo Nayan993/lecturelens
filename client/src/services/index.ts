@@ -25,13 +25,14 @@ export type { Services, ServiceDomain } from './types';
 export * from './types';
 
 /**
- * Domains whose server routes still answer 501 (Member C), mocked by default in development.
- * Everything else talks to the real API: auth and lectures (D), transcript (A, PA.1), topics and
- * summaries (B, PB.1/PB.2). A real domain must never stay in this list: the mock database does not
- * know real lectures, so its pages show "not found" for a lecture the server has fully processed.
- * Remove a domain from this list when its module lands.
+ * Domains mocked by default in development: those whose server routes still answer 501. Every
+ * domain now has a real API — auth and lectures (D), transcript (A), topics and summaries (B),
+ * search, qa, quizzes and revision (C) — so the default is "none". A real domain must never be
+ * mocked by default: the mock database does not know real lectures, so its pages would show "not
+ * found" for a lecture the server has fully processed. (Routes still 501 inside a real domain — e.g.
+ * topic rejection — surface as an honest "not available yet" state, never as fake data.)
  */
-export const DEV_DEFAULT_MOCKS = 'search,qa,quizzes,revision';
+export const DEV_DEFAULT_MOCKS = 'none';
 
 /**
  * Parse a VITE_USE_MOCKS value into the set of mocked domains. Unknown names are ignored with a

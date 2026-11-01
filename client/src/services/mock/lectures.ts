@@ -159,7 +159,10 @@ export const mockLectureService: LectureService = {
     if (!mediaKind({ name: filename, type: blob.type })) fail(415, 'UNSUPPORTED_MEDIA_TYPE', 'This file type is not supported.', { mimeType: blob.type });
     if (blob.size > MAX_UPLOAD_MB * 1024 * 1024) fail(413, 'PAYLOAD_TOO_LARGE', `Files must be ${MAX_UPLOAD_MB} MB or smaller.`, { maxMb: MAX_UPLOAD_MB });
     const recordedOn = formField(form, 'recordedOn');
-    if (recordedOn && (!/^\d{4}-\d{2}-\d{2}$/.test(recordedOn) || recordedOn > new Date().toISOString().slice(0, 10))) {
+    // Same rule as the server (lectures.schemas.ts): "today" in the latest time zone (UTC+14), so a
+    // teacher's local today is never rejected — comparing with the UTC date failed every night 00:00–05:30 IST.
+    const latestToday = new Date(Date.now() + 14 * 3600 * 1000).toISOString().slice(0, 10);
+    if (recordedOn && (!/^\d{4}-\d{2}-\d{2}$/.test(recordedOn) || recordedOn > latestToday)) {
       fail(422, 'VALIDATION_FAILED', 'Request body is invalid.', { recordedOn: 'Use a date that is not in the future' });
     }
 

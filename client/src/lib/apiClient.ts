@@ -41,6 +41,20 @@ export function isNotImplemented(e: unknown): boolean {
 }
 
 /** Map any Axios failure onto the contract's error envelope. */
+/**
+ * A sentence for the user: the server's validation details when it sent any (e.g. 422
+ * { questionCount: "No approved questions available for this lecture" }), else the error message.
+ */
+export function errorDescription(err: unknown): string {
+  // Only validation errors carry user-facing sentences in details (a field → reason map); other
+  // codes' details are data (e.g. { provider: "llm" }), and their message is the sentence.
+  if (isApiError(err) && err.code === 'VALIDATION_FAILED') {
+    const details = Object.values(err.details ?? {}).filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+    if (details.length) return details.join(' ');
+  }
+  return err instanceof Error ? err.message : String(err);
+}
+
 export function normaliseError(err: unknown): ApiRequestError {
   if (err instanceof ApiRequestError) return err;
   if (isAxiosError<ApiErrorBody>(err)) {
@@ -83,6 +97,9 @@ export function signalUnauthorised(requestId: string | null = null): void {
 }
 
 export const apiClient = axios.create({ baseURL: API_BASE_URL, timeout: 30_000 });
+
+/** For requests that call the language model (ask, question generation): they can wait out rate limits. */
+export const LLM_REQUEST_TIMEOUT_MS = 150_000;
 
 /** Routes that take no token (CONTRACTS §1.5). A 401 from these is a wrong password, not an ended session. */
 const PUBLIC_PATHS = ['/auth/login', '/auth/register'];

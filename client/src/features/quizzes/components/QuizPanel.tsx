@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ListChecks, Plus } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { isNotImplemented } from '../../../lib/apiClient';
+import { errorDescription, isNotImplemented } from '../../../lib/apiClient';
 import type { Id } from '../../../types';
 import { Button, EmptyState, ErrorState, Skeleton, useToast } from '../../../components/ui';
 import { useCreateQuiz, useQuizzes } from '../hooks';
@@ -24,7 +24,8 @@ export function useStartPracticeQuiz() {
           toast({
             variant: isNotImplemented(err) ? 'info' : 'error',
             title: isNotImplemented(err) ? 'Quizzes are coming soon' : 'Couldn’t start a quiz',
-            description: err.message,
+            // The server's reason, e.g. "No approved questions available for this lecture".
+            description: errorDescription(err),
           }),
       },
     );

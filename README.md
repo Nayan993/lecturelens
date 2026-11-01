@@ -50,10 +50,10 @@ Health check: `curl -s localhost:5000/api/v1/health`
 
 | Member | Area | Primary paths |
 | --- | --- | --- |
-| **A** | Ingest & transcription | `server/src/services/transcription/`, upload routes, FFmpeg |
-| **B** | Frontend | `client/src/pages/`, `client/src/components/`, routing, UI |
-| **C** | Search, Q&A & LLM features | summaries, semantic search, grounded Q&A, quizzes |
-| **D** | Contracts, models & shared infra | **owns the shared files below** |
+| **A** | Media & transcription | `server/src/services/media/`, `server/src/services/asr/`, `modules/transcript/`, `evaluation/asr/` |
+| **B** | Chunks, topics & summaries | `server/src/services/{chunking,topics,summaries}/`, `modules/{topics,summaries}/`, `evaluation/topics/` |
+| **C** | Retrieval, Q&A & learning | `server/src/services/{embeddings,retrieval,rag,learning}/`, `modules/{search,qa,quiz,revision}/`, `evaluation/rag/` |
+| **D** | Contracts, frontend, auth & shared infra | `client/`, models, auth/RBAC, the shared LLM client, the pipeline interface — **owns the shared files below** |
 
 **Member D owns (others must open a `contract-change` issue instead of editing):**
 `server/src/models/`, `server/src/routes/index.ts`, `server/src/config/env.ts`,
@@ -64,3 +64,6 @@ Health check: `curl -s localhost:5000/api/v1/health`
 
 - **[CLAUDE.md](./CLAUDE.md)** — conventions, hard rules and file ownership. Read it first.
 - **[docs/CONTRACTS.md](./docs/CONTRACTS.md)** — API & data contracts (authored by Member D). Read before implementing any route or model.
+- **[docs/API.md](./docs/API.md)** — every route with its auth rule, status (implemented or 501) and examples.
+- **[docs/DECISIONS.md](./docs/DECISIONS.md)** — append-only decision log.
+- **[docs/KNOWN_LIMITATIONS.md](./docs/KNOWN_LIMITATIONS.md)** — what is implemented, partial or still 501, and the measured evaluation results with their caveats.

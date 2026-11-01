@@ -1,0 +1,326 @@
+{
+  "_about": "Gold question/passage pairs for evaluation/rag. Lecture: mocks/transcript.json (Lecture 7, a SYNTHETIC fixture transcript, 45 segments, 1199.4 s). Written by an AI assistant (annotator 'claude-assistant') from the transcript TEXT on 2026-11-01 — not by watching a recording, and not reviewed by a teammate yet. Answerable spans are the start/end of the transcript segment(s) that answer the question; a retrieved chunk is a hit if its time range overlaps the span. Unanswerable questions are on-topic for a deep-learning course but not covered by this lecture.",
+  "annotator": "claude-assistant",
+  "items": [
+    {
+      "id": "q01",
+      "question": "Why can't neural networks be trained with a closed-form solution like linear regression?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 97.723,
+      "relevantEndSec": 126.77,
+      "answerable": true,
+      "referenceAnswer": "The normal equations need a d×d matrix inverse (~d³) and a neural network has no closed form at all.",
+      "segments": [
+        3
+      ]
+    },
+    {
+      "id": "q02",
+      "question": "How expensive is solving the normal equations?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 97.723,
+      "relevantEndSec": 126.77,
+      "answerable": true,
+      "referenceAnswer": "Inverting a d by d matrix, roughly d cubed.",
+      "segments": [
+        3
+      ]
+    },
+    {
+      "id": "q03",
+      "question": "Is the loss surface of a neural network a convex bowl?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 166.819,
+      "relevantEndSec": 192.211,
+      "answerable": true,
+      "referenceAnswer": "No — only linear regression with squared error is convex; neural networks have many local minima, plateaus and saddle points.",
+      "segments": [
+        6
+      ]
+    },
+    {
+      "id": "q04",
+      "question": "In which direction does the gradient point?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 221.199,
+      "relevantEndSec": 248.597,
+      "answerable": true,
+      "referenceAnswer": "The direction of steepest ascent.",
+      "segments": [
+        8
+      ]
+    },
+    {
+      "id": "q05",
+      "question": "What is the update rule of gradient descent?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 249.396,
+      "relevantEndSec": 274.907,
+      "answerable": true,
+      "referenceAnswer": "theta_new = theta_old − eta × gradient of L at theta_old.",
+      "segments": [
+        9
+      ]
+    },
+    {
+      "id": "q06",
+      "question": "What happens on L(w) = w squared when the step size is 0.9?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 331.403,
+      "relevantEndSec": 357,
+      "answerable": true,
+      "referenceAnswer": "w is multiplied by −0.8 each step: it still converges but oscillates across the minimum.",
+      "segments": [
+        12
+      ]
+    },
+    {
+      "id": "q07",
+      "question": "My loss turns into NaN after a few iterations — what should I suspect first?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 357.43,
+      "relevantEndSec": 385.149,
+      "answerable": true,
+      "referenceAnswer": "A learning rate that is too large.",
+      "segments": [
+        13
+      ]
+    },
+    {
+      "id": "q08",
+      "question": "What goes wrong if the learning rate is very small?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 386.948,
+      "relevantEndSec": 412.214,
+      "answerable": true,
+      "referenceAnswer": "Training takes thousands of times more steps and is more likely to stall on a plateau.",
+      "segments": [
+        14
+      ]
+    },
+    {
+      "id": "q09",
+      "question": "How do people pick a learning rate in practice?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 414.302,
+      "relevantEndSec": 438.121,
+      "answerable": true,
+      "referenceAnswer": "Try a few values on a log scale, watch the training loss for the first few hundred steps, pick the largest that still decreases it steadily.",
+      "segments": [
+        15
+      ]
+    },
+    {
+      "id": "q10",
+      "question": "What stopping criteria can gradient descent use?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 440.395,
+      "relevantEndSec": 465.842,
+      "answerable": true,
+      "referenceAnswer": "Gradient norm below a tolerance, no improvement beyond a threshold for a while, or a fixed number of iterations/epochs.",
+      "segments": [
+        16
+      ]
+    },
+    {
+      "id": "q11",
+      "question": "Why is each full-batch gradient step expensive on a large dataset?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 467.208,
+      "relevantEndSec": 491.326,
+      "answerable": true,
+      "referenceAnswer": "Computing the gradient sums over every training example, so each step touches all of them.",
+      "segments": [
+        17
+      ]
+    },
+    {
+      "id": "q12",
+      "question": "Is the stochastic gradient estimate biased?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 517.092,
+      "relevantEndSec": 540.686,
+      "answerable": true,
+      "referenceAnswer": "No — it is noisy but unbiased; in expectation it equals the full-batch gradient.",
+      "segments": [
+        19
+      ]
+    },
+    {
+      "id": "q13",
+      "question": "How many examples does a typical mini-batch contain?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 541.915,
+      "relevantEndSec": 567.97,
+      "answerable": true,
+      "referenceAnswer": "Somewhere between 32 and 512.",
+      "segments": [
+        20
+      ]
+    },
+    {
+      "id": "q14",
+      "question": "With 50,000 training examples and a batch size of 100, how many iterations make up one epoch?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 568.51,
+      "relevantEndSec": 593.967,
+      "answerable": true,
+      "referenceAnswer": "500 iterations.",
+      "segments": [
+        21
+      ]
+    },
+    {
+      "id": "q15",
+      "question": "Why should the training data be shuffled at every epoch?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 595.317,
+      "relevantEndSec": 620.047,
+      "answerable": true,
+      "referenceAnswer": "Sorted data makes batches unrepresentative and the gradient estimates systematically biased.",
+      "segments": [
+        22
+      ]
+    },
+    {
+      "id": "q16",
+      "question": "How can the noise in SGD help with saddle points?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 620.572,
+      "relevantEndSec": 646.515,
+      "answerable": true,
+      "referenceAnswer": "A noisy step can kick the parameters off a saddle point or out of a sharp narrow minimum.",
+      "segments": [
+        23
+      ]
+    },
+    {
+      "id": "q17",
+      "question": "Why is the learning rate decayed during training?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 647.13,
+      "relevantEndSec": 671.8,
+      "answerable": true,
+      "referenceAnswer": "With a constant rate SGD keeps bouncing near the minimum; decaying lets the iterates settle.",
+      "segments": [
+        24
+      ]
+    },
+    {
+      "id": "q18",
+      "question": "Is backpropagation a learning algorithm?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 699.039,
+      "relevantEndSec": 719.664,
+      "answerable": true,
+      "referenceAnswer": "No — it is an efficient way of computing gradients with the chain rule.",
+      "segments": [
+        26
+      ]
+    },
+    {
+      "id": "q19",
+      "question": "What does an add gate do with the upstream gradient during backprop?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 888.848,
+      "relevantEndSec": 915.081,
+      "answerable": true,
+      "referenceAnswer": "It distributes the upstream gradient unchanged to all its inputs.",
+      "segments": [
+        33
+      ]
+    },
+    {
+      "id": "q20",
+      "question": "Why do deep sigmoid networks have vanishing gradients?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": 1083.141,
+      "relevantEndSec": 1111.59,
+      "answerable": true,
+      "referenceAnswer": "h(1 − h) is at most 1/4, so stacking many sigmoid layers multiplies the gradient by at most a quarter each time.",
+      "segments": [
+        41
+      ]
+    },
+    {
+      "id": "q21",
+      "question": "What values did the lecturer recommend for Adam's beta1 and beta2?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q22",
+      "question": "What momentum coefficient should be used with SGD?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q23",
+      "question": "How does batch normalisation speed up training?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q24",
+      "question": "What dropout rate does the lecturer recommend?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q25",
+      "question": "What is the formula for the cross-entropy loss?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q26",
+      "question": "Who invented backpropagation, and in which year?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q27",
+      "question": "How long should a learning-rate warm-up phase last?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q28",
+      "question": "What is the derivative of ReLU at exactly zero?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q29",
+      "question": "How does L2 weight decay change the update rule?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    },
+    {
+      "id": "q30",
+      "question": "When is the final exam?",
+      "lectureId": "6650c3a0c3b2e41d8a100001",
+      "relevantStartSec": null,
+      "relevantEndSec": null,
+      "answerable": false
+    }
+  ]
+}

@@ -41,23 +41,8 @@ const STUBS: Stub[] = [
   { method: 'post', path: `/topics/${ID}/reject`, body: { rejectionReason: 'AMBIGUOUS', reviewNote: null }, owner: 'B', prompt: 'PB.1', feature: 'Topic rejection', teacherOnly: true },
   { method: 'patch', path: `/summaries/${ID}`, body: { keyPoints: ['One.', 'Two.'] }, owner: 'B', prompt: 'PB.2', feature: 'Summary editing', teacherOnly: true },
   { method: 'post', path: `/summaries/${ID}/reject`, body: { rejectionReason: 'UNSUPPORTED' }, owner: 'B', prompt: 'PB.2', feature: 'Summary rejection', teacherOnly: true },
-  { method: 'post', path: '/ask', body: { question: 'Why does the loss blow up?' }, owner: 'C', prompt: 'PC.2', feature: 'Grounded Q&A', teacherOnly: false },
-  { method: 'post', path: `/lectures/${L}/questions/generate`, body: { count: 3, difficulty: 'medium' }, owner: 'C', prompt: 'PC.3', feature: 'Question generation', teacherOnly: true },
-  { method: 'get', path: `/questions?lectureId=${L}&status=pending_review`, owner: 'C', prompt: 'PC.3', feature: 'The question bank', teacherOnly: true },
-  { method: 'patch', path: `/questions/${ID}`, body: { status: 'rejected', rejectionReason: 'TOO_EASY' }, owner: 'C', prompt: 'PC.3', feature: 'Question review', teacherOnly: true },
-  { method: 'post', path: '/quizzes', body: { lectureId: L, questionCount: 5 }, owner: 'C', prompt: 'PC.3', feature: 'Quiz creation', teacherOnly: false },
-  { method: 'get', path: `/quizzes?lectureId=${L}`, owner: 'C', prompt: 'PC.3', feature: 'The quiz list', teacherOnly: false },
-  {
-    method: 'post',
-    path: `/quizzes/${ID}/attempts`,
-    body: { startedAt: '2026-10-26T18:31:02.118Z', answers: [{ questionId: ID, selectedOptionId: 'b' }, { questionId: L, selectedOptionId: null }] },
-    owner: 'C',
-    prompt: 'PC.3',
-    feature: 'Quiz attempts',
-    teacherOnly: false,
-  },
-  { method: 'get', path: `/attempts/${ID}`, owner: 'C', prompt: 'PC.3', feature: 'Attempt results', teacherOnly: false },
-  { method: 'get', path: `/revision-plan?lectureId=${L}`, owner: 'C', prompt: 'PC.3', feature: 'The revision plan', teacherOnly: false },
+  // Live since Member C's PC.1–PC.3: /search, /ask, questions, quizzes, attempts, revision-plan — see
+  // search.test.ts, rag-answer.test.ts, learning.test.ts and rbac.test.ts.
 ];
 
 const call = (stub: Stub, auth?: string) => {
@@ -90,9 +75,9 @@ describe('A/B/C stub routes', () => {
     return found;
   };
   it.each([
-    ['POST /lectures/:id/questions/generate', stubAt('post', '/questions/generate')],
-    ['PATCH /questions/:id', stubAt('patch', `/questions/${ID}`)],
     ['POST /topics/:id/reject', stubAt('post', `/topics/${ID}/reject`)],
+    ['PATCH /summaries/:id', stubAt('patch', `/summaries/${ID}`)],
+    ['POST /summaries/:id/reject', stubAt('post', `/summaries/${ID}/reject`)],
   ])('%s with a student token → 403 FORBIDDEN', async (_name, stub) => {
     const res = await call(stub, student).expect(403);
     expect(res.body.error.code).toBe('FORBIDDEN');

@@ -1,18 +1,44 @@
-
+import { z } from 'zod';
+import { deepLinkFor } from '../../utils/deepLink.js';
 import type { NumberedPassage } from './prompt.js';
+
+/**
+ * Server-side validation of the model's answer (PC.2) — nothing the model says is trusted:
+ * - output that is not the expected JSON becomes PARSE_FAILED (never a 500);
+ * - a cited number that is not one of the retrieved passages is dropped (hallucinated citation);
+ * - a citation also needs a quote found verbatim in that passage (case and whitespace aside); a
+ *   verbatim quote longer than the 300-character evidence limit is trimmed at a word boundary (still a
+ *   substring of the passage) rather than dropped;
+ * - every surviving citation takes lectureId, startSec, endSec and the deep link from the retrieved
+ *   chunk itself (never from model output), and its quote is the passage's own text;
+ * - answerable with zero surviving citations is forced to a LOW_CONFIDENCE abstention.
+ */
 
 export interface ModelCitationQuote {
   passageNumber: number;
   quote: string;
 }
 
-export interface ModelAnswer {
-  answer: string;
-  citedPassages: number[];
-  citedQuotes: ModelCitationQuote[];
-  answerable: boolean;
-  confidence: number;
+export const MAX_QUOTE_CHARS = 300;
+
+/** The first ≤ MAX_QUOTE_CHARS characters of a verbatim quote, cut at a word boundary (still verbatim). */
+export function trimQuote(quote: string): string {
+  if (quote.length <= MAX_QUOTE_CHARS) return quote;
+  const cut = quote.slice(0, MAX_QUOTE_CHARS);
+  const space = cut.search(/\s\S*$/);
+  return (space > 0 ? cut.slice(0, space) : cut).trim();
 }
+
+/** The JSON the prompt asks for (services/rag/prompt.ts). */
+export const modelAnswerSchema = z.object({
+  answer: z.string(),
+  citedPassages: z.array(z.number().int()),
+  citedQuotes: z.array(z.object({ passageNumber: z.number().int(), quote: z.string() })),
+  answerable: z.boolean(),
+  confidence: z.number().finite().min(0).max(1),
+});
+
+export type ModelAnswer = z.infer<typeof modelAnswerSchema>;
 
 export interface ValidatedCitation {
   marker: number;
@@ -40,166 +66,81 @@ export type ValidationResult =
       confidence: number;
     };
 
-function abstain(
-  reason: 'PARSE_FAILED' | 'LOW_CONFIDENCE',
-): ValidationResult {
-  return {
-    answerable: false,
-    abstainReason: reason,
-    answer: null,
-    citations: [],
-    confidence: null,
-  };
+function abstain(reason: 'PARSE_FAILED' | 'LOW_CONFIDENCE'): ValidationResult {
+  return { answerable: false, abstainReason: reason, answer: null, citations: [], confidence: null };
 }
 
-function parseModelAnswer(raw: string): ModelAnswer | null {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-
-    if (
-      typeof parsed !== 'object' ||
-      parsed === null ||
-      Array.isArray(parsed)
-    ) {
+/** The model output as parsed JSON (a raw string is parsed first); null when it is not a ModelAnswer. */
+export function parseModelAnswer(raw: unknown): ModelAnswer | null {
+  let value = raw;
+  if (typeof raw === 'string') {
+    try {
+      value = JSON.parse(raw);
+    } catch {
       return null;
     }
-
-    const candidate = parsed as Record<string, unknown>;
-
-    if (
-      typeof candidate.answer !== 'string' ||
-      typeof candidate.answerable !== 'boolean' ||
-      !Array.isArray(candidate.citedPassages) ||
-      !candidate.citedPassages.every(
-        (value) =>
-          typeof value === 'number' && Number.isInteger(value),
-      ) ||
-      !Array.isArray(candidate.citedQuotes) ||
-      !candidate.citedQuotes.every((value) => {
-        if (
-          typeof value !== 'object' ||
-          value === null ||
-          Array.isArray(value)
-        ) {
-          return false;
-        }
-
-        const quote = value as Record<string, unknown>;
-
-        return (
-          typeof quote.passageNumber === 'number' &&
-          Number.isInteger(quote.passageNumber) &&
-          typeof quote.quote === 'string'
-        );
-      }) ||
-      typeof candidate.confidence !== 'number' ||
-      !Number.isFinite(candidate.confidence) ||
-      candidate.confidence < 0 ||
-      candidate.confidence > 1
-    ) {
-      return null;
-    }
-
-    return {
-      answer: candidate.answer,
-      answerable: candidate.answerable,
-      citedPassages: candidate.citedPassages as number[],
-      citedQuotes: candidate.citedQuotes as ModelCitationQuote[],
-      confidence: candidate.confidence,
-    };
-  } catch {
-    return null;
   }
+  const parsed = modelAnswerSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }
 
-function buildCitation(
-  passage: NumberedPassage,
-  quote: string,
-): ValidatedCitation {
-  return {
-    marker: passage.number,
-    chunkId: passage.chunkId,
-    lectureId: passage.lectureId,
-    startSec: passage.startSec,
-    endSec: passage.endSec,
-    quote,
-    deepLink: `/lectures/${passage.lectureId}/play?t=${passage.startSec}`,
-  };
+/**
+ * Where `quote` occurs in `text`, comparing case-insensitively with runs of whitespace collapsed.
+ * Returns the passage's OWN text for that span (so the stored quote is verbatim transcript), or null.
+ */
+export function locateQuote(text: string, quote: string): string | null {
+  const wanted = quote.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (!wanted) return null;
+  // Collapse whitespace in the passage while remembering where each kept character came from.
+  let collapsed = '';
+  const origin: number[] = [];
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]!;
+    if (/\s/.test(ch)) {
+      if (collapsed.length === 0 || collapsed.endsWith(' ')) continue;
+      collapsed += ' ';
+    } else collapsed += ch.toLowerCase();
+    origin.push(i);
+  }
+  const at = collapsed.indexOf(wanted);
+  if (at < 0) return null;
+  return text.slice(origin[at]!, origin[at + wanted.length - 1]! + 1);
 }
 
-export function validateModelAnswer(
-  raw: string,
-  passages: NumberedPassage[],
-): ValidationResult {
+export function validateModelAnswer(raw: unknown, passages: NumberedPassage[]): ValidationResult {
   const parsed = parseModelAnswer(raw);
+  if (!parsed) return abstain('PARSE_FAILED');
+  if (!parsed.answerable || !parsed.answer.trim() || parsed.confidence <= 0) return abstain('LOW_CONFIDENCE');
 
-  if (!parsed) {
-    return abstain('PARSE_FAILED');
-  }
-
-  if (!parsed.answerable) {
-    return abstain('LOW_CONFIDENCE');
-  }
-
-  if (!parsed.answer.trim() || parsed.confidence <= 0) {
-    return abstain('LOW_CONFIDENCE');
-  }
-
-  const passageMap = new Map(
-    passages.map((passage) => [passage.number, passage]),
-  );
-
-  const validCitations: ValidatedCitation[] = [];
-
+  const byNumber = new Map(passages.map((p) => [p.number, p]));
+  const citations: ValidatedCitation[] = [];
   for (const number of new Set(parsed.citedPassages)) {
-    const passage = passageMap.get(number);
-
-    if (!passage) {
-      continue;
-    }
-
-    const matchingQuote = parsed.citedQuotes.find(
-      (item) => item.passageNumber === number,
-    )?.quote;
-
-    if (
-      !matchingQuote ||
-      matchingQuote.length > 300 ||
-      !passage.text.includes(matchingQuote)
-    ) {
-      continue;
-    }
-
-    validCitations.push(buildCitation(passage, matchingQuote));
+    const passage = byNumber.get(number);
+    if (!passage) continue; // hallucinated index: not one of the retrieved passages
+    const claimed = parsed.citedQuotes.find((q) => q.passageNumber === number)?.quote;
+    if (!claimed) continue;
+    const located = locateQuote(passage.text, claimed);
+    if (!located) continue; // not in that passage: the citation cannot be verified
+    const quote = trimQuote(located); // models ignore the length rule; the trimmed text is still verbatim
+    citations.push({
+      marker: passage.number,
+      chunkId: passage.chunkId,
+      lectureId: passage.lectureId,
+      startSec: passage.startSec,
+      endSec: passage.endSec,
+      quote,
+      deepLink: deepLinkFor(passage.lectureId, passage.startSec),
+    });
   }
+  // An answer with no verifiable citation is a contract violation (§5.6): abstain instead.
+  if (citations.length === 0) return abstain('LOW_CONFIDENCE');
 
-  if (validCitations.length === 0) {
-    return abstain('LOW_CONFIDENCE');
-  }
+  // Keep [n] markers only for surviving citations; make sure each citation is referenced.
+  const kept = new Set(citations.map((c) => c.marker));
+  let answer = parsed.answer.replace(/\[(\d+)\]/g, (marker, n: string) => (kept.has(Number(n)) ? marker : ''));
+  for (const c of citations) if (!answer.includes(`[${c.marker}]`)) answer = `${answer.trim()} [${c.marker}]`;
+  answer = answer.replace(/[ \t]{2,}/g, ' ').replace(/\s+([.,;:!?])/g, '$1').trim();
 
-  const validNumbers = new Set(
-    validCitations.map((citation) => citation.marker),
-  );
-
-  let answer = parsed.answer.replace(
-    /\[(\d+)\]/g,
-    (marker, number: string) =>
-      validNumbers.has(Number(number)) ? marker : '',
-  );
-
-  for (const citation of validCitations) {
-    const marker = `[${citation.marker}]`;
-
-    if (!answer.includes(marker)) {
-      answer = `${answer.trim()} ${marker}`;
-    }
-  }
-
-  return {
-    answerable: true,
-    abstainReason: null,
-    answer: answer.trim(),
-    citations: validCitations,
-    confidence: parsed.confidence,
-  };
+  citations.sort((a, b) => a.marker - b.marker);
+  return { answerable: true, abstainReason: null, answer, citations, confidence: parsed.confidence };
 }

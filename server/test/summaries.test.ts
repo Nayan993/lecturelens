@@ -182,8 +182,9 @@ describe('createSummariesForLecture', () => {
   });
 });
 
+const app = await buildApp();
+
 describe('summaries routes', () => {
-  const app = buildApp();
   let teacher: Awaited<ReturnType<typeof makeTeacher>>;
   let other: Awaited<ReturnType<typeof makeTeacher>>;
   let student: Awaited<ReturnType<typeof makeStudent>>;

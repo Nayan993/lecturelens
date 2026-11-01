@@ -18,6 +18,7 @@ import {
 } from '../../models/index.js';
 import { discardUpload, uploadDirOf } from '../../middleware/upload.js';
 import { startProcessing } from '../../services/processing/pipeline.js';
+import { invalidateVectorCache } from '../../services/retrieval/vectorCache.js';
 import { conflict, internal, notFound } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 import type { ListQuery } from './lectures.schemas.js';
@@ -141,6 +142,7 @@ async function discardDerivedFrom(lectureId: string, stage: StageName): Promise<
   if (at('summarising')) ops.push(Summary.deleteMany({ lectureId }));
   if (stage === 'indexing') ops.push(Chunk.updateMany({ lectureId }, { $set: { embedding: [] } }));
   await Promise.all(ops);
+  if (at('chunking') || at('indexing')) invalidateVectorCache(lectureId); // stale vectors must not be searched
 }
 
 /* ------------------------------------------------------------------ create ---- */
@@ -266,6 +268,7 @@ export async function remove(id: string, viewer: Viewer): Promise<void> {
   }
 
   await Lecture.deleteOne({ _id: lecture._id });
+  invalidateVectorCache(id);
   try {
     await rm(uploadDirOf(id), { recursive: true, force: true });
   } catch (err) {

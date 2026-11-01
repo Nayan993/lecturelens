@@ -596,17 +596,25 @@ retried, the failure is logged, and the response is `500`.
 `lectureId` optional (omitted = every lecture visible to the caller); `retriever` default `hybrid`;
 `topK` 1–20, default 5. Response `200 { query, retriever, items: Passage[], tookMs }`.
 `score` is higher-is-better and only comparable within one response: `vector` = dot product
-(cosine) in [-1, 1]; `keyword` = Mongo `textScore`; `hybrid` = reciprocal-rank fusion
-`Σ 1/(60 + rank)` over both lists. `rank` is 1-based.
+(cosine) in [-1, 1]; `keyword` = Okapi BM25 over the chunk text of the lectures in scope (k1 1.5,
+b 0.75; unbounded, > 0); `hybrid` = reciprocal-rank fusion `Σ 1/(60 + rank)` over both lists (at
+most 2/61 ≈ 0.0328). `rank` is 1-based. Scope = the lectures the caller may read (§1.6, applied in
+the query): students `ready` + `transcriptApproved`; teachers their own.
 
 `POST /ask` body `{ question, lectureId?, retriever? }` (question 3–500 chars). Response `200`
 — **abstaining is a normal 200, not an error**:
 
-- `NO_RELEVANT_PASSAGE` — no passage above the relevance threshold; the LLM is not called.
+- `NO_RELEVANT_PASSAGE` — no passage above the relevance threshold; the LLM is not called. The gate
+  passes a question when EITHER the **cosine similarity** between the question and the best retrieved
+  passage is ≥ `RAG_MIN_SCORE` (default 0.35), OR one retrieved passage contains **all** of the
+  question's content words (lexical coverage; needed because the embedding model is English-only).
+  It never compares with `topScore`: RRF and BM25 scores carry no absolute relevance (an RRF top hit
+  always scores ≥ 1/61).
 - `LOW_CONFIDENCE` — the model declared it cannot answer from the passages, or every citation
   failed the verbatim-quote check.
 - `PARSE_FAILED` — model output was not valid JSON after one retry.
-- Provider unreachable is **not** an abstain: it is `503 PROVIDER_UNAVAILABLE`.
+- Provider unreachable or rate-limited is **not** an abstain: it is `503 PROVIDER_UNAVAILABLE`
+  `{ provider, retryAfterSec? }` (+ `Retry-After` header when the provider said how long to wait).
 
 When abstained: `answerable: false`, `abstained: true`, `abstainReason` set, `answer: null`,
 `citations: []`, `confidence: null`.
@@ -1052,9 +1060,9 @@ This is the student's 3rd attempt; `mocks/revision.json` is generated from attem
   `501`. Owners replace the handler body only.
 - The processing pipeline (`server/src/services/processing/pipeline.ts`; interface by D) runs every
   stage in §2 order: `extracting` and `transcribing` (A), `chunking`, `segmenting` and `summarising`
-  (B). Until Member C provides embeddings, segmenting uses `fixed_window` and the `indexing` stage is
-  **skipped**: the lecture becomes `ready` with `statusDetail` saying search indexing is not available
-  yet, so nothing is faked. Failures set `failed` with a §4.2 `error.code`: `NO_AUDIO_STREAM`,
+  (B), `indexing` (C — embeds every chunk with the shared embedder), then `ready` ("Ready."). Segmenting
+  still uses the `fixed_window` baseline (see evaluation/topics). A failed `indexing` keeps the
+  transcript, topics and summaries and can be rerun with reprocess `fromStage: "indexing"`. Failures set `failed` with a §4.2 `error.code`: `NO_AUDIO_STREAM`,
   `UNSUPPORTED_CODEC`, `PROVIDER_UNAVAILABLE` (both ASR providers failed or none configured),
   `TRANSCRIPTION_FAILED` (provider output unusable), `INTERNAL_ERROR`.
 - **Returning fabricated success data from a server route is forbidden** — no hard-coded

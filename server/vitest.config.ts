@@ -45,6 +45,8 @@ export default defineConfig({
       LLM_BASE_URL: '',
       LLM_MODEL: '',
       EMBEDDING_MODEL: '',
+      RAG_TOP_K: '',
+      RAG_MIN_SCORE: '',
       LOG_LEVEL: '',
     },
     hookTimeout: 120_000, // the first run downloads the mongod binary

@@ -16,7 +16,7 @@ import type { AsrProvider, AsrTranscriptionResult } from '../src/services/asr/ty
 import { mp4Layout } from '../src/services/media/extract.js';
 import {
   processingPipeline,
-  READY_WITHOUT_INDEXING_DETAIL,
+  READY_DETAIL,
   setPipeline,
 } from '../src/services/processing/pipeline.js';
 import { logger } from '../src/utils/logger.js';
@@ -26,6 +26,9 @@ import { authHeader, buildApp, makeTeacher, resetDb } from './setup.js';
  * The real pipeline end to end — real FFmpeg extraction, real MongoDB, Member B's real chunking /
  * segmenting / summarising — with only the ASR provider faked (replaying the AssemblyAI fixture).
  */
+
+// The indexing stage runs the REAL embed()/embedLecture() on a deterministic fake model (no download).
+vi.mock('@xenova/transformers', async () => (await import('./fakeEmbeddings.js')).fakeTransformers);
 
 const realProviders = { ...asrProviders };
 afterEach(() => {
@@ -106,15 +109,15 @@ describe('processing pipeline (Member A → Member B handoff)', () => {
 
     await processingPipeline.startProcessing(lecture.id);
 
-    expect(statuses).toEqual(['extracting', 'transcribing', 'chunking', 'segmenting', 'summarising', 'ready']);
+    expect(statuses).toEqual(['extracting', 'transcribing', 'chunking', 'segmenting', 'summarising', 'indexing', 'ready']);
     expect(seenDuringAsr).toMatchObject({ status: 'transcribing', audioPath: `${lecture.id}/lecture.audio.wav` });
 
     const done = await Lecture.findById(lecture._id);
-    expect(done).toMatchObject({ status: 'ready', statusDetail: READY_WITHOUT_INDEXING_DETAIL, error: null });
+    expect(done).toMatchObject({ status: 'ready', statusDetail: READY_DETAIL, error: null });
     expect(done!.durationSec).toBeCloseTo(24, 1);
     expect(done!.provider).toMatchObject({ asr: 'assemblyai', asrModel: 'universal-2', externalId: fixture.id });
     expect(done!.stages.map((s) => `${s.name}:${s.state}`)).toEqual([
-      'extracting:done', 'transcribing:done', 'chunking:done', 'segmenting:done', 'summarising:done', 'indexing:skipped',
+      'extracting:done', 'transcribing:done', 'chunking:done', 'segmenting:done', 'summarising:done', 'indexing:done',
     ]);
     expect(done!.stages.find((s) => s.name === 'extracting')!.ms).toBeGreaterThan(0);
 
@@ -134,15 +137,23 @@ describe('processing pipeline (Member A → Member B handoff)', () => {
     expect(topics.length).toBeGreaterThan(0);
     expect(topics[0]!.startSec).toBe(0);
     expect(topics.at(-1)!.endSec).toBe(done!.durationSec);
-    expect(new Set(topics.map((t) => t.method))).toEqual(new Set(['fixed_window'])); // no embedder from C yet
+    expect(new Set(topics.map((t) => t.method))).toEqual(new Set(['fixed_window'])); // baseline kept (see evaluation/topics)
     expect(await Summary.countDocuments({ lectureId: lecture._id })).toBe(topics.length);
+
+    // Member C's indexing stage ran on it: every chunk has a unit-norm 384-d vector (§4.4).
+    const chunks = await Chunk.find({ lectureId: lecture._id }).select('+embedding').lean();
+    for (const c of chunks) {
+      expect(c.embedding).toHaveLength(384);
+      expect(Math.abs(Math.hypot(...c.embedding) - 1)).toBeLessThan(1e-6);
+      expect(c.embeddingModel).toBe('Xenova/all-MiniLM-L6-v2');
+    }
 
     // Traceability: the raw provider response is kept beside the media.
     const raw = JSON.parse(await readFile(path.join(storageRoot, lecture.id, 'asr-response.json'), 'utf8'));
     expect(raw).toMatchObject({ provider: 'assemblyai', externalId: fixture.id, response: { id: fixture.id } });
 
     // And the API shows it: status view and the teacher's transcript.
-    const app = buildApp();
+    const app = await buildApp();
     const status = await request(app).get(`/api/v1/lectures/${lecture.id}/status`).set(authHeader(teacher)).expect(200);
     expect(status.body).toMatchObject({ status: 'ready', progressPct: 100 });
     const transcript = await request(app).get(`/api/v1/lectures/${lecture.id}/transcript`).set(authHeader(teacher)).expect(200);
@@ -319,12 +330,12 @@ describe('robustness (PA.2)', () => {
       return fixtureResult();
     });
     await processingPipeline.startProcessing(lecture.id);
-    const res = await request(buildApp()).get(`/api/v1/lectures/${lecture.id}/status`).set(authHeader(teacher)).expect(200);
+    const res = await request(await buildApp()).get(`/api/v1/lectures/${lecture.id}/status`).set(authHeader(teacher)).expect(200);
     const ms = Object.fromEntries(res.body.stages.map((s: { name: string; ms: number | null }) => [s.name, s.ms]));
     expect(ms.extracting).toBeGreaterThan(0);
     expect(ms.transcribing).toBeGreaterThanOrEqual(120);
     for (const stage of ['chunking', 'segmenting', 'summarising']) expect(typeof ms[stage]).toBe('number');
-    expect(ms.indexing).toBeNull(); // skipped until Member C
+    expect(ms.indexing).toEqual(expect.any(Number)); // Member C's indexing stage now runs
     const stored = await Lecture.findById(lecture._id);
     expect(stored!.stages.find((s) => s.name === 'transcribing')!.ms).toBe(ms.transcribing);
   });
@@ -341,5 +352,38 @@ describe('persistTranscription', () => {
     expect(stored.map((s) => s.index)).toEqual(stored.map((_, i) => i));
     expect(Math.max(...stored.map((s) => s.endSec))).toBeLessThanOrEqual(10);
     expect(existsSync(path.join(storageRoot, lecture.id, 'asr-response.json'))).toBe(true);
+  });
+});
+
+describe('indexing stage (Member C)', () => {
+  const waitFor = async <T>(read: () => Promise<T>, done: (v: T) => boolean): Promise<T> => {
+    for (let i = 0; i < 200; i += 1) {
+      const v = await read();
+      if (done(v)) return v;
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    throw new Error('timed out waiting for the pipeline');
+  };
+
+  it('a failed indexing run never leaves the lecture stuck: failed at "indexing" with an actionable message, and a reprocess from "indexing" completes it', async () => {
+    const lecture = await lectureWithMedia(teacher._id, 'lecture.mp3', tone(6));
+    asrProviders.assemblyai = fake(async () => fixtureResult());
+    vi.spyOn(Chunk, 'bulkWrite').mockRejectedValueOnce(new Error('embedding model unavailable'));
+
+    await processingPipeline.startProcessing(lecture.id);
+    const failed = await Lecture.findById(lecture._id);
+    expect(failed).toMatchObject({ status: 'failed', error: { stage: 'indexing', code: 'INTERNAL_ERROR' } });
+    expect(failed!.statusDetail).toMatch(/Reprocess from "indexing"/);
+    // Everything before indexing is kept: the transcript, topics and summaries are not lost.
+    expect(await TranscriptSegment.countDocuments({ lectureId: lecture._id })).toBeGreaterThan(0);
+    expect(await Summary.countDocuments({ lectureId: lecture._id })).toBeGreaterThan(0);
+
+    const app = await buildApp();
+    await request(app).post(`/api/v1/lectures/${lecture.id}/reprocess`).set(authHeader(teacher)).send({ fromStage: 'indexing' }).expect(202);
+    const done = await waitFor(() => Lecture.findById(lecture._id), (l) => l?.status === 'ready' || l?.status === 'failed');
+    expect(done).toMatchObject({ status: 'ready', statusDetail: READY_DETAIL, error: null });
+    const chunks = await Chunk.find({ lectureId: lecture._id }).select('+embedding').lean();
+    expect(chunks.length).toBeGreaterThan(0);
+    expect(chunks.every((c) => c.embedding.length === 384)).toBe(true);
   });
 });

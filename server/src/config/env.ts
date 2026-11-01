@@ -74,6 +74,9 @@ const envSchema = z.object({
   LLM_BASE_URL: optional(z.string().url('must be a full URL, e.g. https://api.groq.com/openai/v1')),
   LLM_MODEL: optional(z.string()),
   EMBEDDING_MODEL: optional(z.string()),
+  // Member C's grounded Q&A (PC.2). Unset = the module default (services/rag/settings.ts).
+  RAG_TOP_K: optional(z.coerce.number().int('must be an integer').min(1).max(20, 'must be an integer from 1 to 20')),
+  RAG_MIN_SCORE: optional(z.coerce.number().min(-1).max(1, 'must be a cosine similarity between -1 and 1')),
 });
 
 export type Env = Readonly<z.infer<typeof envSchema>>;

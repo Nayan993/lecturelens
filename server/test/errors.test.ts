@@ -60,11 +60,15 @@ describe('error envelope', () => {
   });
 
   it('501 NOT_IMPLEMENTED — owner and prompt in details', async () => {
-    const res = await api().post('/api/v1/ask').set(authHeader(await makeStudent())).send({ question: 'What is a gradient?' });
+    // A route that is still a stub (Member B's topic rejection).
+    const res = await api()
+      .post('/api/v1/topics/6650c3a0c3b2e41d8a400000/reject')
+      .set(authHeader(await makeTeacher()))
+      .send({ rejectionReason: 'AMBIGUOUS' });
     expectEnvelope(res, 501, 'NOT_IMPLEMENTED');
     expect(res.body.error).toMatchObject({
-      message: 'Grounded Q&A is not yet implemented (owner: Member C).',
-      details: { owner: 'C', prompt: 'PC.2' },
+      message: 'Topic rejection is not yet implemented (owner: Member B).',
+      details: { owner: 'B', prompt: 'PB.1' },
     });
   });
 

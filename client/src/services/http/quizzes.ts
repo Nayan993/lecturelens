@@ -1,4 +1,4 @@
-import { apiClient } from '../../lib/apiClient';
+import { apiClient, LLM_REQUEST_TIMEOUT_MS } from '../../lib/apiClient';
 import type { Attempt, Paginated, Question, Quiz, QuizSummary, RevisionPlan } from '../../types';
 import type { QuizService, RevisionService } from '../types';
 
@@ -7,7 +7,8 @@ export const httpQuizService: QuizService = {
     return (await apiClient.get<Paginated<Question>>('/questions', { params })).data;
   },
   async generateQuestions(lectureId, payload = {}) {
-    return (await apiClient.post<{ items: Question[] }>(`/lectures/${lectureId}/questions/generate`, payload)).data.items;
+    // One LLM call per approved topic, each possibly waiting out a short rate limit.
+    return (await apiClient.post<{ items: Question[] }>(`/lectures/${lectureId}/questions/generate`, payload, { timeout: LLM_REQUEST_TIMEOUT_MS })).data.items;
   },
   async updateQuestion(id, payload) {
     return (await apiClient.patch<{ question: Question }>(`/questions/${id}`, payload)).data.question;
