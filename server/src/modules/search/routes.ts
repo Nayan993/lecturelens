@@ -1,15 +1,13 @@
-
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth } from '../../middleware/auth.js';
 import { asyncHandler } from '../../middleware/asyncHandler.js';
 import { validate } from '../../middleware/validate.js';
-import { Lecture, RETRIEVERS } from '../../models/index.js';
-import { notFound } from '../../utils/errors.js';
+import { RETRIEVERS } from '../../models/index.js';
+import { retrieve } from '../../services/retrieval/index.js';
+import { unauthenticated } from '../../utils/errors.js';
 import { objectIdString } from '../../utils/schemas.js';
-import { keywordSearch } from '../../services/retrieval/keyword.js';
-import { vectorSearch } from '../../services/retrieval/vector.js';
-import { hybridSearch } from '../../services/retrieval/hybrid.js';
+import { retrievalScope } from './scope.js';
 
 /** Semantic search — owner C, PC.1 — CONTRACTS.md §5.6. */
 export const searchRouter = Router();
@@ -44,107 +42,13 @@ searchRouter.post(
   validate({ body: searchBody }),
   asyncHandler(async (req, res) => {
     const startedAt = Date.now();
-    const { query, lectureId, retriever: selectedRetriever, topK } =
-      req.body as z.infer<typeof searchBody>;
+    if (!req.user) throw unauthenticated();
+    const { query, lectureId, retriever: selected, topK } = req.body as z.infer<typeof searchBody>;
 
-    const user = req.user!;
+    // Visibility is decided in the database query, before any passage is scored.
+    const lectures = await retrievalScope(req.user, lectureId);
+    const items = await retrieve({ query, lectures, k: topK, retriever: selected });
 
-    const visibilityFilter =
-      user.role === 'student'
-        ? { status: 'ready', transcriptApproved: true }
-        : {
-            $or: [
-              { status: 'ready', transcriptApproved: true },
-              {
-                status: 'pending_review',
-                uploadedBy: user.id,
-              },
-            ],
-          };
-
-    const lectureFilter = lectureId
-      ? { $and: [visibilityFilter, { _id: lectureId }] }
-      : visibilityFilter;
-
-    const lectures = await Lecture.find(lectureFilter)
-      .select('_id title')
-      .lean()
-      .exec();
-
-    if (lectureId && lectures.length === 0) {
-      throw notFound('Lecture');
-    }
-
-    const allowedLectureIds = lectures.map((lecture) =>
-      String(lecture._id),
-    );
-
-    if (allowedLectureIds.length === 0) {
-      return res.json({
-        query,
-        retriever: selectedRetriever,
-        items: [],
-        tookMs: Date.now() - startedAt,
-      });
-    }
-
-    let results;
-
-    if (selectedRetriever === 'keyword') {
-      results = await keywordSearch({
-        query,
-        allowedLectureIds,
-        k: topK,
-      });
-    } else if (selectedRetriever === 'vector') {
-      results = await vectorSearch({
-        query,
-        allowedLectureIds,
-        k: topK,
-      });
-    } else {
-      results = await hybridSearch({
-        query,
-        allowedLectureIds,
-        k: topK,
-      });
-    }
-
-    const titlesByLectureId = new Map(
-      lectures.map((lecture) => [
-        String(lecture._id),
-        lecture.title,
-      ]),
-    );
-
-    const items = results.flatMap((result, index) => {
-      const lectureTitle = titlesByLectureId.get(result.lectureId);
-
-      if (lectureTitle === undefined) {
-        return [];
-      }
-
-      return [
-        {
-          chunkId: result.chunkId,
-          lectureId: result.lectureId,
-          lectureTitle,
-          startSec: result.startSec,
-          endSec: result.endSec,
-          text: result.text,
-          score: result.score,
-          retriever: selectedRetriever,
-          rank: index + 1,
-          deepLink: `/lectures/${result.lectureId}/play?t=${result.startSec}`,
-        },
-      ];
-    });
-
-    return res.json({
-      query,
-      retriever: selectedRetriever,
-      items,
-      tookMs: Date.now() - startedAt,
-    });
+    res.json({ query, retriever: selected, items, tookMs: Date.now() - startedAt });
   }),
 );

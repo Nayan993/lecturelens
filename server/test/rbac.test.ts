@@ -3,11 +3,18 @@ import path from 'node:path';
 import jwt from 'jsonwebtoken';
 import type { HydratedDocument } from 'mongoose';
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { env, storageRoot } from '../src/config/env.js';
+
+// /search and /ask embed the query: a deterministic fake model, so this suite never downloads one.
+vi.mock('@xenova/transformers', async () => (await import('./fakeEmbeddings.js')).fakeTransformers);
 import {
+  Attempt,
+  Chunk,
   Lecture,
   Question,
+  Summary,
+  TranscriptSegment,
   Quiz,
   TopicSection,
   initialStages,
@@ -19,10 +26,9 @@ import { TEST_PASSWORD, authHeader, buildApp, makeStudent, makeTeacher, resetDb 
 /**
  * The RBAC matrix — docs/CONTRACTS.md §1.6 — one test per cell, negatives included.
  *
- * Routes still answering 501 have their real guards mounted, so "allowed" is asserted as
- * "passes authentication and the role check" (→ 501, never 401/403). Cells that depend on
- * handler logic not written yet (approved-only filtering, own-attempt checks) are it.todo
- * with the prompt that will make them testable.
+ * "Allowed" is asserted as "passes authentication and the role check" (never 401/403); the cells
+ * that depend on handler logic (approved-only filtering, ownership, own attempts) assert the
+ * handler's answer too.
  */
 
 const app = await buildApp();
@@ -66,6 +72,29 @@ beforeAll(async () => {
   await writeFile(path.join(storageRoot, L.readyApproved, 'a.mp3'), MP3);
   await Lecture.updateOne({ _id: L.readyApproved }, { mediaPath: `${L.readyApproved}/a.mp3` });
 });
+
+/** Review content on a lecture: one approved and one pending topic + summary + question. */
+async function reviewContent(lectureId: string) {
+  const chunk = await Chunk.create({
+    lectureId, index: 0, startSec: 0, endSec: 60, segmentStart: 0, segmentEnd: 1, text: 'The learning rate sets the step size.', embeddingModel: 'm',
+  });
+  const topic = (index: number, status: 'approved' | 'pending_review') => TopicSection.create({
+    lectureId, index, startSec: index * 30, endSec: index * 30 + 30, segmentStart: index, segmentEnd: index, label: `Topic ${index}`,
+    keywords: ['a', 'b', 'c'], method: 'fixed_window', boundaryScore: null, status,
+  });
+  const topics = [await topic(0, 'approved'), await topic(1, 'pending_review')];
+  const evidence = [{ chunkId: chunk._id, startSec: 0, endSec: 10, quote: 'The learning rate sets the step size.' }];
+  const summaries = await Promise.all(topics.map((t) => Summary.create({
+    lectureId, topicId: t._id, title: t.label, text: 'One. Two.', keyPoints: ['One.', 'Two.'], evidence, status: t.status,
+    model: 'm', promptVersion: 'p', faithfulnessScore: 1, unsupportedSentences: [],
+  })));
+  const questions = await Promise.all(topics.map((t) => Question.create({
+    lectureId, topicId: t._id, type: 'mcq', difficulty: 'easy', stem: `About ${t.label}?`,
+    options: [{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }, { id: 'c', text: 'C' }, { id: 'd', text: 'D' }],
+    correctOptionId: 'a', explanation: 'Because.', evidence, status: t.status, model: 'm', promptVersion: 'p',
+  })));
+  return { topics, summaries, questions };
+}
 
 const as = (user: User) => authHeader(user);
 const ID = '6650c3a0c3b2e41d8a400000'; // a well-formed id for topic/summary/question/quiz/attempt stubs
@@ -116,7 +145,7 @@ const TEACHER_ONLY: Array<[string, Call]> = [
   ['approve or reject a question', { method: 'patch', path: () => `/questions/${ID}`, body: { status: 'approved' } }],
 ];
 
-/* Teacher-only routes that are implemented (D, A, and B's PB.1/PB.2); every other one is still a 501 stub. */
+/* Teacher-only routes that are implemented (D, A, B and C); every other one is still a 501 stub. */
 const LIVE_LECTURE_ROUTES = [
   'upload',
   'read processing status',
@@ -125,7 +154,10 @@ const LIVE_LECTURE_ROUTES = [
   'patch a transcript segment',
   'approve a transcript',
 ];
-const LIVE_REVIEW_ROUTES = ['edit a topic', 'approve a topic', 'approve a summary']; // Member B
+const LIVE_REVIEW_ROUTES = [
+  'edit a topic', 'approve a topic', 'approve a summary', // Member B
+  'generate questions', 'read pending_review questions', 'approve or reject a question', // Member C
+];
 const TEACHER_ONLY_STUBS = TEACHER_ONLY.filter(
   ([cell]) => !LIVE_LECTURE_ROUTES.includes(cell) && !LIVE_REVIEW_ROUTES.includes(cell),
 );
@@ -157,11 +189,9 @@ describe('student', () => {
   it.each(OPEN_TO_ANY)('may %s (passes the guards)', async (_cell, call) => {
     const res = await send(call, as(student));
 
-    const allowedStatuses = _cell === 'read a quiz'
-      ? [200, 404, 501]
-      : [200, 501];
-
-    expect(allowedStatuses).toContain(res.status);
+    // Through the guards: never 401/403, never a server error (404/422 are the handler's own answers).
+    expect([401, 403], `${_cell} → ${res.status}`).not.toContain(res.status);
+    expect(res.status, `${_cell} → ${res.status}`).toBeLessThan(500);
   });
 
   it.each(TEACHER_ONLY)('may NOT %s → 403 FORBIDDEN', async (_cell, call) => {
@@ -175,7 +205,19 @@ describe('student', () => {
     expect(await Lecture.countDocuments()).toBe(4);
   });
 
-  it.todo('reads approved topic sections, summaries and questions ONLY (handler filter — PB.1, PB.2, PC.3)');
+  it('reads approved topic sections, summaries and questions ONLY (handler filter — PB.1, PB.2, PC.3)', async () => {
+    const lectureId = await lecture(owner, { title: 'Review content, student view' });
+    const { topics, summaries, questions } = await reviewContent(lectureId);
+    const t = await send({ method: 'get', path: () => `/lectures/${lectureId}/topics` }, as(student)).expect(200);
+    expect(t.body.items.map((x: { id: string }) => x.id)).toEqual([topics[0]!.id]);
+    const sm = await send({ method: 'get', path: () => `/lectures/${lectureId}/summaries` }, as(student)).expect(200);
+    expect(sm.body.items.map((x: { id: string }) => x.id)).toEqual([summaries[0]!.id]);
+    // Questions reach students only through quizzes, which draw from approved questions only.
+    const quiz = await send({ method: 'post', path: () => '/quizzes', body: { lectureId, questionCount: 20 } }, as(student)).expect(201);
+    expect(quiz.body.quiz.questions.map((x: { id: string }) => x.id)).toEqual([questions[0]!.id]);
+    await send({ method: 'get', path: () => `/questions?lectureId=${lectureId}` }, as(student)).expect(403);
+    await Lecture.deleteOne({ _id: lectureId }); // keep the shared fixture's lecture count stable
+  });
   it('never receives pending questions or answer keys before submitting (PC.3)', async () => {
     const topic = await TopicSection.create({
       lectureId: L.readyApproved,
@@ -262,11 +304,9 @@ describe('teacher', () => {
   it.each(OPEN_TO_ANY)('can do what a student can: %s', async (_cell, call) => {
     const res = await send(call, as(owner));
 
-    const allowedStatuses = _cell === 'read a quiz'
-      ? [200, 404, 501]
-      : [200, 501];
-
-    expect(allowedStatuses).toContain(res.status);
+    // Through the guards: never 401/403, never a server error (404/422 are the handler's own answers).
+    expect([401, 403], `${_cell} → ${res.status}`).not.toContain(res.status);
+    expect(res.status, `${_cell} → ${res.status}`).toBeLessThan(500);
   });
 
   it('uploads a lecture → 202', async () => {
@@ -308,12 +348,14 @@ describe('teacher', () => {
     expect(res.body.error.code).toBe('NOT_IMPLEMENTED');
   });
 
-  // Member B's live review routes: the role check lets a teacher through (the ids here are made up,
+  // Live review routes (B, C): the role check lets a teacher through (the ids here are made up,
   // so the handler answers 404 — what matters is that it is never 401/403 for a teacher).
   it.each(TEACHER_ONLY_LIVE_REVIEW)('may %s (passes the guards; handler reached)', async (_cell, call) => {
     const res = await send(call, as(owner));
     expect([401, 403]).not.toContain(res.status);
-    expect(res.status).toBeLessThan(500);
+    // Question generation needs the LLM, which tests never configure: the handler's honest 503.
+    if (res.status === 503) expect(res.body.error.code).toBe('PROVIDER_UNAVAILABLE');
+    else expect(res.status).toBeLessThan(500);
   });
 
   describe("another teacher's lecture → 404, existence not revealed", () => {
@@ -334,7 +376,42 @@ describe('teacher', () => {
     });
   });
 
-  it.todo("may NOT approve, edit or read pending content of another teacher's lecture (handler ownership — PA.1, PB.1, PB.2, PC.3)");
+  it("may NOT approve, edit or read pending content of another teacher's lecture (handler ownership — PA.1, PB.1, PB.2, PC.3)", async () => {
+    const { topics, summaries, questions } = await reviewContent(L.othersReady);
+    await TranscriptSegment.create({
+      lectureId: L.othersReady, index: 0, startSec: 0, endSec: 5, text: 'Original.', confidence: 0.9, lowConfidence: false, corrected: false, modelVersion: 'm',
+    });
+    await Lecture.updateOne({ _id: L.othersReady }, { transcriptApproved: false });
+    const cells: Array<[string, Call]> = [
+      ['read its transcript', { method: 'get', path: () => `/lectures/${L.othersReady}/transcript` }],
+      ['edit a segment', { method: 'patch', path: () => `/lectures/${L.othersReady}/segments/0`, body: { text: 'Hijacked.' } }],
+      ['approve its transcript', { method: 'post', path: () => `/lectures/${L.othersReady}/transcript/approve` }],
+      ['read its topics', { method: 'get', path: () => `/lectures/${L.othersReady}/topics` }],
+      ['edit a topic', { method: 'patch', path: () => `/topics/${topics[1]!.id}`, body: { label: 'Hijacked' } }],
+      ['approve a topic', { method: 'post', path: () => `/topics/${topics[1]!.id}/approve` }],
+      ['read its summaries', { method: 'get', path: () => `/lectures/${L.othersReady}/summaries` }],
+      ['approve a summary', { method: 'post', path: () => `/summaries/${summaries[1]!.id}/approve` }],
+      ['read its question queue', { method: 'get', path: () => `/questions?lectureId=${L.othersReady}&status=pending_review` }],
+      ['approve a question', { method: 'patch', path: () => `/questions/${questions[1]!.id}`, body: { status: 'approved' } }],
+      ['generate questions', { method: 'post', path: () => `/lectures/${L.othersReady}/questions/generate`, body: {} }],
+    ];
+    for (const [cell, call] of cells) {
+      const res = await send(call, as(owner));
+      expect(res.status, cell).toBe(404);
+      expect(res.body.error.code, cell).toBe('NOT_FOUND');
+    }
+    // Nothing changed.
+    expect((await TopicSection.findById(topics[1]!._id))!.status).toBe('pending_review');
+    expect((await Summary.findById(summaries[1]!._id))!.status).toBe('pending_review');
+    expect((await Question.findById(questions[1]!._id))!.status).toBe('pending_review');
+    expect((await TranscriptSegment.findOne({ lectureId: L.othersReady }))!.text).toBe('Original.');
+    expect((await Lecture.findById(L.othersReady))!.transcriptApproved).toBe(false);
+    // Restore the shared fixture for the cells that follow.
+    await Promise.all([
+      Lecture.updateOne({ _id: L.othersReady }, { transcriptApproved: true }),
+      ...[TopicSection, Summary, Question, TranscriptSegment, Chunk].map((m) => (m as typeof Chunk).deleteMany({ lectureId: L.othersReady })),
+    ]);
+  });
 });
 
 describe('nobody', () => {
@@ -377,5 +454,19 @@ describe('nobody', () => {
     await api().post('/api/v1/auth/login').send({ email: student.email, password: TEST_PASSWORD }).expect(200);
   });
 
-  it.todo("may NOT read another user's attempts — GET /attempts/:id ownership (PC.3)");
+  it("may NOT read another user's attempts — GET /attempts/:id ownership (PC.3)", async () => {
+    const quiz = await Quiz.create({ lectureId: L.readyApproved, createdBy: student._id, title: 'Q', questionIds: [ID] });
+    const attempt = await Attempt.create({
+      quizId: quiz._id, lectureId: L.readyApproved, studentId: student._id,
+      answers: [{ questionId: ID, topicId: ID, selectedOptionId: 'a', correct: true }],
+      score: { correct: 1, total: 1, accuracy: 1 }, perTopic: [], startedAt: new Date(), submittedAt: new Date(), timeTakenSec: 1,
+    });
+    const classmate = await makeStudent();
+    for (const user of [classmate, owner, otherTeacher]) {
+      const res = await send({ method: 'get', path: () => `/attempts/${attempt.id}` }, as(user)).expect(404);
+      expect(res.body.error.code).toBe('NOT_FOUND');
+    }
+    await send({ method: 'get', path: () => `/attempts/${attempt.id}` }, as(student)).expect(200);
+    await api().get(`/api/v1/attempts/${attempt.id}`).expect(401);
+  });
 });

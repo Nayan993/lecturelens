@@ -36,16 +36,13 @@ describe('VITE_USE_MOCKS', () => {
     expect(parseMockFlag('qa', 'none').size).toBe(1);
   });
 
-  it('unset in development: every domain the server implements uses the real API', () => {
+  it('unset in development: every domain uses the real API (all nine are implemented)', () => {
     // Regression: transcript/topics/summaries stayed mocked after their routes landed, so a lecture
     // processed by the real pipeline showed "No transcript for this lecture — Lecture not found."
+    // Note: '' would mean "all mocked" — the no-mocks default must be the word 'none'.
     const services = selectServices(parseMockFlag(undefined, DEV_DEFAULT_MOCKS));
-    for (const domain of ['auth', 'lectures', 'transcript', 'topics', 'summaries'] as const) {
+    for (const domain of ['auth', 'lectures', 'transcript', 'topics', 'summaries', 'search', 'qa', 'quizzes', 'revision'] as const) {
       expect(services[domain]).toBe(httpServices[domain]);
-    }
-    // Only Member C's domains (still 501 on the server) are mocked.
-    for (const domain of ['search', 'qa', 'quizzes', 'revision'] as const) {
-      expect(services[domain]).toBe(mockServices[domain]);
     }
   });
 

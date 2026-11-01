@@ -39,25 +39,35 @@ node_modules/.bin/vitest run evaluation/topics  # metric unit tests (incl. NLTK'
   - `embedding_similarity` (the proposed method): an **unsupervised heuristic** (cosine
     similarity between adjacent segments over pretrained sentence embeddings). It is **not a
     trained segmentation model** — nothing is trained.
-  - **`embedding_similarity` was NOT run**, because Member C's embedder
-    (`server/src/services/embeddings`) does not exist yet. `evaluate.ts` runs it automatically
-    once that module lands. Its row is `n/a`, never an estimate.
+  - `embedding_similarity` now runs on Member C's shared embedder
+    (`server/src/services/embeddings`, Xenova/all-MiniLM-L6-v2 — pretrained, English-only), with
+    the module defaults (threshold 0.45, sections ≥ 120 s, 3-segment windows). Nothing was tuned on
+    these two lectures.
 - The table that used to be in this file (and the earlier `results.csv`, plus
   `lecture-1/2-annotation.json`) was **removed**. It was not produced by any script: it
   reported `embedding_similarity` scores without an embedder, and a lecture with no transcript.
 
-## Results (real run, 2026-11-01 — `results.csv`)
+## Results (real run, 2026-11-01, with the embedder — `results.csv`)
 
 | Method | Lecture | Segs | Reference | Predicted | P | R | F1 | WindowDiff (k) |
 | --- | --- | ---: | --- | --- | ---: | ---: | ---: | ---: |
 | fixed_window | Gate Smashers UML | 23 | 1 4 7 11 14 19 | 11 | 1.000 | 0.167 | 0.286 | 0.476 (2) |
-| embedding_similarity | Gate Smashers UML | 23 | 1 4 7 11 14 19 | not run | n/a | n/a | n/a | n/a |
+| embedding_similarity | Gate Smashers UML | 23 | 1 4 7 11 14 19 | (none) | 0.000 | 0.000 | 0.000 | 0.571 (2) |
 | fixed_window | Lecture 7 (synthetic) | 45 | 7 16 24 35 | 11 22 33 | 0.000 | 0.000 | 0.000 | 0.525 (5) |
-| embedding_similarity | Lecture 7 (synthetic) | 45 | 7 16 24 35 | not run | n/a | n/a | n/a | n/a |
+| embedding_similarity | Lecture 7 (synthetic) | 45 | 7 16 24 35 | 7 26 | 0.500 | 0.250 | 0.333 | 0.350 (5) |
 
 Boundary times:
 - Gate Smashers: predicted 11 @ 316 s; reference 48, 125, 213, 316, 401 and 493 s.
 - Lecture 7: predicted 331, 621 and 916 s; reference 221, 467, 674 and 965 s.
+- `embedding_similarity`, Lecture 7: predicted 221 s (exact hit) and 722 s (2 segments after the
+  674 s reference); Gate Smashers: no boundary at all.
+
+**Reading it:** on the English lecture the proposed method beats the baseline (F1 0.333 vs 0,
+WindowDiff 0.350 vs 0.525). On the Hindi–English lecture it finds **nothing**: the English-only
+embedding model gives code-mixed Devanagari windows uniformly middling similarity, so no gap falls
+below the 0.45 threshold, and the ~80 s sections are shorter than the 120 s minimum anyway. With two
+lectures and opposite results, the pipeline still runs `fixed_window`; switching is Member B's call
+(see `docs/KNOWN_LIMITATIONS.md`).
 
 ## Segmentation failure cases (observed in the run above)
 

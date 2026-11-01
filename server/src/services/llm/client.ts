@@ -8,13 +8,27 @@ import { logger } from '../../utils/logger.js';
  * JSON output validated with zod. The model is a PRETRAINED HOSTED SERVICE: we only prompt it.
  */
 
+export interface LlmUsage {
+  promptTokens: number;
+  completionTokens: number;
+}
+
 export interface LlmClient {
   /** Ask for a JSON object; resolves only with output that passes `schema`, else rejects. */
   generateJson<T>(prompt: string, schema: z.ZodType<T>): Promise<T>;
+  /**
+   * The same, plus the token usage the provider reported, summed over the attempts (0 when the
+   * provider reports none). Optional so simple fakes need only generateJson.
+   */
+  generateJsonWithUsage?<T>(prompt: string, schema: z.ZodType<T>): Promise<{ data: T; usage: LlmUsage }>;
 }
 
 export class LlmError extends Error {
-  constructor(message: string, readonly status: number | null = null) {
+  /**
+   * `status`: the provider's HTTP status, or null when it answered but the output was unusable.
+   * `retryAfterSec`: how long the provider asked us to wait (rate limits), when it said.
+   */
+  constructor(message: string, readonly status: number | null = null, readonly retryAfterSec: number | null = null) {
     super(message);
     this.name = 'LlmError';
   }
@@ -39,7 +53,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export function createLlmClient(opts: { baseUrl: string; apiKey: string; model: string }): LlmClient {
   const url = `${opts.baseUrl.replace(/\/$/, '')}/chat/completions`;
 
-  async function complete(messages: Array<{ role: 'system' | 'user'; content: string }>): Promise<string> {
+  async function complete(messages: Array<{ role: 'system' | 'user'; content: string }>): Promise<{ content: string; usage: LlmUsage }> {
     for (let attempt = 1; ; attempt++) {
       const response = await fetch(url, {
         method: 'POST',
@@ -48,44 +62,71 @@ export function createLlmClient(opts: { baseUrl: string; apiKey: string; model: 
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
       if (response.ok) {
-        const body = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        const body = (await response.json()) as {
+          choices?: Array<{ message?: { content?: string } }>;
+          usage?: { prompt_tokens?: number; completion_tokens?: number };
+        };
         const content = body.choices?.[0]?.message?.content;
         if (typeof content !== 'string') throw new LlmError('LLM response had no message content');
-        return content;
+        return {
+          content,
+          usage: { promptTokens: body.usage?.prompt_tokens ?? 0, completionTokens: body.usage?.completion_tokens ?? 0 },
+        };
       }
       const retryable = response.status === 429 || response.status >= 500;
-      const detail = (await response.text()).slice(0, 300);
-      if (!retryable || attempt > llmRetryPolicy.retries) {
-        throw new LlmError(`LLM request failed (HTTP ${response.status}): ${detail}`, response.status);
+      // Provider error bodies can name the account (e.g. Groq's organisation id): keep it out of logs.
+      const detail = (await response.text()).slice(0, 300).replace(/org_[A-Za-z0-9]+/g, 'org_…');
+      const header = Number(response.headers.get('retry-after'));
+      const retryAfterSec = Number.isFinite(header) && header > 0 ? header : null;
+      // A provider that asks for a longer wait than we are willing to hold a request (e.g. a daily
+      // token quota: "retry in 521 s") will not recover within our retries: fail now, and say when.
+      const waitTooLong = retryAfterSec !== null && retryAfterSec * 1000 > llmRetryPolicy.maxDelayMs;
+      if (!retryable || attempt > llmRetryPolicy.retries || waitTooLong) {
+        throw new LlmError(`LLM request failed (HTTP ${response.status}): ${detail}`, response.status, retryAfterSec);
       }
-      const waitMs = Math.min(llmRetryPolicy.maxDelayMs, llmRetryPolicy.baseDelayMs * 2 ** (attempt - 1));
+      // Honour the provider's Retry-After (seconds) on a rate limit, within maxDelayMs.
+      const backoffMs = llmRetryPolicy.baseDelayMs * 2 ** (attempt - 1);
+      const waitMs = Math.min(
+        llmRetryPolicy.maxDelayMs,
+        retryAfterSec !== null ? Math.max(backoffMs, retryAfterSec * 1000) : backoffMs,
+      );
       logger.warn('LLM request failed; retrying', { status: response.status, attempt, retryInMs: waitMs });
       await sleep(waitMs);
     }
   }
 
-  return {
-    async generateJson<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-      const messages: Array<{ role: 'system' | 'user'; content: string }> = [
-        { role: 'system', content: 'Reply with a single JSON object only, no prose and no code fences.' },
-        { role: 'user', content: prompt },
-      ];
-      let lastProblem = '';
-      // One extra try when the output is not valid JSON or does not match the schema.
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        const content = await complete(messages);
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(content);
-        } catch {
-          lastProblem = 'output was not valid JSON';
-          continue;
-        }
-        const result = schema.safeParse(parsed);
-        if (result.success) return result.data;
-        lastProblem = `output did not match the schema: ${result.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`;
+  async function generateJsonWithUsage<T>(prompt: string, schema: z.ZodType<T>): Promise<{ data: T; usage: LlmUsage }> {
+    const messages: Array<{ role: 'system' | 'user'; content: string }> = [
+      { role: 'system', content: 'Reply with a single JSON object only, no prose and no code fences.' },
+      { role: 'user', content: prompt },
+    ];
+    const usage: LlmUsage = { promptTokens: 0, completionTokens: 0 };
+    let lastProblem = '';
+    // One extra try when the output is not valid JSON or does not match the schema.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const reply = await complete(messages);
+      usage.promptTokens += reply.usage.promptTokens;
+      usage.completionTokens += reply.usage.completionTokens;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(reply.content);
+      } catch {
+        lastProblem = 'output was not valid JSON';
+        continue;
       }
-      throw new LlmError(`LLM ${lastProblem}`);
+      const result = schema.safeParse(parsed);
+      if (result.success) return { data: result.data, usage };
+      lastProblem = `output did not match the schema: ${result.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`;
+    }
+    // status null = the provider answered but the output was unusable (callers tell this apart from
+    // an unreachable provider, which carries an HTTP status or is a network error).
+    throw new LlmError(`LLM ${lastProblem}`);
+  }
+
+  return {
+    generateJsonWithUsage,
+    async generateJson<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
+      return (await generateJsonWithUsage(prompt, schema)).data;
     },
   };
 }

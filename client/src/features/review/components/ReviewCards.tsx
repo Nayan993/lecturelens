@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { Check, CheckCircle2, Pencil, X } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, Sparkles, X } from 'lucide-react';
 import { cn } from '../../../lib/cn';
 import { formatAge } from '../../../lib/formatDate';
 import { formatTimestamp } from '../../../lib/formatTime';
-import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../../components/ui';
-import { useQuestionReview, useSummaryReview, type PendingQuestion, type PendingSummary, type SummaryChange } from '../hooks';
+import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, Input, Select } from '../../../components/ui';
+import {
+  useQuestionGeneration,
+  useQuestionReview,
+  useSummaryReview,
+  useTopicReview,
+  type PendingQuestion,
+  type PendingSummary,
+  type PendingTopic,
+  type SummaryChange,
+} from '../hooks';
+import type { Lecture } from '../../../types';
 import { EditQuestionDialog, EditSummaryDialog, EvidenceLink, RejectDialog } from './ReviewDialogs';
 
 function Context({ lecture, topicLabel, start, createdAt }: { lecture: string; topicLabel?: string; start?: number; createdAt: string }) {
@@ -173,6 +183,101 @@ export function QuestionReviewCard({ item, highlighted }: { item: PendingQuestio
         onConfirm={(payload) => run({ status: 'rejected', ...payload }, 'Question rejected')}
       />
       <EditQuestionDialog question={question} open={editing} onOpenChange={setEditing} pending={review.isPending} onSave={(patch) => run(patch, 'Question updated')} />
+    </Card>
+  );
+}
+
+/** A topic section waiting for approval. Until it is approved students see neither it nor its summary. */
+export function TopicReviewCard({ item }: { item: PendingTopic }) {
+  const { topic, lecture } = item;
+  const review = useTopicReview();
+  return (
+    <Card id={`review-${topic.id}`} className="scroll-mt-24">
+      <CardHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="neutral">Topic</Badge>
+          <p className="text-xs text-ink-2">
+            {lecture.title}
+            <span className="font-mono tabular-nums text-accent-strong">
+              {' '}
+              · {formatTimestamp(topic.startSec)}–{formatTimestamp(topic.endSec)}
+            </span>
+          </p>
+        </div>
+        <CardTitle>{topic.label}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        {topic.keywords.length > 0 && (
+          <ul className="flex flex-wrap gap-1.5" aria-label="Keywords">
+            {topic.keywords.map((k) => (
+              <li key={k}>
+                <Badge variant="neutral">{k}</Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-sm text-ink-2">Approving shows this section, and its summary once that is approved, to students. It also lets you generate quiz questions from it.</p>
+      </CardContent>
+      <CardFooter>
+        <Button
+          size="sm"
+          leftIcon={<Check />}
+          loading={review.isPending}
+          onClick={() => review.mutate(topic)}
+          aria-label={`Approve topic: ${topic.label}`}
+        >
+          Approve
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+/** Generate quiz questions for one of the teacher's ready lectures; they arrive pending review. */
+export function GenerateQuestionsCard({ lectures }: { lectures: Lecture[] }) {
+  const generate = useQuestionGeneration();
+  const [lectureId, setLectureId] = useState(lectures[0]?.id ?? '');
+  const [count, setCount] = useState(5);
+  const selected = lectures.some((l) => l.id === lectureId) ? lectureId : (lectures[0]?.id ?? '');
+  if (lectures.length === 0) return null;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Generate quiz questions</CardTitle>
+        <p className="text-sm text-ink-2">
+          Multiple-choice questions are drafted from a lecture’s <strong>approved</strong> topic sections, each with a quote located in the
+          transcript. Nothing reaches students until you approve it here.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (selected) generate.mutate({ lectureId: selected, count });
+          }}
+        >
+          <Select label="Lecture" value={selected} onChange={(e) => setLectureId(e.target.value)} containerClassName="min-w-56 flex-1">
+            {lectures.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.title}
+              </option>
+            ))}
+          </Select>
+          <Input
+            label="How many"
+            type="number"
+            min={1}
+            max={20}
+            value={count}
+            onChange={(e) => setCount(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+            containerClassName="w-28"
+          />
+          <Button type="submit" leftIcon={<Sparkles />} loading={generate.isPending} disabled={!selected}>
+            {generate.isPending ? 'Generating…' : 'Generate questions'}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }

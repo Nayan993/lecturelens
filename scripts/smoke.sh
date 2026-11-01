@@ -26,7 +26,14 @@ check "GET /lectures/$ID" 200 "$API/lectures/$ID" -H "$AUTH"
 [ "$(json 'j.lecture.id')" = "$ID" ] || fail "lecture detail returned a different id"
 check "GET /lectures/$ID/status" 200 "$API/lectures/$ID/status" -H "$AUTH"
 [ "$(json 'j.stages.length')" = 6 ] || fail "status does not list six stages"
-check "POST /ask (stub)" 501 -X POST "$API/ask" -H "$AUTH" \
+check "POST /search" 200 -X POST "$API/search" -H "$AUTH" \
+  -H 'Content-Type: application/json' -d '{"query":"learning rate too large","topK":3}'
+[ "$(json 'Array.isArray(j.items) && typeof j.tookMs === "number"')" = true ] || fail "search response is not { items, tookMs }"
+check "POST /ask (answered or abstained — both are 200)" 200 -X POST "$API/ask" -H "$AUTH" \
   -H 'Content-Type: application/json' -d '{"question":"Why does the loss blow up?"}'
+[ "$(json 'typeof j.abstained === "boolean" && (j.abstained ? j.citations.length === 0 : j.citations.length > 0)')" = true ] \
+  || fail "ask response breaks the GroundedAnswer contract (answers need citations, abstentions none)"
+check "POST /topics/:id/reject (still a stub)" 501 -X POST "$API/topics/6650c3a0c3b2e41d8a400000/reject" -H "$AUTH" \
+  -H 'Content-Type: application/json' -d '{"rejectionReason":"AMBIGUOUS"}'
 [ "$(json 'j.error.code')" = NOT_IMPLEMENTED ] || fail "501 without the NOT_IMPLEMENTED envelope"
 echo "smoke: all checks passed"

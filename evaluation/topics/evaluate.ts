@@ -148,7 +148,7 @@ async function main(): Promise<void> {
         continue;
       }
       const m = evaluateBoundarySets(predicted, reference, n, 1);
-      rows.push({ ...base, predicted: predicted.join(' '), tolerance: 1, ...m });
+      rows.push({ ...base, predicted: predicted.join(' ') || '(none)', tolerance: 1, ...m });
       const at = (i: number) => `${i}@${t.segments[i + 1]?.startSec.toFixed(0) ?? '?'}s`;
       detail.push(`${method} · ${a.lectureId}: predicted ${predicted.map(at).join(', ') || '(none)'} · reference ${reference.map(at).join(', ')}`);
     }

@@ -94,13 +94,18 @@ export const notImplemented = (owner: 'A' | 'B' | 'C' | 'D', prompt: string, fea
     { owner, prompt },
   );
 
-/** `provider` e.g. "assemblyai", "groq", "openrouter". */
-export const providerUnavailable = (provider: string): AppError =>
+/**
+ * `provider` e.g. "assemblyai", "groq", "openrouter". `retryAfterSec`, when the provider said how
+ * long to wait (rate limits), is passed on in details and in the message.
+ */
+export const providerUnavailable = (provider: string, retryAfterSec: number | null = null): AppError =>
   new AppError(
     'PROVIDER_UNAVAILABLE',
-    'An external service is unavailable right now. Please try again shortly.',
+    retryAfterSec === null
+      ? 'An external service is unavailable right now. Please try again shortly.'
+      : `The language model's usage limit has been reached. Please try again in about ${Math.max(1, Math.ceil(retryAfterSec / 60))} minute${Math.ceil(retryAfterSec / 60) > 1 ? 's' : ''}.`,
     ERROR_STATUS.PROVIDER_UNAVAILABLE,
-    { provider },
+    retryAfterSec === null ? { provider } : { provider, retryAfterSec: Math.ceil(retryAfterSec) },
   );
 
 export const conflict = (message: string, details: ErrorDetails = {}): AppError =>

@@ -1,0 +1,4 @@
+retriever,questions,recall@1,recall@5,recall@10,mrr,meanLatencyMs,p95LatencyMs
+keyword,20,0.9,0.95,1,0.932,3.86,4.591
+vector,20,0.9,0.95,1,0.933,5.447,7.928
+hybrid,20,0.95,1,1,0.96,10.057,15.254

@@ -4,7 +4,7 @@ import { PartyPopper, ShieldCheck } from 'lucide-react';
 import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import { Badge, EmptyState, ErrorState, Skeleton, Tabs } from '../../components/ui';
 import { useReviewQueue } from '../../features/review/hooks';
-import { QuestionReviewCard, SummaryReviewCard } from '../../features/review/components/ReviewCards';
+import { GenerateQuestionsCard, QuestionReviewCard, SummaryReviewCard, TopicReviewCard } from '../../features/review/components/ReviewCards';
 import { PAGE_NARROW } from '../../components/layout/Page';
 
 function QueueSkeleton() {
@@ -16,11 +16,12 @@ function QueueSkeleton() {
   );
 }
 
-/** /app/review — approve, edit or reject generated summaries and questions. */
+/** /app/review — approve topic sections; approve, edit or reject generated summaries and questions; generate questions. */
 export function ReviewPage() {
   useDocumentTitle('Review Queue');
   const [params, setParams] = useSearchParams();
-  const tab = params.get('tab') === 'questions' ? 'questions' : 'summaries';
+  const requested = params.get('tab');
+  const tab = requested === 'questions' || requested === 'topics' ? requested : 'summaries';
   const focus = params.get('focus');
   const queue = useReviewQueue();
 
@@ -32,34 +33,52 @@ export function ReviewPage() {
     el?.querySelector<HTMLButtonElement>('button[aria-label^="Approve"]')?.focus({ preventScroll: true });
   }, [focus, queue.isPending, tab]);
 
-  const body = (kind: 'summaries' | 'questions') => {
+  const body = (kind: 'topics' | 'summaries' | 'questions') => {
     if (queue.isPending) return <QueueSkeleton />;
     if (queue.notImplemented) return <ErrorState variant="notImplemented" message="Reviewing generated content isn’t available yet." />;
     if (queue.error) return <ErrorState message={queue.error.message} onRetry={() => void queue.refetch()} />;
-    const list = kind === 'summaries' ? queue.summaries : queue.questions;
+    const generator = kind === 'questions' ? <GenerateQuestionsCard lectures={queue.lectures} /> : null;
+    const list = kind === 'topics' ? queue.topics : kind === 'summaries' ? queue.summaries : queue.questions;
     if (list.length === 0) {
       return (
-        <EmptyState
-          icon={<PartyPopper />}
-          title={kind === 'summaries' ? 'No summaries waiting' : 'No questions waiting'}
-          description="Everything generated so far has been reviewed."
-        />
+        <div className="flex flex-col gap-4 pb-6">
+          {generator}
+          <EmptyState
+            icon={<PartyPopper />}
+            title={kind === 'topics' ? 'No topics waiting' : kind === 'summaries' ? 'No summaries waiting' : 'No questions waiting'}
+            description="Everything generated so far has been reviewed."
+          />
+        </div>
+      );
+    }
+    if (kind === 'topics') {
+      return (
+        <ul className="flex flex-col gap-4 pb-6">
+          {queue.topics.map((item) => (
+            <li key={item.topic.id}>
+              <TopicReviewCard item={item} />
+            </li>
+          ))}
+        </ul>
       );
     }
     return (
-      <ul className="flex flex-col gap-4 pb-6">
-        {kind === 'summaries'
-          ? queue.summaries.map((item) => (
-              <li key={item.summary.id}>
-                <SummaryReviewCard item={item} highlighted={focus === item.summary.id} />
-              </li>
-            ))
-          : queue.questions.map((item) => (
-              <li key={item.question.id}>
-                <QuestionReviewCard item={item} highlighted={focus === item.question.id} />
-              </li>
-            ))}
-      </ul>
+      <div className="flex flex-col gap-4 pb-6">
+        {generator}
+        <ul className="flex flex-col gap-4">
+          {kind === 'summaries'
+            ? queue.summaries.map((item) => (
+                <li key={item.summary.id}>
+                  <SummaryReviewCard item={item} highlighted={focus === item.summary.id} />
+                </li>
+              ))
+            : queue.questions.map((item) => (
+                <li key={item.question.id}>
+                  <QuestionReviewCard item={item} highlighted={focus === item.question.id} />
+                </li>
+              ))}
+        </ul>
+      </div>
     );
   };
 
@@ -67,7 +86,7 @@ export function ReviewPage() {
     <div className={PAGE_NARROW}>
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-1">Review Queue</h1>
-        <p className="text-sm text-ink-2">Generated summaries and quiz questions wait here until you decide.</p>
+        <p className="text-sm text-ink-2">Topic sections, generated summaries and quiz questions wait here until you decide.</p>
       </header>
 
       <div role="note" className="flex items-start gap-3 rounded-card border border-brand/25 bg-brand-soft px-4 py-3.5">
@@ -83,6 +102,15 @@ export function ReviewPage() {
         value={tab}
         onValueChange={(v) => setParams(v === 'summaries' ? {} : { tab: v }, { replace: true })}
         items={[
+          {
+            value: 'topics',
+            label: (
+              <span className="flex items-center gap-2">
+                Topics {!queue.isPending && <Badge variant={queue.topics.length ? 'accent' : 'neutral'}>{queue.topics.length}</Badge>}
+              </span>
+            ),
+            content: body('topics'),
+          },
           {
             value: 'summaries',
             label: (

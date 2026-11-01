@@ -1,6 +1,6 @@
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../../components/ui';
-import { isApiError, isNotImplemented } from '../../lib/apiClient';
+import { errorDescription, isApiError, isNotImplemented } from '../../lib/apiClient';
 import { queryKeys } from '../../lib/queryKeys';
 import { services } from '../../services';
 import type {
@@ -26,6 +26,12 @@ export interface PendingSummary {
   summary: Summary;
   lecture: Lecture;
   topic?: TopicSection;
+}
+
+export interface PendingTopic {
+  kind: 'topic';
+  topic: TopicSection;
+  lecture: Lecture;
 }
 
 export interface PendingQuestion {
@@ -73,18 +79,29 @@ export function useReviewQueue() {
       return question.status === 'pending_review' && lecture ? [{ kind: 'question' as const, question, lecture, topic: topicOf.get(question.topicId) }] : [];
     });
 
+  // Topic sections awaiting approval: until a topic is approved, students see neither the section
+  // nor its summary, and questions cannot be generated from it.
+  const pendingTopics: PendingTopic[] = topics
+    .filter((topic) => topic.status === 'pending_review')
+    .flatMap((topic) => {
+      const lecture = byId.get(topic.lectureId);
+      return lecture ? [{ kind: 'topic' as const, topic, lecture }] : [];
+    })
+    .sort((a, b) => a.lecture.title.localeCompare(b.lecture.title) || a.topic.index - b.topic.index);
+
   const pendingCount = new Map<Id, number>();
-  for (const item of [...summaries, ...questions]) pendingCount.set(item.lecture.id, (pendingCount.get(item.lecture.id) ?? 0) + 1);
+  for (const item of [...pendingTopics, ...summaries, ...questions]) pendingCount.set(item.lecture.id, (pendingCount.get(item.lecture.id) ?? 0) + 1);
 
   const errors = [lecturesQ.error, ...summaryQs.map((q) => q.error), ...questionQs.map((q) => q.error)].filter(
     (e): e is Error => e !== null && !(isApiError(e) && e.status === 404),
   );
   return {
     lectures,
+    topics: pendingTopics,
     summaries,
     questions,
     pendingCount,
-    total: summaries.length + questions.length,
+    total: pendingTopics.length + summaries.length + questions.length,
     isPending: lecturesQ.isPending || summaryQs.some((q) => q.isPending) || questionQs.some((q) => q.isPending),
     notImplemented: errors.length > 0 && errors.every(isNotImplemented),
     error: errors[0] ?? null,
@@ -171,5 +188,55 @@ export function useQuestionReview() {
     },
     onSuccess: (_q, v) => toast({ variant: 'success', title: v.successMessage }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.questions.all }),
+  });
+}
+
+/**
+ * Approve a topic section (POST /topics/:id/approve). The topics cache is updated with the saved
+ * section, so it leaves the queue; students then see the section and its approved summary.
+ * (Rejecting a topic is still a 501 on the server — Member B — so it is not offered here.)
+ */
+export function useTopicReview() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: (topic: TopicSection) => services.topics.approve(topic.id),
+    onSuccess: (saved) => {
+      queryClient.setQueryData<LectureCollection<TopicSection>>(queryKeys.topics(saved.lectureId), (old) =>
+        old ? { ...old, items: old.items.map((t) => (t.id === saved.id ? saved : t)) } : old,
+      );
+      toast({ variant: 'success', title: 'Topic approved — students can now see this section and its summary' });
+    },
+    onError: (err) => toast({ variant: 'error', title: 'Couldn’t approve the topic', description: errorDescription(err) }),
+  });
+}
+
+/**
+ * Generate quiz questions for one lecture (POST /lectures/:id/questions/generate). They arrive as
+ * pending_review and appear in the queue; the server's reason is shown when it refuses (no approved
+ * topics, lecture not ready, model unavailable).
+ */
+export function useQuestionGeneration() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: ({ lectureId, count }: { lectureId: Id; count: number }) => services.quizzes.generateQuestions(lectureId, { count }),
+    onSuccess: (items, { count }) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.questions.all });
+      if (items.length === 0) {
+        toast({
+          variant: 'info',
+          title: 'No questions were saved',
+          description: 'The model’s questions could not be verified against the transcript. Try again.',
+        });
+      } else {
+        toast({
+          variant: 'success',
+          title: `${items.length} question${items.length === 1 ? '' : 's'} generated`,
+          description: `${items.length < count ? `${count - items.length} discarded (their evidence could not be found). ` : ''}They wait below for your review.`,
+        });
+      }
+    },
+    onError: (err) => toast({ variant: 'error', title: 'Couldn’t generate questions', description: errorDescription(err) }),
   });
 }

@@ -1,0 +1,810 @@
+{
+  "generatedAt": "2026-11-01T18:09:14.017Z",
+  "summary": {
+    "model": "openai/gpt-oss-120b",
+    "retriever": "hybrid",
+    "topK": 8,
+    "minScore": 0.35,
+    "questions": 30,
+    "errors": 0,
+    "answered": 18,
+    "abstained": 12,
+    "abstainedNoRelevantPassage": 7,
+    "abstainedLowConfidence": 5,
+    "abstainedParseFailed": 0,
+    "citations": 28,
+    "citationValidity": 1,
+    "citationCorrectness": 1,
+    "answerableAnswered": 0.9,
+    "abstentionPrecision": 0.833,
+    "abstentionRecall": 1,
+    "meanLatencyMs": 11935,
+    "p95LatencyMs": 22434
+  },
+  "details": [
+    {
+      "id": "q01",
+      "question": "Why can't neural networks be trained with a closed-form solution like linear regression?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        97.723,
+        126.77
+      ],
+      "referenceAnswer": "The normal equations need a d×d matrix inverse (~d³) and a neural network has no closed form at all.",
+      "abstained": true,
+      "abstainReason": "LOW_CONFIDENCE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.619,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 1614,
+      "error": null
+    },
+    {
+      "id": "q02",
+      "question": "How expensive is solving the normal equations?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        97.723,
+        126.77
+      ],
+      "referenceAnswer": "Inverting a d by d matrix, roughly d cubed.",
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.277,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 14,
+      "error": null
+    },
+    {
+      "id": "q03",
+      "question": "Is the loss surface of a neural network a convex bowl?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        166.819,
+        192.211
+      ],
+      "referenceAnswer": "No — only linear regression with squared error is convex; neural networks have many local minima, plateaus and saddle points.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "No, the loss surface of a neural network is not a convex bowl; it has many local minima, flat plateaus and saddle points [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.602,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 166.819,
+          "endSec": 248.597,
+          "quote": "For linear regression with squared error, yes, it's convex, it's a bowl, and there is exactly one minimum. For neural networks, no. The surface has many local minima, flat plateaus and saddle points.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 127.581,
+          "endSec": 192.211,
+          "quote": "For linear regression with squared error, yes, it's convex, it's a bowl, and there is exactly one minimum. For neural networks, no. The surface has many local minima, flat plateaus and saddle points.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 1824,
+      "error": null
+    },
+    {
+      "id": "q04",
+      "question": "In which direction does the gradient point?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        221.199,
+        248.597
+      ],
+      "referenceAnswer": "The direction of steepest ascent.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "The gradient points in the direction of steepest ascent [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.477,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 166.819,
+          "endSec": 248.597,
+          "quote": "the gradient points in the direction of steepest ascent",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 221.199,
+          "endSec": 297.133,
+          "quote": "the gradient points in the direction of steepest ascent",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 1329,
+      "error": null
+    },
+    {
+      "id": "q05",
+      "question": "What is the update rule of gradient descent?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        249.396,
+        274.907
+      ],
+      "referenceAnswer": "theta_new = theta_old − eta × gradient of L at theta_old.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "The gradient descent update rule is θ_new = θ_old − η ∇L(θ_old) [1].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.636,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 221.199,
+          "endSec": 297.133,
+          "quote": "theta new equals theta old minus eta times the gradient of L evaluated at theta old.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 18467,
+      "error": null
+    },
+    {
+      "id": "q06",
+      "question": "What happens on L(w) = w squared when the step size is 0.9?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        331.403,
+        357
+      ],
+      "referenceAnswer": "w is multiplied by −0.8 each step: it still converges but oscillates across the minimum.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "With a step size of 0.9, each update multiplies w by –0.8, causing w to jump to –0.8, then to +0.64, and so on; it still converges but oscillates back and forth across the minimum [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.444,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 277.023,
+          "endSec": 357,
+          "quote": "Now try eta equal to point nine. Each step multiplies w by one minus one point eight, which is negative point eight. So w jumps to negative point eight, then positive point six four, and so on. It still converges, but it oscillates back and forth across the minimum.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 331.403,
+          "endSec": 412.214,
+          "quote": "Now try eta equal to point nine. Each step multiplies w by one minus one point eight, which is negative point eight. So w jumps to negative point eight, then positive point six four, and so on. It still converges, but it oscillates back and forth across the minimum.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 10002,
+      "error": null
+    },
+    {
+      "id": "q07",
+      "question": "My loss turns into NaN after a few iterations — what should I suspect first?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        357.43,
+        385.149
+      ],
+      "referenceAnswer": "A learning rate that is too large.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "You should first suspect that the learning rate is too large [1].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.451,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 331.403,
+          "endSec": 412.214,
+          "quote": "If you ever see your loss turn into NaN in the first few iterations, a learning rate that is too large is the first suspect.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 21495,
+      "error": null
+    },
+    {
+      "id": "q08",
+      "question": "What goes wrong if the learning rate is very small?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        386.948,
+        412.214
+      ],
+      "referenceAnswer": "Training takes thousands of times more steps and is more likely to stall on a plateau.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "A very small learning rate makes training progress extremely slow, requiring many more steps, and can cause the optimizer to stall on plateaus where the gradient is near zero [1][3].",
+      "confidence": 0.95,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.559,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 386.948,
+          "endSec": 465.842,
+          "quote": "Too small is also a problem, just a quieter one. With eta equal to point zero zero one you'll get there eventually, but it might take thousands of times more steps, and on a non convex surface you're more likely to stall on a plateau where the gradient is nearly zero.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 3,
+          "startSec": 331.403,
+          "endSec": 412.214,
+          "quote": "Too small is also a problem, just a quieter one. With eta equal to point zero zero one you'll get there eventually, but it might take thousands of times more steps, and on a non convex surface you're more likely to stall on a plateau where the gradient is nearly zero.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 22434,
+      "error": null
+    },
+    {
+      "id": "q09",
+      "question": "How do people pick a learning rate in practice?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        414.302,
+        438.121
+      ],
+      "referenceAnswer": "Try a few values on a log scale, watch the training loss for the first few hundred steps, pick the largest that still decreases it steadily.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "In practice people try a few learning‑rate values on a log scale (e.g., 1, 0.1, 0.01, 0.001) and watch the training loss for the first few hundred steps, then pick the largest value that still decreases the loss steadily [1].",
+      "confidence": 0.96,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.37,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 386.948,
+          "endSec": 465.842,
+          "quote": "In practice people pick the learning rate by trying a few values on a log scale, say one, point one, point zero one, point zero zero one, and watching the training loss for the first few hundred steps. Pick the largest one that still decreases the loss steadily.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 20130,
+      "error": null
+    },
+    {
+      "id": "q10",
+      "question": "What stopping criteria can gradient descent use?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        440.395,
+        465.842
+      ],
+      "referenceAnswer": "Gradient norm below a tolerance, no improvement beyond a threshold for a while, or a fixed number of iterations/epochs.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "Gradient descent can stop when the gradient norm falls below a small tolerance, when the loss hasn’t improved by more than a threshold for a while, or after a fixed number of iterations/epochs [1].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.608,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 440.395,
+          "endSec": 515.965,
+          "quote": "Stop when the gradient norm falls below some small tolerance, stop when the loss hasn't improved by more than some threshold for a while, or simply stop after a fixed number of iterations.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 20065,
+      "error": null
+    },
+    {
+      "id": "q11",
+      "question": "Why is each full-batch gradient step expensive on a large dataset?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        467.208,
+        491.326
+      ],
+      "referenceAnswer": "Computing the gradient sums over every training example, so each step touches all of them.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "Each full‑batch gradient step is expensive because computing the gradient requires summing over every training example, so a step must touch all examples (e.g., a million examples) each time [5]. In contrast, a stochastic step only uses one example, avoiding that cost [1].",
+      "confidence": 0.95,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.701,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 492.332,
+          "endSec": 567.97,
+          "quote": "each step costs one example instead of a million.",
+          "overlapsGold": false
+        },
+        {
+          "marker": 5,
+          "startSec": 440.395,
+          "endSec": 515.965,
+          "quote": "Notice what each gradient descent step costs. To compute the gradient of the mean squared error, I have to sum a term over every training example. If I have a million examples, every single step touches all one million of them.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 21347,
+      "error": null
+    },
+    {
+      "id": "q12",
+      "question": "Is the stochastic gradient estimate biased?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        517.092,
+        540.686
+      ],
+      "referenceAnswer": "No — it is noisy but unbiased; in expectation it equals the full-batch gradient.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "No, the stochastic gradient estimate is unbiased [1].",
+      "confidence": 0.95,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.466,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 492.332,
+          "endSec": 567.97,
+          "quote": "That estimate is noisy, but it's unbiased. In expectation over which example you pick, it equals the true full batch gradient.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 16420,
+      "error": null
+    },
+    {
+      "id": "q13",
+      "question": "How many examples does a typical mini-batch contain?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        541.915,
+        567.97
+      ],
+      "referenceAnswer": "Somewhere between 32 and 512.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "A typical mini-batch contains somewhere between thirty‑two and five‑hundred‑twelve examples [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.595,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 541.915,
+          "endSec": 620.047,
+          "quote": "We use a mini-batch, typically somewhere between thirty two and five hundred twelve examples.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 492.332,
+          "endSec": 567.97,
+          "quote": "We use a mini-batch, typically somewhere between thirty two and five hundred twelve examples.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 12966,
+      "error": null
+    },
+    {
+      "id": "q14",
+      "question": "With 50,000 training examples and a batch size of 100, how many iterations make up one epoch?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        568.51,
+        593.967
+      ],
+      "referenceAnswer": "500 iterations.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "One epoch consists of 500 iterations [1].",
+      "confidence": 0.99,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.523,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 541.915,
+          "endSec": 620.047,
+          "quote": "So with fifty thousand examples and a batch size of one hundred, one epoch is five hundred iterations.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 20446,
+      "error": null
+    },
+    {
+      "id": "q15",
+      "question": "Why should the training data be shuffled at every epoch?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        595.317,
+        620.047
+      ],
+      "referenceAnswer": "Sorted data makes batches unrepresentative and the gradient estimates systematically biased.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "The data should be shuffled each epoch because otherwise sorted data would make batches unrepresentative, causing systematic bias in gradient estimates, which is far worse than random noise [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.607,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 541.915,
+          "endSec": 620.047,
+          "quote": "And you should shuffle the data at the start of every epoch. If your data is sorted, say all the cats and then all the dogs, the batches won't be representative and the gradient estimates will be biased in a systematic way, which is much worse than random noise.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 595.317,
+          "endSec": 671.8,
+          "quote": "And you should shuffle the data at the start of every epoch. If your data is sorted, say all the cats and then all the dogs, the batches won't be representative and the gradient estimates will be biased in a systematic way, which is much worse than random noise.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 15894,
+      "error": null
+    },
+    {
+      "id": "q16",
+      "question": "How can the noise in SGD help with saddle points?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        620.572,
+        646.515
+      ],
+      "referenceAnswer": "A noisy step can kick the parameters off a saddle point or out of a sharp narrow minimum.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "The stochastic noise adds random perturbations that can kick the optimizer off a saddle point (or out of a sharp, narrow minimum) that full‑batch gradient descent would get stuck at, helping it escape [1].",
+      "confidence": 0.97,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.585,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 595.317,
+          "endSec": 671.8,
+          "quote": "The noise in SGD is actually helpful. A noisy step can kick you off a saddle point or out of a sharp, narrow minimum, where full batch gradient descent would just sit there with a gradient of almost zero.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 19210,
+      "error": null
+    },
+    {
+      "id": "q17",
+      "question": "Why is the learning rate decayed during training?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        647.13,
+        671.8
+      ],
+      "referenceAnswer": "With a constant rate SGD keeps bouncing near the minimum; decaying lets the iterates settle.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "The learning rate is decayed so that training can start with a large step size for fast progress and later shrink to allow the iterates to settle near the minimum, because a constant learning rate causes SGD to keep bouncing around the minimum [1][4].",
+      "confidence": 0.97,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.542,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 647.13,
+          "endSec": 719.664,
+          "quote": "The flip side is that with a constant learning rate, SGD never fully settles. It keeps bouncing around in a region near the minimum. That's why people decay the learning rate over training, start large to make fast progress, then shrink it so the iterates can settle down.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 4,
+          "startSec": 595.317,
+          "endSec": 671.8,
+          "quote": "The flip side is that with a constant learning rate, SGD never fully settles. It keeps bouncing around in a region near the minimum. That's why people decay the learning rate over training, start large to make fast progress, then shrink it so the iterates can settle down.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 22787,
+      "error": null
+    },
+    {
+      "id": "q18",
+      "question": "Is backpropagation a learning algorithm?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        699.039,
+        719.664
+      ],
+      "referenceAnswer": "No — it is an efficient way of computing gradients with the chain rule.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "No, backpropagation is not a learning algorithm; it is just an efficient method for computing gradients [1][2].",
+      "confidence": 0.97,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.764,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 647.13,
+          "endSec": 719.664,
+          "quote": "Backpropagation is not a new learning algorithm. I want to be really clear about that. It is just an efficient way of computing gradients, using the chain rule from calculus, organised so that we never compute the same thing twice.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 2,
+          "startSec": 699.039,
+          "endSec": 778.242,
+          "quote": "Backpropagation is not a new learning algorithm. I want to be really clear about that. It is just an efficient way of computing gradients, using the chain rule from calculus, organised so that we never compute the same thing twice.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 17920,
+      "error": null
+    },
+    {
+      "id": "q19",
+      "question": "What does an add gate do with the upstream gradient during backprop?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        888.848,
+        915.081
+      ],
+      "referenceAnswer": "It distributes the upstream gradient unchanged to all its inputs.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "An add gate distributes the upstream gradient unchanged to all its inputs [1].",
+      "confidence": 0.99,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.738,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 863.016,
+          "endSec": 939.066,
+          "quote": "An add gate distributes the upstream gradient unchanged to all its inputs.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 14029,
+      "error": null
+    },
+    {
+      "id": "q20",
+      "question": "Why do deep sigmoid networks have vanishing gradients?",
+      "goldAnswerable": true,
+      "goldSpan": [
+        1083.141,
+        1111.59
+      ],
+      "referenceAnswer": "h(1 − h) is at most 1/4, so stacking many sigmoid layers multiplies the gradient by at most a quarter each time.",
+      "abstained": false,
+      "abstainReason": null,
+      "answer": "Deep sigmoid networks suffer vanishing gradients because the sigmoid derivative h × (1‑h) is at most 0.25, so each layer multiplies the back‑propagated gradient by ≤¼; stacking many layers drives the early‑layer gradients to near zero [1][4].",
+      "confidence": 0.95,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.71,
+      "citations": [
+        {
+          "marker": 1,
+          "startSec": 1041.122,
+          "endSec": 1111.59,
+          "quote": "h times one minus h is at most one quarter, at h equals one half. Stack ten sigmoid layers and you've multiplied by at most a quarter ten times, so the gradient at the early layers is tiny.",
+          "overlapsGold": true
+        },
+        {
+          "marker": 4,
+          "startSec": 1083.141,
+          "endSec": 1171.498,
+          "quote": "Exactly right. h times one minus h is at most one quarter, at h equals one half. Stack ten sigmoid layers and you've multiplied by at most a quarter ten times, so the gradient at the early layers is tiny.",
+          "overlapsGold": true
+        }
+      ],
+      "citationsValid": true,
+      "latencyMs": 14335,
+      "error": null
+    },
+    {
+      "id": "q21",
+      "question": "What values did the lecturer recommend for Adam's beta1 and beta2?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03177805800756621,
+      "topSimilarity": 0.199,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 9,
+      "error": null
+    },
+    {
+      "id": "q22",
+      "question": "What momentum coefficient should be used with SGD?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.282,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 6,
+      "error": null
+    },
+    {
+      "id": "q23",
+      "question": "How does batch normalisation speed up training?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "LOW_CONFIDENCE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.509,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 18036,
+      "error": null
+    },
+    {
+      "id": "q24",
+      "question": "What dropout rate does the lecturer recommend?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03225806451612903,
+      "topSimilarity": 0.349,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 14,
+      "error": null
+    },
+    {
+      "id": "q25",
+      "question": "What is the formula for the cross-entropy loss?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.031754032258064516,
+      "topSimilarity": 0.333,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 11,
+      "error": null
+    },
+    {
+      "id": "q26",
+      "question": "Who invented backpropagation, and in which year?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "LOW_CONFIDENCE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03252247488101534,
+      "topSimilarity": 0.539,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 17066,
+      "error": null
+    },
+    {
+      "id": "q27",
+      "question": "How long should a learning-rate warm-up phase last?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "LOW_CONFIDENCE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03149801587301587,
+      "topSimilarity": 0.39,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 14908,
+      "error": null
+    },
+    {
+      "id": "q28",
+      "question": "What is the derivative of ReLU at exactly zero?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.296,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 15,
+      "error": null
+    },
+    {
+      "id": "q29",
+      "question": "How does L2 weight decay change the update rule?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "LOW_CONFIDENCE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03278688524590164,
+      "topSimilarity": 0.398,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 15244,
+      "error": null
+    },
+    {
+      "id": "q30",
+      "question": "When is the final exam?",
+      "goldAnswerable": false,
+      "goldSpan": null,
+      "referenceAnswer": null,
+      "abstained": true,
+      "abstainReason": "NO_RELEVANT_PASSAGE",
+      "answer": null,
+      "confidence": null,
+      "topScore": 0.03177805800756621,
+      "topSimilarity": 0.156,
+      "citations": [],
+      "citationsValid": true,
+      "latencyMs": 13,
+      "error": null
+    }
+  ]
+}

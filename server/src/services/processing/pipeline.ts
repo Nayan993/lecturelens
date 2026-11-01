@@ -1,4 +1,4 @@
-﻿import path from 'node:path';
+import path from 'node:path';
 import {
   Chunk,
   Lecture,
@@ -18,6 +18,7 @@ import { AsrUnavailableError, transcribeWithFallback } from '../asr/index.js';
 import { persistTranscription, TranscriptValidationError } from '../asr/persist.js';
 import { buildChunks } from '../chunking/chunker.js';
 import { extractAudio, makeBrowserPlayable, MediaProcessingError } from '../media/extract.js';
+import { invalidateVectorCache } from '../retrieval/vectorCache.js';
 import { createSummariesForLecture } from '../summaries/index.js';
 import {
   assertTopicTiling,
@@ -58,9 +59,8 @@ const STAGE_DETAIL: Record<StageName, string> = {
   indexing: 'Indexing passages for search.',
 };
 
-/** Indexing (embeddings for search) belongs to Member C and does not exist yet. */
-export const READY_WITHOUT_INDEXING_DETAIL =
-  'Ready. Search indexing is not available yet (Member C), so this lecture cannot be searched or asked about.';
+/** statusDetail of a fully processed lecture (CONTRACTS.md §6.2 example). */
+export const READY_DETAIL = 'Ready.';
 
 /* ------------------------------------------------------------------ Member B's stages ---- */
 
@@ -82,6 +82,7 @@ export async function runChunkingStage(lectureId: string): Promise<number> {
   );
 
   await Chunk.deleteMany({ lectureId });
+  invalidateVectorCache(lectureId); // the old chunks' vectors are gone with them
   await Chunk.insertMany(
     built.map((chunk) => ({
       ...chunk,
@@ -154,7 +155,7 @@ export async function runSegmentingStage(
 
 type StageRunner = (lectureId: string) => Promise<void>;
 
-const STAGES: Record<Exclude<StageName, 'indexing'>, StageRunner> = {
+const STAGES: Record<StageName, StageRunner> = {
   // Member A
   async extracting(lectureId) {
     const lecture = await Lecture.findById(lectureId).select('mediaPath');
@@ -206,6 +207,14 @@ const STAGES: Record<Exclude<StageName, 'indexing'>, StageRunner> = {
   async summarising(lectureId) {
     await createSummariesForLecture(lectureId, getLlmClient(), llmModelName());
   },
+
+  // Member C — embeds every chunk without a valid vector (Xenova/all-MiniLM-L6-v2, in process).
+  // Imported on first use: the ONNX runtime then only loads when a lecture is actually indexed.
+  async indexing(lectureId) {
+    const { embedLecture } = await import('../embeddings/index.js');
+    const embedded = await embedLecture(lectureId);
+    logger.info('Chunks indexed for search', { lectureId, embedded });
+  },
 };
 
 /* ----------------------------------------------------------------- status updates ---- */
@@ -242,11 +251,9 @@ async function markReady(lectureId: string): Promise<void> {
   if (!lecture) return;
   const at = new Date();
   lecture.status = 'ready';
-  lecture.statusDetail = READY_WITHOUT_INDEXING_DETAIL;
+  lecture.statusDetail = READY_DETAIL;
   lecture.error = null;
-  lecture.stages = stagesAfter(lecture.stages, 'ready', null, at).map((s) =>
-    s.name === 'indexing' ? { name: 'indexing', state: 'skipped', ms: null, startedAt: null, finishedAt: null } : s,
-  );
+  lecture.stages = stagesAfter(lecture.stages, 'ready', null, at);
   await lecture.save();
 }
 
@@ -274,6 +281,10 @@ export function describeFailure(error: unknown, stage: StageName): { code: Lectu
   }
   if (error instanceof TranscriptValidationError) {
     return { code: 'TRANSCRIPTION_FAILED', message: `Transcription failed: ${error.message}` };
+  }
+  if (stage === 'indexing') {
+    // The transcript, topics and summaries are already stored; only the search index is missing.
+    return { code: 'INTERNAL_ERROR', message: 'Search indexing failed (the embedding model could not run). Reprocess from "indexing" to try again.' };
   }
   return { code: 'INTERNAL_ERROR', message: `Processing failed unexpectedly while ${STAGE_DETAIL[stage].replace(/\.$/, '').toLowerCase()}. The error has been logged.` };
 }
@@ -325,7 +336,6 @@ async function runPipeline(lectureId: string, opts?: { fromStage?: LectureStatus
 
   try {
     for (stage of STAGE_NAMES.slice(STAGE_NAMES.indexOf(fromStage))) {
-      if (stage === 'indexing') break; // Member C: not implemented yet
       if (!(await enterStage(lectureId, stage))) {
         settled = true; // lecture deleted mid-run: nothing left to update
         return;

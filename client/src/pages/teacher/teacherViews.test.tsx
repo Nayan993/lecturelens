@@ -251,6 +251,51 @@ describe('review queue', () => {
   });
 });
 
+describe('review queue: topics and question generation (regression — no UI for either existed)', () => {
+  it('lists pending topic sections; approving one calls POST /topics/:id/approve and removes it from the queue', async () => {
+    const approve = vi.spyOn(services.topics, 'approve');
+    renderAs(TEACHER, '/app/review?tab=topics');
+    const button = await screen.findByRole('button', { name: 'Approve topic: Backpropagation through a two-layer network' });
+    fireEvent.click(button);
+    expect(await within(toasts()).findByText('Topic approved — students can now see this section and its summary')).toBeTruthy();
+    expect(approve).toHaveBeenCalledWith('6650c3a0c3b2e41d8a400004');
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Approve topic:/ })).toBeNull());
+    expect(screen.getByText('No topics waiting')).toBeTruthy();
+  });
+
+  it('generates questions for the chosen lecture with the chosen count; they arrive pending review', async () => {
+    const generate = vi.spyOn(services.quizzes, 'generateQuestions');
+    renderAs(TEACHER, '/app/review?tab=questions');
+    const lecture = (await screen.findByLabelText(/^Lecture/)) as HTMLSelectElement;
+    fireEvent.change(lecture, { target: { value: L7 } });
+    fireEvent.change(screen.getByLabelText(/^How many/), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate questions' }));
+    expect(await within(toasts()).findByText('3 questions generated')).toBeTruthy();
+    expect(generate).toHaveBeenCalledWith(L7, { count: 3 });
+    const created = await generate.mock.results[0]!.value;
+    expect(created.every((q: { status: string }) => q.status === 'pending_review')).toBe(true);
+  });
+
+  it('shows the server\'s reason when generation is refused (e.g. no approved topics)', async () => {
+    vi.spyOn(services.quizzes, 'generateQuestions').mockRejectedValue(
+      new ApiRequestError({ status: 422, code: 'VALIDATION_FAILED', message: 'Request is invalid.', details: { topicIds: 'No approved topic sections to generate questions from; approve topics first' } }),
+    );
+    renderAs(TEACHER, '/app/review?tab=questions');
+    fireEvent.click(await screen.findByRole('button', { name: 'Generate questions' }));
+    expect(await within(toasts()).findByText('No approved topic sections to generate questions from; approve topics first')).toBeTruthy();
+  });
+
+  it('a student\'s refused quiz shows the server\'s reason, not "Request is invalid."', async () => {
+    vi.spyOn(services.quizzes, 'create').mockRejectedValue(
+      new ApiRequestError({ status: 422, code: 'VALIDATION_FAILED', message: 'Request is invalid.', details: { questionCount: 'No approved questions available for this lecture' } }),
+    );
+    renderAs(STUDENT, `/app/lectures/${L7}`);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Quiz' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'New practice quiz' }));
+    expect(await within(toasts()).findByText('No approved questions available for this lecture')).toBeTruthy();
+  });
+});
+
 describe('transcript review', () => {
   const editButton = (i: number) => document.querySelector<HTMLButtonElement>(`button[data-edit-index="${i}"]`)!;
 
